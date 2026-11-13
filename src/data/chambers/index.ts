@@ -1,5 +1,6 @@
 import type { ChamberDef, ChamberId } from '../../core/chamber/types';
 import { P_E } from './P-E';
+import { W_H } from './W-H';
 import { W_M } from './W-M';
 import { W_E } from './W-E';
 
@@ -7,6 +8,7 @@ import { W_E } from './W-E';
 export const CHAMBERS: Partial<Record<ChamberId, ChamberDef>> = {
   'W-E': W_E,
   'W-M': W_M,
+  'W-H': W_H,
   'P-E': P_E,
 };
 

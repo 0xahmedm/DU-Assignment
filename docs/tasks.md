@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 3 · W-H (first: decide what happens with its out-of-reach dispenser)
+**Next task →** Day 3 · Shieldbearer (basic movement) + P-M (run the reachability checker on P-M first)
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -53,7 +53,9 @@ How to use this file:
 - [x] Walker (basic): patrol, turns at walls, ledges (literal rule, C91) and blocking bodies; no air control; gravity; weighs plates. Unit-tested + verified in the game
 - [x] W-M entered and **solved end to end in the real game** (timed drop onto `t`, crate onto `x`). Holding `s` permanently makes the walker turn at the open trapdoor, as C91 says. "Grants Throw" is stored in the data; granting arrives with progression (Day 5)
 - [x] Throw: fixed arc, **lands exactly 5 ahead** verified in the test room (from col 25 → col 30 across the 4-gap; from col 32 → col 37, into the 5-gap); ground only; kit-gated (refused in W-E)
-- [ ] W-H (first decide: its dispenser is out of melee reach, so hold-R is the only recovery for a stuck crate; see the decision-log change log)
+- [x] W-H entered and **solved end to end in the real game**; Day 1 grid was unclimbable → widened diagonal staircase (C92); dispenser: hold-R fallback (C93)
+- [x] Reachability checker (`core/player/reach.ts`): real movement model vs the grid; calibrated on all C29 metrics; W-E/W-H routes are tests
+- [ ] Run the reachability checker on each remaining chamber (P-M, L-E, L-M, L-H, P-H) **before** entering it; key routes become tests
 - [x] P-E entered and **solved end to end in the real game**; red-phase pit dead end found and fixed with a pit crystal (C90), escape verified in both colours
 - [ ] Shieldbearer (basic movement) + P-M (2-tall tunnel); grants Dash
 - [x] Melee forward + up (basic hit detection on mirrors, crystals, dispensers): reach 1.3 tiles from the body edge, never through walls; crystal hits verified in the game (P-E), mirror hits unit-tested (no Light chamber yet)

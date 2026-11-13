@@ -153,6 +153,8 @@ Details in the DOCX that the handoff left out:
 | C89 | **The GitHub repo may be public; deploy via GitHub Pages (Actions).** Repo: github.com/0xahmedm/DU-Assignment. | User, 2026-11-14 |
 | C90 | **P-E revision: a crystal in section B's pit** (row 9, col 8). A scripted playtest found that walking off the neutral block's right edge while still Red drops you into the pit in Red, where the escape step has only 1 tile of headroom under the red platform (hold-R was the only way out). The pit crystal swaps to Blue so the existing escape works. It is reachable only from inside the pit, so it opens no bypass. | User, 2026-11-14 |
 | C91 | **Walker ledge rule is literal:** a walker turns at any gap in the *current* floor, including an open trapdoor, and only falls when the floor disappears under it (trapdoor opening, phase swap). Chosen by the user over "open trapdoors count as floor for the patrol". **Consequences:** (1) W-M becomes a timing puzzle: step on `s` while the walker is over the trapdoor. Measured in the game: the walker is fully over it for ~0.22 s once per ~17 s patrol cycle, at the left end of the gallery (it turns at door K). (2) **L-H's chain needs a redesign before it is built** (Day 4): its walker patrols cols 15–18 with the trapdoor in the middle (col 16), so after the Bolt opens the trapdoor it would turn at the hole and usually never fall. | User, 2026-11-14 |
+| C92 | **W-H revision: diagonal staircase, room widened 26 → 32 columns.** As drawn, W-H could not be climbed: the player is 1.375 tiles tall and each blue step hung over the take-off spot of the hop below it (in Blue nobody got past the first step, crate or not; confirmed in the game and by the reachability checker). A 2-high zigzag in the 5-wide strip cannot work in any arrangement. New climb: neutral step (row 17, cols 19–20) → neutral ledge (row 15, cols 22–23) → blue steps (rows 13 / 11 / 9) → L, which is extended to col 26. The 1-tile gap after the bottom step keeps the exit floor connected to the rest of the room (the Day 1 drawing, and the first version of this fix, made the exit floor a dead end). Everything left of col 19 is unchanged: walker box, red platform, pocket `x`, both crystals, the solution. Checker results: crate reaches L only in Blue; L unreachable in Red; from L in Red the crate cannot be carried across the 4-gap (Throw required); the exit floor connects both ways in both colours. | User, 2026-11-14 |
+| C93 | **W-H dispenser stays out of melee reach; hold-R is the fallback** for the rare stuck crate (a throw in the wrong colour lands safely on the floor; crates left on blue steps fall when the colours swap). | User, 2026-11-14 |
 | C41 | **L-H recovery: kill the walker to undo.** The walker lands in an open low-walled pen; killing it releases its plate and reverses the chain. Bolt the high mirror back first so the respawned walker doesn't fall again. | User, 2026-11-12 |
 | C30 | **Rulebook defaults (accepted without objection, not explicitly approved):** wires always visible and lit when powered; all plates identical (player/crate/enemy); lost crates respawn at a dispenser; carrying lowers jump; beams stop at walls/crates/enemies/solid phase blocks; blocks that would turn solid on an occupant stay ghosted until vacated; phase swaps only by hit or signal, never a timer. | User (no objection), 2026-11-12 |
 
@@ -303,6 +305,30 @@ DS.C............1........E
 - **In-chamber teaching:** the walker falling onto `y` at step 1 shows the player that "a swap drops things onto plates" before they need it for the crate.
 - **Checked:** L is unreachable in Red (the step chain breaks at 14 → 12). The crate can't be carried across the 4-gap. Throwing in Blue drops the crate safely to the bottom floor, so you just retry. The walker drops onto `y` no matter when you swap. The player can't fit into `x`, and the box is escapable (3 deep).
 - Section count: 3 (bottom hub / middle step climb / top throw). Vertical traversal is 12 tiles; the horizontal throw is across a 4-gap.
+- **Superseded by C92 (Day 2 build):** the blue steps above could not be climbed by the real 1.375-tile body. Final grid:
+```
+W-H (C92, final)
+################################
+######.........................#
+######.........................#
+######.........................#
+######.........................#
+######.........................#
+######............2............#
+######RRR....##############....#
+######x........................#
+#######.....................BB.#
+#######......#..w..#...........#
+#..U.........#RRRRR#......BB...#
+#............#yyyyy#...........#
+#............#######....BB.....#
+#..............................#
+#.....................##.......#
+#..............................#
+D..................##..........E
+DS.C............1..............E
+################################
+```
 
 **W-H concept recap** (A selected, C33): Weight × Phase + Throw, 3 sections.
 - Exit needs `x` AND `y`, both in 1-deep slots under phase floors. The walker patrols a red platform above `y`'s funnel. The crate's slot `x` sits under a red block across a 4-gap, so it can't be carried there (carry gap 3) but can be thrown (3).
@@ -965,3 +991,4 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
 - 2026-11-14 (Day 2 build): Melee (forward + up) implemented; P-E entered and solved end to end in the real game. **P-E design bug found by a scripted playtest** (red-phase pit dead end) → pit crystal approved (C90). Implementation defaults, open to the user's objection: attacking is allowed while carrying; one swing swaps the phase at most once (two crystals in reach would otherwise cancel out); puzzle hits resolve on the frame the swing starts; an exit with no inputs is a plain doorway and must be declared (`exitAlwaysOpen`, P-E and P-M). **Open question, decide when W-H is built:** the dispensers in W-E (section B), W-H and L-H sit 6+ tiles above the floor, out of melee reach. W-E's crate can't be lost and L-H has up-Bolt, but in W-H recall is unreachable, so hold-R would be the only recovery for a stuck crate.
 - 2026-11-14 (Day 2 build): Walker (basic) implemented: patrol, turns at walls/ledges/blocking bodies, no air control, gravity, weighs plates. **Design inconsistency found:** W-M and L-H (drawn on Day 1) relied on walkers walking into an opened trapdoor, which contradicts "turns at ledges". The user chose the literal rule (C91). W-M entered and solved end to end with the timed drop; L-H flagged for redesign.
 - 2026-11-14 (Day 2 build): Throw implemented as a scripted arc (not a physics impulse): the crate lands centred on the tile exactly 5 columns ahead of the player's column, at the player's floor height; touching anything solid mid-flight drops it on the spot; no floor at the landing tile → it keeps falling. Verified in the movement test room: clears the 4-gap (lands on the first tile past it), falls into the 5-gap. Kit enforcement (C24) verified: no Throw in W-E. Implementation default, open to the user's objection: **Throw only from the ground** (in the air it is refused with a small shake), so "5 ahead" is always measured from the player's floor.
+- 2026-11-14 (Day 2 build): W-H entered; the Day 1 grid was unclimbable (C92) and had an exit-floor dead end; both fixed with user approval, verified by a new **headless reachability checker** (`src/core/player/reach.ts`: runs the real movement model against the grid; calibrated against every C29 metric) and solved end to end in the game. Dispenser: hold-R fallback (C93). This extends C51's layered checks: movement reachability is no longer manual only.

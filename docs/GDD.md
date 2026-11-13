@@ -41,6 +41,7 @@ The mechanics combine because each changes the others' rules:
   - A load-time validator checks grid sanity and wiring.
   - A logic enumerator tries every mirror/phase/plate combination and confirms the intended configuration lights the exit.
   - Each chamber stores its intended solution.
+  - A reachability checker runs the real movement model against each grid ("can the player, carrying a crate or not, get from here to there in this colour?"). It was added after the Day 1 drawings proved too optimistic about headroom, and it caught W-H's unclimbable staircase.
 - **Recovery:**
   - A free hold-R reset.
   - Pits are always escapable, in either colour. (P-E's pit got an extra crystal after a scripted playtest found a fall in Red had no way out.)
