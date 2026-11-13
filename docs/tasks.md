@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 2 · `core/chamber`: types, legend, parser + tests
+**Next task →** Day 2 · melee attack (forward + up) so crystals, mirrors and dispensers can be hit, then W-M (walker as weight)
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -16,7 +16,7 @@ How to use this file:
 - [x] Copy the ChatGPT handoff → `docs/ai-logs/day1-preproduction-chatgpt-handoff.md`
 - [x] Seed `docs/` (implementation plan, tasks, decision log, GDD draft, devlog, asset list)
 - [x] (user) ChatGPT conversation export added → `docs/ai-logs/day1-preproduction-chatgpt.md`
-- [ ] (user) Day 1 screenshot of the design artefacts, labelled as pre-production → `docs/screenshots/day1-design.png`
+- [x] (user) Day 1 screenshot → `docs/screenshots/day1-projectFolder.png`
 
 ## Day 2: Foundations (today, extended)
 - [x] (user) Approve the Step 1 implementation plan
@@ -36,17 +36,20 @@ How to use this file:
 - [x] Player controller: run, variable jump, apex hang, fall cap, coyote time, jump buffer (C58)
 - [x] Movement test room with tile markers: **jump 3 / gap 4 verified**
 - [x] Carry / put down + carry penalties: **jump 2 / gap 3 verified**
-- [ ] `core/chamber`: types, legend, parser + tests
-- [ ] `core/chamber/validator` + tests (broken fixtures must fail)
-- [ ] Chamber scene renders a parsed chamber (tiles, C52 colours and patterns)
-- [ ] `core`: signal bus (OR/AND), plates, doors/trapdoors (never close on occupants) + tests
-- [ ] `core`: crates + dispenser (+ recall) + tests
-- [ ] `core`: phase system + ghost rule + tests
-- [ ] Level-select stub + `?chamber=` and `?debug=1`
-- [ ] Day 2 routine: gameplay screenshot · AI export · tick tasks · devlog + AI bug log · commit + tag `day2`
+- [x] `core/chamber`: types, legend, stitching parser + tests
+- [x] `core/chamber/validator` + tests (broken fixtures must fail)
+- [x] Chamber scene renders a parsed chamber (tiles, plates, wires, doors, exit lamps, phase blocks with hatching/dots)
+- [x] `core`: signal logic (OR/AND), plates, doors/trapdoors (never close on occupants), exit lamps + tests (`ChamberLogic`)
+- [x] Crates: carry / put down, solid, weigh plates
+- [ ] Dispenser recall (hit the dispenser → fresh crate); needs melee (Day 3)
+- [x] `core`: phase system + ghost rule + tests (rendering done; crystal hits arrive with melee on Day 3)
+- [x] Level-select stub (3 × 3) + `?chamber=`, `?room=movement`, `?debug`
+- [x] Day 2 gameplay screenshot → `docs/screenshots/day2-W-E-first-playable.png` (saved via the dev-only `/__screenshot` endpoint)
+- [ ] Day 2 routine: AI export · devlog · commit + tag `day2` · (user) approve push
+- [ ] Polish: centre chambers shorter than the screen (empty band below W-E)
 
 ## Day 3: Weight, Phase, Light (extended)
-- [ ] W-E data entered; solution + reset verified
+- [x] W-E data entered; **solved end to end in the real game** with scripted input (Day 2, ahead of plan); hold-R reset implemented
 - [ ] Walker (basic): patrol, turns at walls and ledges, gravity, counts as weight
 - [ ] W-M (trapdoor, walker as weight); grants Throw
 - [ ] Throw: fixed arc, **lands exactly 5 ahead** verified
@@ -59,7 +62,7 @@ How to use this file:
 - [ ] L-E
 - [ ] L-M; grants Bolt
 - [ ] Bolt: upper-body row; hits mirrors, crystals, enemies
-- [ ] Hold-R chamber reset (~1 s, fill ring)
+- [x] Hold-R chamber reset (~1 s, fill ring)
 - [ ] Day 3 routine
 
 ## Day 4: Finish chambers, combat, brief change

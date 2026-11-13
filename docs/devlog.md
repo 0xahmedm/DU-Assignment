@@ -30,6 +30,8 @@ Daily entries (5 lines max) plus an **AI bug log**: what the AI got wrong, how i
 - Scaffolded the project: Vite 8, TypeScript 6.0.3 (TS 7 isn't supported by typescript-eslint yet), Phaser 3.90.0 (C87), Vitest, ESLint.
 - Clean-architecture guard: ESLint rule + test. Proven by planting a violation, which both caught.
 - Movement model lives in `src/core/player/movement.ts` as a pure function. `tests/core/movement.test.ts` proves the C29 metrics: full jump 3.57 tiles, tap 1.35, carry 2.69; gap 4 yes / 5 never (even with perfect coyote, robust to +5% speed); carry gap 3 yes / 4 never.
+- Chamber pipeline: data grids → stitching parser → validator → engine-free `ChamberLogic` (signals, doors, exit lamps, phase + ghost rule, locked mirrors), all unit-tested (49 tests).
+- **W-E is playable and was solved end to end in the real game** with scripted input following its stored solution.
 - The Phaser player runs that same function once per fixed 60 Hz physics step. All metrics were re-verified in the real game with scripted key input in the movement test room (`?autotest`).
 
 ### AI bug log (Day 2)
