@@ -23,7 +23,7 @@ How to use this file:
 - [x] `git init`, `.gitignore`
 - [x] README skeleton
 - [x] (user) Create the GitHub repo (github.com/0xahmedm/DU-Assignment); remote connected, its initial commit merged
-- [ ] (user) Delete the redundant local clone folder `G:\Du\DU Assignment` (now git-ignored)
+- [x] Project moved into the user's chosen folder `G:\Du\DU Assignment` (the repo root); the clone's redundant `.git` backed up outside the project
 - [ ] (user) Approve the first push to GitHub (C88: ask before every push)
 - [x] Scaffold Vite 8 + TypeScript 6.0 (strict) + Phaser 3.90.0 + Vitest 5 + ESLint 10 (versions pinned)
 - [x] Clean-architecture guard: ESLint `no-restricted-imports` for `src/core` + `tests/architecture.test.ts` (fails if core imports Phaser/DOM)
@@ -31,7 +31,7 @@ How to use this file:
 - [ ] (user) Enable Pages: repo Settings → Pages → Source: GitHub Actions (after the first push)
 - [ ] Live Pages URL verified
 - [x] Single-file build target (`npm run build:single` → one 1.2 MB `dist-single/index.html`, no external references, dev hook stripped)
-- [ ] (user) Double-click `dist-single/index.html` and confirm the game opens (the browser pane can't open file:// pages)
+- [ ] (user) Double-click `G:\Du\DU Assignment\dist-single\index.html` and confirm the game opens (the browser pane can't open file:// pages)
 - [x] `core/player/metrics.ts`: C29 metrics + derived physics constants (gravity, jump velocity, run speed)
 - [x] Player controller: run, variable jump, apex hang, fall cap, coyote time, jump buffer (C58)
 - [x] Movement test room with tile markers: **jump 3 / gap 4 verified**
