@@ -4,6 +4,7 @@ import { parseChamber } from '../../src/core/chamber/parser';
 import type { ChamberDef, PhaseColor } from '../../src/core/chamber/types';
 import { reachFrom, type ReachWorld } from '../../src/core/player/reach';
 import { W_E } from '../../src/data/chambers/W-E';
+import { P_M } from '../../src/data/chambers/P-M';
 import { W_H } from '../../src/data/chambers/W-H';
 import { MOVEMENT_TEST_ROOM } from '../../src/data/rooms/movementTest';
 
@@ -99,5 +100,28 @@ describe('reachability: W-H (C92 revision)', () => {
   it('from L in Red: the player can jump to the red platform, but cannot carry the crate there (Throw is needed)', { timeout: 30000 }, () => {
     expect(reachFrom(chamberWorld(W_H, 'red'), { row: 7, col: 15 }).canReach(7, 7)).toBe(true);
     expect(reachFrom(chamberWorld(W_H, 'red'), { row: 7, col: 15 }, { carrying: true }).canReach(7, 7)).toBe(false);
+  });
+});
+
+describe('reachability: P-M (C47, C95)', () => {
+  // World coordinates: the tower is shifted down 5 rows by the stitching (its floor is row 24).
+  const red = () => chamberWorld(P_M, 'red');
+  const blue = () => chamberWorld(P_M, 'blue');
+
+  it('tower: each stage reaches exactly the next foothold in the right colour', { timeout: 30000 }, () => {
+    expect(reachFrom(red(), { row: 24, col: 2 }).canReach(19, 6)).toBe(false); // nub 1 not from the floor in Red
+    const b1 = reachFrom(blue(), { row: 24, col: 2 });
+    expect(b1.canReach(21, 3) && b1.canReach(19, 6)).toBe(true); // blue platform, then nub 1
+    expect(b1.canReach(14, 12)).toBe(false); // nub 2 not in Blue
+    const r1 = reachFrom(red(), { row: 19, col: 6 });
+    expect(r1.canReach(16, 9) && r1.canReach(14, 12)).toBe(true); // red platform, then nub 2
+    expect(r1.canReach(8, 12)).toBe(false); // exit ledge not in Red
+    expect(reachFrom(blue(), { row: 14, col: 12 }).canReach(8, 12)).toBe(true); // blue platform, exit ledge
+  });
+
+  it('bridge: in Blue the exit side is out of reach (chasm escapes only to the entry); in Red the bridge leads there', { timeout: 30000 }, () => {
+    expect(reachFrom(blue(), { row: 8, col: 17 }).canReach(8, 33)).toBe(false);
+    expect(reachFrom(blue(), { row: 12, col: 28 }).canReach(8, 17)).toBe(true);
+    expect(reachFrom(red(), { row: 8, col: 17 }).canReach(8, 33)).toBe(true);
   });
 });

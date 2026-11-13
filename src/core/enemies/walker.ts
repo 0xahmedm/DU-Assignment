@@ -33,9 +33,24 @@ export function mustTurn(body: Box, dir: 1 | -1, world: WalkerWorld): boolean {
 }
 
 /**
- * One patrol decision per physics step. Returns the new direction and horizontal speed.
- * In the air a walker has no control: it drops straight down (so it falls cleanly into slots).
+ * One patrol decision per physics step, shared by every patrolling enemy (walker, Shieldbearer).
+ * Returns the new direction and horizontal speed. In the air an enemy has no control: it drops
+ * straight down (so it falls cleanly into slots and chasms).
  */
+export function stepPatrol(
+  body: Box,
+  dir: 1 | -1,
+  grounded: boolean,
+  blockedAhead: boolean,
+  world: WalkerWorld,
+  speed: number,
+): { dir: 1 | -1; vx: number } {
+  if (!grounded) return { dir, vx: 0 };
+  const next: 1 | -1 = blockedAhead || mustTurn(body, dir, world) ? (-dir as 1 | -1) : dir;
+  return { dir: next, vx: next * speed };
+}
+
+/** The walker's patrol step. */
 export function stepWalker(
   body: Box,
   dir: 1 | -1,
@@ -43,7 +58,5 @@ export function stepWalker(
   blockedAhead: boolean,
   world: WalkerWorld,
 ): { dir: 1 | -1; vx: number } {
-  if (!grounded) return { dir, vx: 0 };
-  const next: 1 | -1 = blockedAhead || mustTurn(body, dir, world) ? (-dir as 1 | -1) : dir;
-  return { dir: next, vx: next * WALKER.speed };
+  return stepPatrol(body, dir, grounded, blockedAhead, world, WALKER.speed);
 }

@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 3 · Shieldbearer (basic movement) + P-M (run the reachability checker on P-M first)
+**Next task →** Day 3 · `core/light`: beam tracer (reflection table, blockers incl. phase colours, receivers) + tests, then L-E
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -55,9 +55,9 @@ How to use this file:
 - [x] Throw: fixed arc, **lands exactly 5 ahead** verified in the test room (from col 25 → col 30 across the 4-gap; from col 32 → col 37, into the 5-gap); ground only; kit-gated (refused in W-E)
 - [x] W-H entered and **solved end to end in the real game**; Day 1 grid was unclimbable → widened diagonal staircase (C92); dispenser: hold-R fallback (C93)
 - [x] Reachability checker (`core/player/reach.ts`): real movement model vs the grid; calibrated on all C29 metrics; W-E/W-H routes are tests
-- [ ] Run the reachability checker on each remaining chamber (P-M, L-E, L-M, L-H, P-H) **before** entering it; key routes become tests
+- [ ] Run the reachability checker on each remaining chamber (~~P-M~~ done, L-E, L-M, L-H, P-H) **before** entering it; key routes become tests
 - [x] P-E entered and **solved end to end in the real game**; red-phase pit dead end found and fixed with a pit crystal (C90), escape verified in both colours
-- [ ] Shieldbearer (basic movement) + P-M (2-tall tunnel); grants Dash
+- [x] Shieldbearer (basic movement: shared patrol, 1 x 1.5 tiles, front shield drawn) + P-M entered and **solved end to end in the real game**; checker found the bridge issues → C94 (accepted), C95 (chasm deepened). "Grants Dash" stored in data
 - [x] Melee forward + up (basic hit detection on mirrors, crystals, dispensers): reach 1.3 tiles from the body edge, never through walls; crystal hits verified in the game (P-E), mirror hits unit-tested (no Light chamber yet)
 - [x] Collision without seams: per-tile bodies, internal faces off (found while testing P-E's pit escape); W-E re-verified end to end
 - [ ] `core/light`: beam tracer (reflection table, blockers incl. phase colours, receivers) + tests

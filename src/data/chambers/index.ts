@@ -1,5 +1,6 @@
 import type { ChamberDef, ChamberId } from '../../core/chamber/types';
 import { P_E } from './P-E';
+import { P_M } from './P-M';
 import { W_H } from './W-H';
 import { W_M } from './W-M';
 import { W_E } from './W-E';
@@ -10,6 +11,7 @@ export const CHAMBERS: Partial<Record<ChamberId, ChamberDef>> = {
   'W-M': W_M,
   'W-H': W_H,
   'P-E': P_E,
+  'P-M': P_M,
 };
 
 /** Level-select layout (C53): rows = mechanic, columns = difficulty. */

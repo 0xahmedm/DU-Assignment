@@ -31,7 +31,7 @@ The mechanics combine because each changes the others' rules:
 |---|---|---|---|
 | **Weight** | *First Weight:* a crate keeps a door open; carrying lowers your jump | *Borrowed Weight:* trap an enemy on a plate so you can fetch the crate (grants **Throw**) | *Drop Delivery* (Weight × Phase): throw the crate in red, drop it onto its plate in blue |
 | **Light** | *First Light:* flip mirrors to power doors; beams block paths | *Order of Light:* set the far mirror before the beam fills your path (grants **Bolt**) | *Chain Reaction* (Light × Weight): one Bolt triggers enemy → plate → mirror → exit |
-| **Phase** | *First Phase:* swap colours from safe ground to cross | *Footing:* swap only from neutral footholds; the swap drops the enemy guarding the bridge (grants **Dash**) | *Eclipse* (final, all three): light needs blue, the bridge needs red. Dash home through the dilemma |
+| **Phase** | *First Phase:* swap colours from safe ground to cross | *Footing:* swap only from neutral footholds; your tower swaps have already dropped the bridge's guard into the chasm, so swap back to restore the bridge (grants **Dash**) | *Eclipse* (final, all three): light needs blue, the bridge needs red. Dash home through the dilemma |
 
 ## How solvability is ensured
 - **Fixed movement metrics:** every layout is drawn in tiles against them (jump 3, gap 4, carrying 2/3, Throw 5, Dash 4). No upgrade can change them.
