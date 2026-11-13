@@ -24,12 +24,12 @@ How to use this file:
 - [x] README skeleton
 - [x] (user) Create the GitHub repo (github.com/0xahmedm/DU-Assignment); remote connected, its initial commit merged
 - [x] Project moved into the user's chosen folder `G:\Du\DU Assignment` (the repo root); the clone's redundant `.git` backed up outside the project
-- [ ] (user) Approve the first push to GitHub (C88: ask before every push)
+- [x] First push approved; GitHub `main` = local `fb20c1b` (verified with `git ls-remote`)
 - [x] Scaffold Vite 8 + TypeScript 6.0 (strict) + Phaser 3.90.0 + Vitest 5 + ESLint 10 (versions pinned)
 - [x] Clean-architecture guard: ESLint `no-restricted-imports` for `src/core` + `tests/architecture.test.ts` (fails if core imports Phaser/DOM)
 - [x] GitHub Pages deploy workflow written (`.github/workflows/pages.yml`)
-- [ ] (user) Enable Pages: repo Settings → Pages → Source: GitHub Actions (after the first push)
-- [ ] Live Pages URL verified
+- [x] Pages enabled; the Actions workflow (typecheck + lint + tests + build + deploy) passed on GitHub
+- [x] Live Pages URL verified: https://0xahmedm.github.io/DU-Assignment/ (game loads; `?chamber=W-E` works; dev hook absent)
 - [x] Single-file build target (`npm run build:single` → one 1.2 MB `dist-single/index.html`, no external references, dev hook stripped)
 - [ ] (user) Double-click `G:\Du\DU Assignment\dist-single\index.html` and confirm the game opens (the browser pane can't open file:// pages)
 - [x] `core/player/metrics.ts`: C29 metrics + derived physics constants (gravity, jump velocity, run speed)

@@ -5,7 +5,7 @@ A browser-playable 2D puzzle action-platformer prototype: **9 puzzle chambers** 
 > Design docs live in [`docs/`](docs/): [GDD](docs/GDD.md) · [decision log](docs/design-decision-log.md) · [implementation plan](docs/implementation-plan.md) · [tasks](docs/tasks.md) · [devlog + AI bug log](docs/devlog.md) · [assets](docs/ASSETS.md)
 
 ## Play
-- **Online:** GitHub Pages link (added once deployed).
+- **Online:** https://0xahmedm.github.io/DU-Assignment/ (try `?chamber=W-E` to open a chamber directly).
 - **Offline:** unzip the release and double-click `index.html` (a single self-contained file; no server needed).
 
 ## Controls
