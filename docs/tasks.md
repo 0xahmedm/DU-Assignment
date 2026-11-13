@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 2 · melee attack (forward + up) so crystals, mirrors and dispensers can be hit, then W-M (walker as weight)
+**Next task →** Day 3 · Walker (basic): patrol, turns at walls and ledges, gravity, counts as weight → then W-M
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -41,7 +41,7 @@ How to use this file:
 - [x] Chamber scene renders a parsed chamber (tiles, plates, wires, doors, exit lamps, phase blocks with hatching/dots)
 - [x] `core`: signal logic (OR/AND), plates, doors/trapdoors (never close on occupants), exit lamps + tests (`ChamberLogic`)
 - [x] Crates: carry / put down, solid, weigh plates
-- [ ] Dispenser recall (hit the dispenser → fresh crate); needs melee (Day 3)
+- [x] Dispenser recall (hit the dispenser → fresh crate drops; works even on a carried crate). Verified in W-E with the dev hook (its dispenser is out of reach on foot) + unit tests
 - [x] `core`: phase system + ghost rule + tests (rendering done; crystal hits arrive with melee on Day 3)
 - [x] Level-select stub (3 × 3) + `?chamber=`, `?room=movement`, `?debug`
 - [x] Day 2 gameplay screenshot → `docs/screenshots/day2-W-E-first-playable.png` (saved via the dev-only `/__screenshot` endpoint)
@@ -53,10 +53,11 @@ How to use this file:
 - [ ] Walker (basic): patrol, turns at walls and ledges, gravity, counts as weight
 - [ ] W-M (trapdoor, walker as weight); grants Throw
 - [ ] Throw: fixed arc, **lands exactly 5 ahead** verified
-- [ ] W-H
-- [ ] P-E
+- [ ] W-H (first decide: its dispenser is out of melee reach, so hold-R is the only recovery for a stuck crate; see the decision-log change log)
+- [x] P-E entered and **solved end to end in the real game**; red-phase pit dead end found and fixed with a pit crystal (C90), escape verified in both colours
 - [ ] Shieldbearer (basic movement) + P-M (2-tall tunnel); grants Dash
-- [ ] Melee forward + up (basic hit detection on mirrors, crystals, dispensers)
+- [x] Melee forward + up (basic hit detection on mirrors, crystals, dispensers): reach 1.3 tiles from the body edge, never through walls; crystal hits verified in the game (P-E), mirror hits unit-tested (no Light chamber yet)
+- [x] Collision without seams: per-tile bodies, internal faces off (found while testing P-E's pit escape); W-E re-verified end to end
 - [ ] `core/light`: beam tracer (reflection table, blockers incl. phase colours, receivers) + tests
 - [ ] Emitters, mirrors, receivers rendered; beams update on state change
 - [ ] L-E

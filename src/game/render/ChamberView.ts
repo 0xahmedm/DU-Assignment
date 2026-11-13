@@ -20,9 +20,11 @@ const center = (d: Device) => {
  */
 export class ChamberView {
   private readonly dynamic: Phaser.GameObjects.Graphics;
+  /** Device id -> time (ms) its hit flash started. */
+  private readonly flashes = new Map<string, number>();
 
   constructor(
-    scene: Phaser.Scene,
+    private readonly scene: Phaser.Scene,
     private readonly model: ChamberModel,
     private readonly logic: ChamberLogic,
   ) {
@@ -46,6 +48,42 @@ export class ChamberView {
     for (const d of this.model.devices) this.drawDevice(g, d, pressedPlates);
     this.drawPhaseBlocks(g);
     this.drawExitLamps(g);
+    this.drawFlashes(g);
+  }
+
+  /** Briefly highlight a device that was hit or changed. */
+  flash(deviceId: string): void {
+    this.flashes.set(deviceId, this.scene.time.now);
+  }
+
+  /** A small burst where a recalled crate vanished. */
+  puff(x: number, y: number): void {
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const bit = this.scene.add.rectangle(x, y, 6, 6, PALETTE.weight).setDepth(12);
+      this.scene.tweens.add({
+        targets: bit,
+        x: x + Math.cos(a) * 22,
+        y: y + Math.sin(a) * 22,
+        alpha: 0,
+        duration: 260,
+        onComplete: () => bit.destroy(),
+      });
+    }
+  }
+
+  private drawFlashes(g: Phaser.GameObjects.Graphics): void {
+    const FLASH_MS = 180;
+    for (const [id, t0] of this.flashes) {
+      const t = (this.scene.time.now - t0) / FLASH_MS;
+      const d = this.model.devices.find((x) => x.id === id);
+      if (t >= 1 || !d) {
+        this.flashes.delete(id);
+        continue;
+      }
+      g.fillStyle(PALETTE.lightCore, 0.7 * (1 - t));
+      for (const [r, c] of d.cells) g.fillRect(c * TILE, r * TILE, TILE, TILE);
+    }
   }
 
   private drawWires(g: Phaser.GameObjects.Graphics): void {
@@ -98,8 +136,26 @@ export class ChamberView {
           g.fillStyle(PALETTE.weight, 1).fillRect(c * TILE + 6, r * TILE + TILE - 8, TILE - 12, 6);
         }
         break;
+      case 'crystal': {
+        // Split diamond (red | blue): "hitting this swaps the colours". Never colour alone: the
+        // diamond shape is unique to crystals.
+        const { x, y } = center(d);
+        const h = 11;
+        g.fillStyle(PALETTE.phaseRed, 1).fillTriangle(x, y - h, x, y + h, x - h, y);
+        g.fillStyle(PALETTE.phaseBlue, 1).fillTriangle(x, y - h, x, y + h, x + h, y);
+        g.lineStyle(2, PALETTE.lightCore, 0.9).strokePoints(
+          [
+            { x, y: y - h },
+            { x: x + h, y },
+            { x, y: y + h },
+            { x: x - h, y },
+          ],
+          true,
+        );
+        break;
+      }
       default:
-        break; // light devices and crystals are drawn by the Day 3 renderer
+        break; // light devices are drawn by the Day 3 renderer
     }
   }
 

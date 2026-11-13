@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { symbolInfo } from '../../core/chamber/legend';
-import { ChamberLogic } from '../../core/chamber/logic';
+import { cellsHitBySwing } from '../../core/combat/melee';
+import { exposedFaces } from '../../core/chamber/collision';
+import { dropCell, feedingDispenser } from '../../core/chamber/dispensers';
+import { ChamberLogic, type HitResult } from '../../core/chamber/logic';
 import { parseChamber } from '../../core/chamber/parser';
 import type { ChamberId, ChamberModel } from '../../core/chamber/types';
 import { validateChamber } from '../../core/chamber/validator';
@@ -13,6 +16,8 @@ import { ChamberView } from '../render/ChamberView';
 import { cssHex, PALETTE } from '../render/palette';
 
 const RESET_HOLD_MS = 1000; // hold R this long to reset (C51)
+/** Cells whose solidity changes during play (doors, trapdoors, exit, phase blocks). */
+const SWITCHABLE = new Set(['R', 'B', '|', 'K', '=', 'E']);
 const key = (r: number, c: number) => `${r},${c}`;
 
 interface Bounds {
@@ -34,7 +39,7 @@ export class ChamberScene extends Phaser.Scene {
   private player!: Player;
   private controls!: Controls;
   private crates: Crate[] = [];
-  private toggles = new Map<string, Phaser.GameObjects.Rectangle>();
+  private cellBodies: { r: number; c: number; body: Phaser.Physics.Arcade.StaticBody }[] = [];
   private pressed: ReadonlySet<string> = new Set();
   private resetHeldMs = 0;
   private resetRing!: Phaser.GameObjects.Graphics;
@@ -48,7 +53,7 @@ export class ChamberScene extends Phaser.Scene {
   init(data: { id?: ChamberId }): void {
     this.chamberId = data.id ?? this.chamberId;
     this.crates = [];
-    this.toggles = new Map();
+    this.cellBodies = [];
     this.pressed = new Set();
     this.resetHeldMs = 0;
     this.solved = false;
@@ -80,32 +85,16 @@ export class ChamberScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, width, height);
     this.cameras.main.setBounds(0, 0, width, height).setBackgroundColor(PALETTE.background);
 
-    // Static solids (terrain, dispensers, emitters, mirrors, receivers): merged per horizontal run.
+    // Collision: one static body per cell that is, or can become, solid (terrain, solid devices,
+    // doors, trapdoors, the exit, phase blocks). syncSolids() switches bodies on/off from the logic
+    // and turns off faces between solid cells, so walls have no seams to snag on.
     const solids = this.physics.add.staticGroup();
-    const isStatic = (ch: string) => symbolInfo(ch)?.tile === 'solid';
-    this.model.grid.forEach((row, r) => {
-      let c = 0;
-      while (c < row.length) {
-        if (!isStatic(row[c]!)) {
-          c++;
-          continue;
-        }
-        const start = c;
-        while (c < row.length && isStatic(row[c]!)) c++;
-        const w = (c - start) * TILE;
-        solids.add(this.add.rectangle(start * TILE + w / 2, r * TILE + TILE / 2, w, TILE).setVisible(false));
-      }
-    });
-    solids.refresh();
-
-    // Switchable solids: doors, trapdoors, exit, phase blocks (one body per cell).
-    const switchable = this.physics.add.staticGroup();
     this.model.grid.forEach((row, r) => {
       [...row].forEach((ch, c) => {
-        if (!['R', 'B', '|', 'K', '=', 'E'].includes(ch)) return;
+        if (!SWITCHABLE.has(ch) && symbolInfo(ch)?.tile !== 'solid') return;
         const rect = this.add.rectangle(c * TILE + TILE / 2, r * TILE + TILE / 2, TILE, TILE).setVisible(false);
-        switchable.add(rect);
-        this.toggles.set(key(r, c), rect);
+        solids.add(rect);
+        this.cellBodies.push({ r, c, body: rect.body as Phaser.Physics.Arcade.StaticBody });
       });
     });
 
@@ -114,13 +103,11 @@ export class ChamberScene extends Phaser.Scene {
     const [sr, sc] = this.model.start;
     this.player = new Player(this, sc * TILE + TILE / 2, (sr + 1) * TILE - PLAYER_BODY.height / 2, this.controls);
     this.physics.add.collider(this.player.hitbox, solids);
-    this.physics.add.collider(this.player.hitbox, switchable);
 
     for (const s of this.model.spawns.filter((x) => x.kind === 'crate')) {
-      const crate = new Crate(this, s.cell[1] * TILE + TILE / 2, s.cell[0] * TILE + TILE / 2);
+      const crate = new Crate(this, s.cell[1] * TILE + TILE / 2, s.cell[0] * TILE + TILE / 2, feedingDispenser(this.model, s.cell));
       this.crates.push(crate);
       this.physics.add.collider(crate.rect, solids);
-      this.physics.add.collider(crate.rect, switchable);
       this.physics.add.collider(this.player.hitbox, crate.rect);
     }
     for (let i = 0; i < this.crates.length; i++) {
@@ -169,6 +156,15 @@ export class ChamberScene extends Phaser.Scene {
     }
     this.pressed = pressed;
 
+    const swing = this.player.takeSwing();
+    if (swing) {
+      const cells = cellsHitBySwing(swing.box, swing.facing, swing.dir, {
+        isSolid: (r, c) => this.logic.isSolid(r, c),
+        isHittable: (r, c) => this.logic.hittableAt(r, c) !== undefined,
+      });
+      this.onHits(this.logic.resolveHits(cells, occupied));
+    }
+
     this.logic.update({ pressedPlates: pressed, occupiedCells: occupied });
     this.logic.takeEvents(); // feedback hooks (sound/particles) arrive with the FX pass
     this.syncSolids();
@@ -176,14 +172,49 @@ export class ChamberScene extends Phaser.Scene {
     this.updateReset(dt);
   }
 
+  /** Feedback for a swing's hits, and the physical part of dispenser recall. */
+  private onHits(hit: HitResult): void {
+    if (hit.crystal) {
+      this.view.flash(hit.crystal);
+      this.cameras.main.flash(90, 255, 255, 255, false);
+    }
+    for (const id of hit.flipped) this.view.flash(id);
+    if (hit.locked.length > 0) this.cameras.main.shake(70, 0.004); // "clang": locked to its plate (C42)
+    for (const id of hit.dispensers) this.recall(id);
+  }
+
+  /**
+   * Dispenser recall (C50): the dispenser's crate vanishes wherever it is (even from the player's
+   * hands) and a fresh one drops from the dispenser. Refused, with a shake, if something is in the way.
+   */
+  private recall(dispenserId: string): void {
+    const crate = this.crates.find((c) => c.dispenser === dispenserId);
+    const cell = dropCell(this.model, dispenserId);
+    if (!crate || !cell) return;
+    const x = cell[1] * TILE + TILE / 2;
+    const y = cell[0] * TILE + TILE / 2;
+    const blocking = this.physics
+      .overlapRect(x - TILE / 2 + 2, y - TILE / 2 + 2, TILE - 4, TILE - 4, true, false)
+      .filter((b) => b !== crate.body);
+    if (blocking.length > 0) {
+      this.cameras.main.shake(80, 0.003);
+      return;
+    }
+    this.view.puff(crate.rect.x, crate.rect.y);
+    if (this.player.carried === crate) this.player.releaseCarried();
+    crate.respawnAt(x, y);
+    this.view.flash(dispenserId);
+  }
+
   private boundsOf(body: Phaser.Physics.Arcade.Body): Bounds {
     return { left: body.left, right: body.right, top: body.top, bottom: body.bottom };
   }
 
   private syncSolids(): void {
-    for (const [k, rect] of this.toggles) {
-      const [r, c] = k.split(',').map(Number) as [number, number];
-      (rect.body as Phaser.Physics.Arcade.StaticBody).enable = this.logic.isSolid(r, c);
+    const isSolid = (r: number, c: number) => this.logic.isSolid(r, c);
+    for (const { r, c, body } of this.cellBodies) {
+      body.enable = isSolid(r, c);
+      if (body.enable) Object.assign(body.checkCollision, exposedFaces(r, c, isSolid));
     }
   }
 

@@ -1,3 +1,4 @@
+import { feedingDispenser } from './dispensers';
 import { symbolInfo } from './legend';
 import type { ChamberModel, DeviceKind } from './types';
 
@@ -53,21 +54,19 @@ export function validateChamber(model: ChamberModel): ValidationReport {
       driving.add(f);
     }
   }
-  if (!driven.has('exit')) errors.push(`${id}: the exit has no inputs, so the chamber can never be completed`);
+  // An unwired exit is always open; that must be declared, so a forgotten link is still caught.
+  if (!driven.has('exit') && !def.exitAlwaysOpen) {
+    errors.push(`${id}: the exit has no inputs (declare exitAlwaysOpen if the exit is a plain doorway)`);
+  }
+  if (driven.has('exit') && def.exitAlwaysOpen) errors.push(`${id}: exitAlwaysOpen is declared but the exit is wired`);
   for (const d of model.devices) {
     if (SOURCES.has(d.kind) && !driving.has(d.id)) warnings.push(`${id}: ${d.kind} "${d.id}" is not wired to anything`);
   }
 
   // Crates should have a dispenser directly above them (recall = softlock safety net, C50).
-  const dispensers = model.devices.filter((d) => d.kind === 'dispenser').map((d) => d.cells[0]!);
   for (const s of model.spawns.filter((x) => x.kind === 'crate')) {
     const [r, c] = s.cell;
-    const fed = dispensers.some(([dr, dc]) => {
-      if (dc !== c || dr >= r) return false;
-      for (let y = dr + 1; y < r; y++) if (symbolInfo(at(y, c))?.tile !== 'empty') return false;
-      return true;
-    });
-    if (!fed && !def.cratesCannotBeLost) {
+    if (!feedingDispenser(model, s.cell) && !def.cratesCannotBeLost) {
       warnings.push(`${id}: crate at row ${r} col ${c} has no dispenser above it (declare cratesCannotBeLost if intended)`);
     }
   }

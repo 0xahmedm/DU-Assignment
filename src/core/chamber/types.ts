@@ -55,6 +55,8 @@ export interface ChamberDef {
   solution: readonly string[];
   /** The feeling this chamber is designed to create (GDD, follow-up call). */
   intendedFeeling: string;
+  /** Set when the exit has no inputs on purpose (a plain doorway, e.g. P-E, P-M); states why. */
+  exitAlwaysOpen?: string;
   /** Set when crates have no dispenser because the layout cannot lose them (validator warning otherwise). */
   cratesCannotBeLost?: string;
 }

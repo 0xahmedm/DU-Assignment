@@ -1,5 +1,5 @@
 import { symbolInfo } from './legend';
-import type { ChamberModel, Device, MirrorState, PhaseColor } from './types';
+import type { Cell, ChamberModel, Device, MirrorState, PhaseColor } from './types';
 
 /** Inputs the game layer reports to the logic once per physics step. */
 export interface WorldReport {
@@ -15,6 +15,18 @@ export interface LogicEvents {
   closed: string[];
   phaseSwapped: boolean;
   mirrorsFlipped: string[];
+}
+
+/** What one swing (or Bolt) did. */
+export interface HitResult {
+  /** The crystal that swapped the phase, if any. */
+  crystal: string | undefined;
+  /** Mirrors that flipped. */
+  flipped: string[];
+  /** Mirrors that refused because they are wired to a plate (C42): play a "clang". */
+  locked: string[];
+  /** Dispensers hit: the game recalls their crate (C50). */
+  dispensers: string[];
 }
 
 const cellKey = (r: number, c: number) => `${r},${c}`;
@@ -54,8 +66,41 @@ export class ChamberLogic {
       if (this.devices.get(l.to)?.kind === 'mirror') this.wiredMirrors.add(l.to);
     }
     for (const d of model.devices) if (d.kind === 'mirror' && d.mirror) this.mirrorStates.set(d.id, d.mirror);
-    // Unwired doors are doorways: always open.
-    for (const d of model.devices) if (d.kind === 'door' && !this.sourcesOf.has(d.id)) this.openDoors.add(d.id);
+    // Unwired doors are doorways: always open. An unwired exit is too (P-E, P-M have no exit inputs;
+    // the validator requires `exitAlwaysOpen` to be declared so a forgotten link is still caught).
+    for (const d of model.devices) {
+      if ((d.kind === 'door' || d.kind === 'exit') && !this.sourcesOf.has(d.id)) this.openDoors.add(d.id);
+    }
+  }
+
+  /** The device a swing or Bolt can hit at this cell (crystal, mirror, dispenser), if any. */
+  hittableAt(r: number, c: number): Device | undefined {
+    const d = this.deviceAt.get(cellKey(r, c));
+    return d && (d.kind === 'crystal' || d.kind === 'mirror' || d.kind === 'dispenser') ? d : undefined;
+  }
+
+  /**
+   * Applies one swing's hits. A swing swaps the phase at most once, even if it reaches two
+   * crystals (two swaps would cancel out and read as "nothing happened"). Dispensers are only
+   * reported: recalling a crate is a physical action the game layer performs.
+   */
+  resolveHits(cells: readonly Cell[], occupied: ReadonlySet<string>): HitResult {
+    const result: HitResult = { crystal: undefined, flipped: [], locked: [], dispensers: [] };
+    const done = new Set<string>();
+    for (const [r, c] of cells) {
+      const d = this.hittableAt(r, c);
+      if (!d || done.has(d.id)) continue;
+      done.add(d.id);
+      if (d.kind === 'crystal' && result.crystal === undefined) {
+        this.hitCrystal(d.id, occupied);
+        result.crystal = d.id;
+      } else if (d.kind === 'mirror') {
+        (this.hitMirror(d.id) ? result.flipped : result.locked).push(d.id);
+      } else if (d.kind === 'dispenser') {
+        result.dispensers.push(d.id);
+      }
+    }
+    return result;
   }
 
   // --- player / world actions -------------------------------------------------------------------

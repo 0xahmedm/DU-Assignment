@@ -9,7 +9,13 @@ export class Crate {
   readonly body: Phaser.Physics.Arcade.Body;
   carried = false;
 
-  constructor(scene: Phaser.Scene, x: number, y: number) {
+  /** @param dispenser the dispenser that recalls this crate (C50), if it has one. */
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    readonly dispenser?: string,
+  ) {
     this.rect = scene.add
       .rectangle(x, y, TILE - 2, TILE - 2, PALETTE.weight)
       .setStrokeStyle(3, PALETTE.weightDark);
@@ -29,5 +35,12 @@ export class Crate {
     this.carried = false;
     this.body.enable = true;
     this.body.reset(x, y);
+  }
+
+  /** Dispenser recall (C50): the crate reappears at (x, y) and falls from there. */
+  respawnAt(x: number, y: number): void {
+    this.putDownAt(x, y);
+    this.rect.setAlpha(0);
+    this.rect.scene.tweens.add({ targets: this.rect, alpha: 1, duration: 180 });
   }
 }

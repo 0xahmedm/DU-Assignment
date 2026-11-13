@@ -238,6 +238,7 @@ G:\Du
 │  │  ├─ light/                            BeamTracer
 │  │  ├─ chamber/                          types, legend, parser, ChamberState, validator, enumerator
 │  │  ├─ player/                           metrics.ts (C29) + derived physics constants, kit
+│  │  ├─ combat/                           melee.ts: swing area + which cells a swing hits (no hits through walls)
 │  │  └─ run/                              progression graph, seals, hearts, upgrades, rng, generator
 │  ├─ data/                                chambers/*.ts · rooms/*.ts · encounters/*.ts · upgrades.ts
 │  └─ game/                                scenes/ · player/ · enemies/ · render/ · fx/ · audio/ · ui/ · adapters/
@@ -295,5 +296,6 @@ interface ChamberDef {
 | Arcade physics vs exact metrics | Derive gravity, jump velocity and run speed analytically from C29; tile-marker test room; constants in one file |
 | Throw/Dash imprecision | Throw is a scripted arc landing exactly 5 tiles ahead; Dash is a fixed-distance move, not physics impulses |
 | Phase ghost rule vs physics overlap | Solidity is a per-tile query in core; Phaser colliders consult it each frame |
+| Seams in tile collision (Arcade separates the vertical axis first, so a body sliding up a wall catches on the seam between stacked tiles; found Day 2) | One static body per tile; faces between solid tiles are switched off (`core/chamber/collision.ts`, the way tile engines do it), recomputed from core solidity every step |
 | AI writes Phaser code the user can't explain | Small commits; a short "how it works" note per system in the devlog |
 | Day 4 brief change unknown | Half-day buffer; data-driven chambers and systems |

@@ -151,6 +151,7 @@ Details in the DOCX that the handoff left out:
 | C87 | **Phaser 3.90.0** (final Phaser 3 release) chosen over Phaser 4.2.1: frozen, battle-tested, best known by AI tools; our code-drawn art gains nothing from v4's renderer. Step 1 implementation plan + `tasks.md` approved; Day 2 started. | User, 2026-11-14 |
 | C88 | **Ask before every push** to GitHub (local commits are fine). | User, 2026-11-14 |
 | C89 | **The GitHub repo may be public; deploy via GitHub Pages (Actions).** Repo: github.com/0xahmedm/DU-Assignment. | User, 2026-11-14 |
+| C90 | **P-E revision: a crystal in section B's pit** (row 9, col 8). A scripted playtest found that walking off the neutral block's right edge while still Red drops you into the pit in Red, where the escape step has only 1 tile of headroom under the red platform (hold-R was the only way out). The pit crystal swaps to Blue so the existing escape works. It is reachable only from inside the pit, so it opens no bypass. | User, 2026-11-14 |
 | C41 | **L-H recovery: kill the walker to undo.** The walker lands in an open low-walled pen; killing it releases its plate and reverses the chain. Bolt the high mirror back first so the respawned walker doesn't fall again. | User, 2026-11-12 |
 | C30 | **Rulebook defaults (accepted without objection, not explicitly approved):** wires always visible and lit when powered; all plates identical (player/crate/enemy); lost crates respawn at a dispenser; carrying lowers jump; beams stop at walls/crates/enemies/solid phase blocks; blocks that would turn solid on an occupant stay ghosted until vacated; phase swaps only by hit or signal, never a timer. | User (no objection), 2026-11-12 |
 
@@ -431,6 +432,22 @@ DS........R.BB.....#        #####.............######
   2. Walk the red platforms to the neutral block, up-attack its crystal → Blue.
   3. Walk the blue platforms to the exit.
   - Swapping while on red (facing back at the near crystal, or jump-attacking the far one) drops you into the shallow pit. The escape step leads back to the start pillar, where the near crystal resets you. The neutral block floats, so the pit floor is continuous and every fall leads to the same escape.
+  - **Revised (C90, Day 2 build):** the escape step only works in Blue (in Red it sits under the red platform with 1 tile of headroom), and walking off the neutral block in Red is an easy mistake. Section B now has a **pit crystal** at row 9, col 8:
+```
+Section B (C90)
+########################
+#......................#
+#......................#
+#.........*............#
+|...*..................E
+|......................E
+####RRRRRR##BBBBBB######
+####......##......######
+#####.............######
+#####...*.........######
+#####.............######
+########################
+```
 
 **P-M "Footing"** (starts Red; grants Dash)
 ```
@@ -944,3 +961,4 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
 - 2026-11-14: Step 0 done: session exported (`docs/ai-logs/`), docs set seeded. **Version check found that Phaser 4 is now the stable line (4.2.1); Phaser 3's final release is 3.90.0.** C73 said "Phaser 3, latest stable": the choice of Phaser 3.90.0 vs Phaser 4.2.1 is raised with the user. TypeScript is pinned to 6.0.3 because typescript-eslint doesn't support TS 7 yet (technical detail, not a design change).
 - 2026-11-14: GitHub repo connected (`origin`); the nested clone `DU Assignment/` was untracked and git-ignored, and its initial commit (`.gitattributes`) merged locally. Push policy C88, Pages C89.
 - 2026-11-14: **Correction:** the user created the repo in `G:\Du\DU Assignment` on purpose: the project belongs inside it. The project (incl. its `.git`, which already contained the GitHub repo's initial commit) was moved into `DU Assignment`; the clone's own `.git` was backed up outside the project, and the ignore rule removed.
+- 2026-11-14 (Day 2 build): Melee (forward + up) implemented; P-E entered and solved end to end in the real game. **P-E design bug found by a scripted playtest** (red-phase pit dead end) → pit crystal approved (C90). Implementation defaults, open to the user's objection: attacking is allowed while carrying; one swing swaps the phase at most once (two crystals in reach would otherwise cancel out); puzzle hits resolve on the frame the swing starts; an exit with no inputs is a plain doorway and must be declared (`exitAlwaysOpen`, P-E and P-M). **Open question, decide when W-H is built:** the dispensers in W-E (section B), W-H and L-H sit 6+ tiles above the floor, out of melee reach. W-E's crate can't be lost and L-H has up-Bolt, but in W-H recall is unreachable, so hold-R would be the only recovery for a stuck crate.

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { MELEE, swingBox, type Box, type SwingDir } from '../../core/combat/melee';
 import { PLAYER_BODY, TILE } from '../../core/player/metrics';
 import {
   DEFAULT_MOVEMENT,
@@ -26,6 +27,8 @@ export class Player {
   private state: MovementState = initialMovementState();
   private facing: 1 | -1 = 1;
   private wasGrounded = true;
+  private swingCooldown = 0;
+  private pendingSwing: { box: Box; facing: 1 | -1; dir: SwingDir } | undefined;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -52,6 +55,8 @@ export class Player {
   step(dt: number, crates: readonly Crate[]): void {
     const grounded = this.grounded;
     if (this.controls.consume('carry')) this.toggleCarry(crates);
+    this.swingCooldown = Math.max(0, this.swingCooldown - dt);
+    if (this.controls.consume('attack') && this.swingCooldown === 0) this.swing();
 
     const move = this.controls.horizontal();
     const before = this.state.jumpedSinceGrounded;
@@ -82,6 +87,41 @@ export class Player {
     if (this.carried) {
       this.carried.rect.setPosition(this.hitbox.x, this.hitbox.y - PLAYER_BODY.height / 2 - TILE / 2 + 2);
     }
+  }
+
+  /**
+   * The swing started this step, if any; the scene resolves what it hits (core/combat/melee).
+   * Hits are resolved on the frame the swing starts, so puzzle hits are instant and predictable.
+   */
+  takeSwing(): { box: Box; facing: 1 | -1; dir: SwingDir } | undefined {
+    const s = this.pendingSwing;
+    this.pendingSwing = undefined;
+    return s;
+  }
+
+  /** Bounds of the physics body in world pixels. */
+  bounds(): Box {
+    return { left: this.body.left, top: this.body.top, right: this.body.right, bottom: this.body.bottom };
+  }
+
+  /** Drops whatever is carried without placing it (used when a dispenser recalls that crate). */
+  releaseCarried(): void {
+    this.carried = undefined;
+  }
+
+  /** Melee (C35): up-swing while holding up, otherwise forward. Allowed while carrying. */
+  private swing(): void {
+    const dir: SwingDir = this.controls.held('up') ? 'up' : 'forward';
+    const box = swingBox(this.bounds(), this.facing, dir);
+    this.pendingSwing = { box, facing: this.facing, dir };
+    this.swingCooldown = MELEE.recovery;
+
+    // Visual: a short bright slash over the swing area.
+    const slash = this.scene.add
+      .rectangle((box.left + box.right) / 2, (box.top + box.bottom) / 2, box.right - box.left, box.bottom - box.top, PALETTE.lightCore, 0.35)
+      .setDepth(11);
+    this.scene.tweens.add({ targets: slash, alpha: 0, duration: MELEE.showTime * 1000, onComplete: () => slash.destroy() });
+    if (dir === 'forward') this.squash(1.12, 0.94);
   }
 
   private toggleCarry(crates: readonly Crate[]): void {

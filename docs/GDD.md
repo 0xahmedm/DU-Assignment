@@ -43,7 +43,7 @@ The mechanics combine because each changes the others' rules:
   - Each chamber stores its intended solution.
 - **Recovery:**
   - A free hold-R reset.
-  - Pits are always escapable.
+  - Pits are always escapable, in either colour. (P-E's pit got an extra crystal after a scripted playtest found a fall in Red had no way out.)
   - Crate dispensers recall stuck crates.
   - Doors never close on objects.
   - Defeat costs a heart and resets only the current room.

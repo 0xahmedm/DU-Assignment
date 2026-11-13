@@ -1,9 +1,11 @@
 import type { ChamberDef, ChamberId } from '../../core/chamber/types';
+import { P_E } from './P-E';
 import { W_E } from './W-E';
 
 /** All chambers entered so far (the rest are added on Days 3-4; see docs/tasks.md). */
 export const CHAMBERS: Partial<Record<ChamberId, ChamberDef>> = {
   'W-E': W_E,
+  'P-E': P_E,
 };
 
 /** Level-select layout (C53): rows = mechanic, columns = difficulty. */

@@ -40,6 +40,8 @@ describe('validateChamber', () => {
 
   it('flags an exit with no inputs', () => {
     expect(report(fixture(['#####', '#S.pE', '#####'], { links: [] })).errors.join()).toMatch(/exit has no inputs/);
+    expect(report(fixture(['#####', '#S.pE', '#####'], { links: [], exitAlwaysOpen: 'doorway' })).errors).toEqual([]);
+    expect(report(fixture(['#####', '#S.pE', '#####'], { exitAlwaysOpen: 'oops' })).errors.join()).toMatch(/exitAlwaysOpen is declared/);
   });
 
   it('flags an open border', () => {
