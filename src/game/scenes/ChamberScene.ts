@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { symbolInfo } from '../../core/chamber/legend';
 import { cellsHitBySwing } from '../../core/combat/melee';
 import { exposedFaces } from '../../core/chamber/collision';
+import { WALKER } from '../../core/enemies/walker';
 import { dropCell, feedingDispenser } from '../../core/chamber/dispensers';
 import { ChamberLogic, type HitResult } from '../../core/chamber/logic';
 import { parseChamber } from '../../core/chamber/parser';
@@ -10,6 +11,7 @@ import { validateChamber } from '../../core/chamber/validator';
 import { PLAYER_BODY, TILE } from '../../core/player/metrics';
 import { CHAMBERS } from '../../data/chambers';
 import { Controls } from '../input/Controls';
+import { Walker } from '../enemies/Walker';
 import { Crate } from '../player/Crate';
 import { Player } from '../player/Player';
 import { ChamberView } from '../render/ChamberView';
@@ -39,6 +41,7 @@ export class ChamberScene extends Phaser.Scene {
   private player!: Player;
   private controls!: Controls;
   private crates: Crate[] = [];
+  private walkers: Walker[] = [];
   private cellBodies: { r: number; c: number; body: Phaser.Physics.Arcade.StaticBody }[] = [];
   private pressed: ReadonlySet<string> = new Set();
   private resetHeldMs = 0;
@@ -53,6 +56,7 @@ export class ChamberScene extends Phaser.Scene {
   init(data: { id?: ChamberId }): void {
     this.chamberId = data.id ?? this.chamberId;
     this.crates = [];
+    this.walkers = [];
     this.cellBodies = [];
     this.pressed = new Set();
     this.resetHeldMs = 0;
@@ -110,6 +114,14 @@ export class ChamberScene extends Phaser.Scene {
       this.physics.add.collider(crate.rect, solids);
       this.physics.add.collider(this.player.hitbox, crate.rect);
     }
+    // Walkers stand on their spawn cell's floor. No player collider: contact will cost a heart (Day 4).
+    for (const s of this.model.spawns.filter((x) => x.kind === 'walker')) {
+      const walker = new Walker(this, s.cell[1] * TILE + TILE / 2, (s.cell[0] + 1) * TILE - WALKER.height / 2);
+      this.walkers.push(walker);
+      this.physics.add.collider(walker.rect, solids);
+      for (const c of this.crates) this.physics.add.collider(walker.rect, c.rect);
+    }
+
     for (let i = 0; i < this.crates.length; i++) {
       for (let j = i + 1; j < this.crates.length; j++) this.physics.add.collider(this.crates[i]!.rect, this.crates[j]!.rect);
     }
@@ -134,9 +146,13 @@ export class ChamberScene extends Phaser.Scene {
   private onStep(dt: number): void {
     if (this.solved) return;
     this.player.step(dt, this.crates);
+    const world = { isSolid: (r: number, c: number) => this.logic.isSolid(r, c) };
+    for (const w of this.walkers) w.step(world);
 
+    // Everything with weight: the player first (checkExit uses it), crates on the ground, walkers.
     const bodies: Bounds[] = [this.boundsOf(this.player.body)];
     for (const c of this.crates) if (!c.carried) bodies.push(this.boundsOf(c.body));
+    for (const w of this.walkers) bodies.push(w.bounds());
 
     const occupied = new Set<string>();
     for (const b of bodies) {
@@ -244,6 +260,7 @@ export class ChamberScene extends Phaser.Scene {
   override update(): void {
     if (!this.model || !this.player) return;
     this.player.render();
+    for (const w of this.walkers) w.render();
     this.view.draw(this.pressed);
   }
 

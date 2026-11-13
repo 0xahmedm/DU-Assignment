@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 3 · Walker (basic): patrol, turns at walls and ledges, gravity, counts as weight → then W-M
+**Next task →** Day 3 · Throw: fixed arc, lands exactly 5 tiles ahead (then W-H)
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -50,8 +50,8 @@ How to use this file:
 
 ## Day 3: Weight, Phase, Light (extended)
 - [x] W-E data entered; **solved end to end in the real game** with scripted input (Day 2, ahead of plan); hold-R reset implemented
-- [ ] Walker (basic): patrol, turns at walls and ledges, gravity, counts as weight
-- [ ] W-M (trapdoor, walker as weight); grants Throw
+- [x] Walker (basic): patrol, turns at walls, ledges (literal rule, C91) and blocking bodies; no air control; gravity; weighs plates. Unit-tested + verified in the game
+- [x] W-M entered and **solved end to end in the real game** (timed drop onto `t`, crate onto `x`). Holding `s` permanently makes the walker turn at the open trapdoor, as C91 says. "Grants Throw" is stored in the data; granting arrives with progression (Day 5)
 - [ ] Throw: fixed arc, **lands exactly 5 ahead** verified
 - [ ] W-H (first decide: its dispenser is out of melee reach, so hold-R is the only recovery for a stuck crate; see the decision-log change log)
 - [x] P-E entered and **solved end to end in the real game**; red-phase pit dead end found and fixed with a pit crystal (C90), escape verified in both colours
@@ -67,6 +67,7 @@ How to use this file:
 - [ ] Day 3 routine
 
 ## Day 4: Finish chambers, combat, brief change
+- [ ] **L-H redesign proposal (C91):** the walker must fall through the trapdoor without walking into an open hole → (user) approval
 - [ ] Plate-wired locked mirrors + L-H
 - [ ] Dash: 4 tiles; invulnerable to beams and enemies; not while carrying
 - [ ] P-H (C56 revision; three exit lamps)

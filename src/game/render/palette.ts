@@ -11,6 +11,7 @@ export const PALETTE = {
   lightCore: 0xffffff,
   phaseRed: 0xe0484f, // hatched
   phaseBlue: 0x4f7be0, // dotted
+  enemy: 0xb07ce8, // violet: no puzzle mechanic uses it
   text: 0xd8d8d8,
   dim: 0x6b6e78,
 } as const;

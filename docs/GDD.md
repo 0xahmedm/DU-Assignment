@@ -58,7 +58,7 @@ The mechanics combine because each changes the others' rules:
 - **Melee** hits forward and up, with hit-stop, knockback and screen shake.
 - **Hearts:** 3 per run; any hit or enemy contact costs a heart and resets the room; losing the last ends the run.
 - **Enemies:**
-  - The **Walker** patrols and turns at ledges (knock it off ledges, into beams, or drop it with a swap).
+  - The **Walker** patrols and turns at walls and at any gap, even an open trapdoor; it only falls when the floor vanishes under it (knock it off ledges, into beams, or drop it with a swap or a well-timed trapdoor).
   - The **Shieldbearer** is immune from the front (jump over it and strike its back, or use the environment).
 - **Combat rooms** reuse the puzzle systems (ledges over pits, phase arenas, beam arenas).
 - **Dash** grants brief invulnerability.
