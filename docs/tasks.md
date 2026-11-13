@@ -15,18 +15,23 @@ How to use this file:
 - [x] Export the full Claude Code pre-production conversation → `docs/ai-logs/day1-preproduction-claude-session.zip` + readable `day1-preproduction-claude.md`
 - [x] Copy the ChatGPT handoff → `docs/ai-logs/day1-preproduction-chatgpt-handoff.md`
 - [x] Seed `docs/` (implementation plan, tasks, decision log, GDD draft, devlog, asset list)
-- [ ] (user) Export the **complete** ChatGPT conversation (the handoff is only a summary) → `docs/ai-logs/day1-preproduction-chatgpt-full.*`
+- [x] (user) ChatGPT conversation export added → `docs/ai-logs/day1-preproduction-chatgpt.md`
 - [ ] (user) Day 1 screenshot of the design artefacts, labelled as pre-production → `docs/screenshots/day1-design.png`
 
 ## Day 2: Foundations (today, extended)
 - [x] (user) Approve the Step 1 implementation plan
 - [x] `git init`, `.gitignore`
-- [ ] README skeleton
-- [ ] (user) Create the GitHub repo on github.com and send the URL; connect the remote
+- [x] README skeleton
+- [x] (user) Create the GitHub repo (github.com/0xahmedm/DU-Assignment); remote connected, its initial commit merged
+- [ ] (user) Delete the redundant local clone folder `G:\Du\DU Assignment` (now git-ignored)
+- [ ] (user) Approve the first push to GitHub (C88: ask before every push)
 - [x] Scaffold Vite 8 + TypeScript 6.0 (strict) + Phaser 3.90.0 + Vitest 5 + ESLint 10 (versions pinned)
 - [x] Clean-architecture guard: ESLint `no-restricted-imports` for `src/core` + `tests/architecture.test.ts` (fails if core imports Phaser/DOM)
-- [ ] GitHub Pages deploy workflow; live URL verified
-- [ ] Single-file build target for the zip; verified opening `index.html` by double-click
+- [x] GitHub Pages deploy workflow written (`.github/workflows/pages.yml`)
+- [ ] (user) Enable Pages: repo Settings → Pages → Source: GitHub Actions (after the first push)
+- [ ] Live Pages URL verified
+- [x] Single-file build target (`npm run build:single` → one 1.2 MB `dist-single/index.html`, no external references, dev hook stripped)
+- [ ] (user) Double-click `dist-single/index.html` and confirm the game opens (the browser pane can't open file:// pages)
 - [x] `core/player/metrics.ts`: C29 metrics + derived physics constants (gravity, jump velocity, run speed)
 - [x] Player controller: run, variable jump, apex hang, fall cap, coyote time, jump buffer (C58)
 - [x] Movement test room with tile markers: **jump 3 / gap 4 verified**
