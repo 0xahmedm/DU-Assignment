@@ -105,7 +105,7 @@ export class ChamberScene extends Phaser.Scene {
     this.view = new ChamberView(this, this.model, this.logic);
     this.controls = new Controls(this);
     const [sr, sc] = this.model.start;
-    this.player = new Player(this, sc * TILE + TILE / 2, (sr + 1) * TILE - PLAYER_BODY.height / 2, this.controls);
+    this.player = new Player(this, sc * TILE + TILE / 2, (sr + 1) * TILE - PLAYER_BODY.height / 2, this.controls, new Set(def.kit));
     this.physics.add.collider(this.player.hitbox, solids);
 
     for (const s of this.model.spawns.filter((x) => x.kind === 'crate')) {
@@ -147,11 +147,12 @@ export class ChamberScene extends Phaser.Scene {
     if (this.solved) return;
     this.player.step(dt, this.crates);
     const world = { isSolid: (r: number, c: number) => this.logic.isSolid(r, c) };
+    for (const c of this.crates) c.stepFlight(dt, world.isSolid);
     for (const w of this.walkers) w.step(world);
 
     // Everything with weight: the player first (checkExit uses it), crates on the ground, walkers.
     const bodies: Bounds[] = [this.boundsOf(this.player.body)];
-    for (const c of this.crates) if (!c.carried) bodies.push(this.boundsOf(c.body));
+    for (const c of this.crates) if (!c.carried && !c.flying) bodies.push(this.boundsOf(c.body));
     for (const w of this.walkers) bodies.push(w.bounds());
 
     const occupied = new Set<string>();

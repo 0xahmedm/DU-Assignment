@@ -10,13 +10,14 @@ import { buildSolids, findCell } from '../render/solids';
 /** Day 2 movement test room: verify the C29 metrics by hand against tile-height pillars and pits. */
 export class TestRoomScene extends Phaser.Scene {
   private player!: Player;
-  private readonly crates: Crate[] = [];
+  private crates: Crate[] = [];
 
   constructor() {
     super('TestRoom');
   }
 
   create(): void {
+    this.crates = []; // scene.restart() reuses this instance: drop the previous run's crates
     const room = MOVEMENT_TEST_ROOM;
     const width = room.grid[0]!.length * TILE;
     const height = room.grid.length * TILE;
@@ -33,6 +34,7 @@ export class TestRoomScene extends Phaser.Scene {
       start.col * TILE + TILE / 2,
       (start.row + 1) * TILE - PLAYER_BODY.height / 2,
       controls,
+      new Set(['throw', 'bolt', 'dash'] as const), // every ability, to verify the metrics
     );
     this.physics.add.collider(this.player.hitbox, solids);
 
@@ -54,7 +56,7 @@ export class TestRoomScene extends Phaser.Scene {
       });
     }
     this.add
-      .text(12, 10, 'Movement test room | move: arrows or A/D | jump: Space or Z (hold = higher) | carry: C', {
+      .text(12, 10, 'Movement test room | move: arrows or A/D | jump: Space or Z (hold = higher) | carry: C | throw: V', {
         fontFamily: 'monospace',
         fontSize: '13px',
         color: cssHex(PALETTE.text),
@@ -64,7 +66,11 @@ export class TestRoomScene extends Phaser.Scene {
 
     this.cameras.main.startFollow(this.player.hitbox, true, 0.15, 0.15);
     // Run the movement model once per fixed physics step (60 Hz), in lockstep with the tests.
-    this.physics.world.on('worldstep', (dt: number) => this.player.step(dt, this.crates));
+    const isSolid = (r: number, c: number) => (room.grid[r]?.[c] ?? '#') === '#';
+    this.physics.world.on('worldstep', (dt: number) => {
+      this.player.step(dt, this.crates);
+      for (const c of this.crates) c.stepFlight(dt, isSolid);
+    });
   }
 
   override update(): void {

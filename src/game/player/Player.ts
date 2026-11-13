@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { MELEE, swingBox, type Box, type SwingDir } from '../../core/combat/melee';
+import type { Ability } from '../../core/chamber/types';
 import { PLAYER_BODY, TILE } from '../../core/player/metrics';
+import { throwTarget } from '../../core/player/throw';
 import {
   DEFAULT_MOVEMENT,
   initialMovementState,
@@ -35,6 +37,8 @@ export class Player {
     x: number,
     y: number,
     private readonly controls: Controls,
+    /** Abilities usable here: the chamber's declared kit (C24), or all of them in the test room. */
+    private readonly abilities: ReadonlySet<Ability> = new Set(),
   ) {
     this.hitbox = scene.add.rectangle(x, y, PLAYER_BODY.width, PLAYER_BODY.height).setVisible(false);
     scene.physics.add.existing(this.hitbox);
@@ -55,6 +59,7 @@ export class Player {
   step(dt: number, crates: readonly Crate[]): void {
     const grounded = this.grounded;
     if (this.controls.consume('carry')) this.toggleCarry(crates);
+    if (this.controls.consume('throw')) this.throwCrate(grounded);
     this.swingCooldown = Math.max(0, this.swingCooldown - dt);
     if (this.controls.consume('attack') && this.swingCooldown === 0) this.swing();
 
@@ -109,6 +114,20 @@ export class Player {
     this.carried = undefined;
   }
 
+  /** Throw (C23, C29): from the ground only, so "5 tiles ahead" is always measured on the player's floor. */
+  private throwCrate(grounded: boolean): void {
+    const crate = this.carried;
+    if (!crate || !this.abilities.has('throw')) return;
+    if (!grounded) {
+      this.scene.cameras.main.shake(60, 0.002);
+      return;
+    }
+    const feet = this.hitbox.y + PLAYER_BODY.height / 2;
+    crate.launch({ x: crate.rect.x, y: crate.rect.y }, throwTarget(this.hitbox.x, feet, this.facing));
+    this.carried = undefined;
+    this.squash(1.15, 0.9);
+  }
+
   /** Melee (C35): up-swing while holding up, otherwise forward. Allowed while carrying. */
   private swing(): void {
     const dir: SwingDir = this.controls.held('up') ? 'up' : 'forward';
@@ -134,6 +153,7 @@ export class Player {
     const target = crates.find(
       (c) =>
         !c.carried &&
+        !c.flying &&
         Math.abs(c.rect.x - this.hitbox.x) <= reach &&
         Math.abs(c.rect.y + TILE / 2 - feet) <= TILE / 2,
     );

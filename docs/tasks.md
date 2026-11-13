@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 3 · Throw: fixed arc, lands exactly 5 tiles ahead (then W-H)
+**Next task →** Day 3 · W-H (first: decide what happens with its out-of-reach dispenser)
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -52,7 +52,7 @@ How to use this file:
 - [x] W-E data entered; **solved end to end in the real game** with scripted input (Day 2, ahead of plan); hold-R reset implemented
 - [x] Walker (basic): patrol, turns at walls, ledges (literal rule, C91) and blocking bodies; no air control; gravity; weighs plates. Unit-tested + verified in the game
 - [x] W-M entered and **solved end to end in the real game** (timed drop onto `t`, crate onto `x`). Holding `s` permanently makes the walker turn at the open trapdoor, as C91 says. "Grants Throw" is stored in the data; granting arrives with progression (Day 5)
-- [ ] Throw: fixed arc, **lands exactly 5 ahead** verified
+- [x] Throw: fixed arc, **lands exactly 5 ahead** verified in the test room (from col 25 → col 30 across the 4-gap; from col 32 → col 37, into the 5-gap); ground only; kit-gated (refused in W-E)
 - [ ] W-H (first decide: its dispenser is out of melee reach, so hold-R is the only recovery for a stuck crate; see the decision-log change log)
 - [x] P-E entered and **solved end to end in the real game**; red-phase pit dead end found and fixed with a pit crystal (C90), escape verified in both colours
 - [ ] Shieldbearer (basic movement) + P-M (2-tall tunnel); grants Dash
