@@ -6,3 +6,6 @@ coverage/
 *.log
 .DS_Store
 Thumbs.db
+
+# Local clone of the GitHub repo made by mistake inside the project; the project root is the repo.
+DU Assignment/
