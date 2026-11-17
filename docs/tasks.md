@@ -84,7 +84,8 @@ How to use this file:
 - [x] Defeat on enemy contact (C55; not while dashing, C60): slow-motion flash, fade, chamber restarts at the entrance; hearts off in level select (C54). Hearts rules (3, lose one, run over at 0, Mend) in core and tested
 - [ ] Hearts in expeditions: take a heart on defeat, HUD, run over at 0 (with the expedition loop, Day 5)
 - [ ] **Day 4 brief change:** save the email → impact analysis vs the decision log → plan agreed with user → implement → document (devlog + GDD + decision log)
-- [ ] Day 4 routine
+- [x] Day 4 routine: AI export (`docs/ai-logs/day4-*`, redacted) · devlog · commit + tag `day4` (the brief change, when it arrives, is logged on top)
+- [ ] (user) Approve pushing the Day 4 commit and the `day4` tag
 
 ## Day 5: Expedition loop
 - [ ] Draft connector / start / reward / exit room grids → (user) approval

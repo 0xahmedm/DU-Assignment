@@ -89,7 +89,14 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 
 ---
 
-## Day 4: Finish chambers, combat, brief change (in progress)
+## Day 4: Finish chambers, combat, brief change (build done; brief change pending)
+**Summary (5 lines)**
+1. All nine chambers are built and each was solved end to end in the real game: L-H (walker caged on the trapdoor, shaft rebuilt) and the finale P-H (walker pocket, mirror housing, plate moved), every change agreed with the user (C97–C100).
+2. New abilities: Dash (exactly 4 tiles, once per airtime, beam- and enemy-proof) joins Throw and Bolt; jump + Dash reaches 9 tiles, pinned by a test.
+3. Checking got stronger: the reachability checker learned to Dash and to test melee reach, and a logic-state enumerator proves every chamber's intended state opens its exit (no unintended solutions; report in `docs/enumerator-report.md`).
+4. Combat: walker and Shieldbearer fights with hit-stop, shake, flashes and code-generated sounds; contact is a defeat that restarts the chamber.
+5. 181 automated tests; AI log `docs/ai-logs/day4-*` (email and username redacted); screenshots `docs/screenshots/day4-*`. Still open: the Day 4 brief change (waiting for the email).
+
 - **Logic-state enumerator:** every phase × mirror × plate combination of every chamber; the intended end states all open their exits, and every other opening configuration is listed in `docs/enumerator-report.md` and was reviewed: no unintended solution. The finale has exactly one.
 - **Combat:** walker (2 hits) and Shieldbearer (front immune with a clang, 3 hits from behind, telegraphed turn) in the engine-free core with tests; hit-stop, shake, flash and code-generated sounds; enemy contact is a defeat (slow-motion flash, fade, chamber restart) unless you are dashing. Verified in the game on W-M and P-M.
 - **P-H, the finale, solved end to end: all nine chambers now play.** The checker learned to Dash and to test melee reach; it found that the walker's box could be reached and the "Bolt-only" mirror could be hit by a jump-attack (C99). Playing the build found that the crate on `p` blocked the way home (C100).
