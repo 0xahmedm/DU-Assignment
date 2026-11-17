@@ -3,6 +3,7 @@ import { L_E } from './L-E';
 import { L_H } from './L-H';
 import { L_M } from './L-M';
 import { P_E } from './P-E';
+import { P_H } from './P-H';
 import { P_M } from './P-M';
 import { W_H } from './W-H';
 import { W_M } from './W-M';
@@ -18,6 +19,7 @@ export const CHAMBERS: Partial<Record<ChamberId, ChamberDef>> = {
   'L-H': L_H,
   'P-E': P_E,
   'P-M': P_M,
+  'P-H': P_H,
 };
 
 /** Level-select layout (C53): rows = mechanic, columns = difficulty. */

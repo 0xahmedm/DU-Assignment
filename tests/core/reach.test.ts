@@ -3,10 +3,12 @@ import { ChamberLogic } from '../../src/core/chamber/logic';
 import { parseChamber } from '../../src/core/chamber/parser';
 import type { ChamberDef, PhaseColor } from '../../src/core/chamber/types';
 import { reachFrom, type ReachWorld } from '../../src/core/player/reach';
+import { cellsHitBySwing, swingBox } from '../../src/core/combat/melee';
 import { W_E } from '../../src/data/chambers/W-E';
 import { L_E } from '../../src/data/chambers/L-E';
 import { L_H } from '../../src/data/chambers/L-H';
 import { L_M } from '../../src/data/chambers/L-M';
+import { P_H } from '../../src/data/chambers/P-H';
 import { P_M } from '../../src/data/chambers/P-M';
 import { W_H } from '../../src/data/chambers/W-H';
 import { MOVEMENT_TEST_ROOM } from '../../src/data/rooms/movementTest';
@@ -161,5 +163,51 @@ describe('reachability: L-H (C98)', () => {
   it('the pen can be entered and left again (C41 undo)', { timeout: 30000 }, () => {
     expect(reachFrom(world(), { row: 19, col: 2 }).canReach(12, 16)).toBe(true);
     expect(reachFrom(world(), { row: 12, col: 16 }).canReach(19, 5)).toBe(true);
+  });
+});
+
+describe('reachability with Dash', () => {
+  it('jump + Dash crosses a 5-gap (and up to 9) that a plain jump cannot', { timeout: 30000 }, () => {
+    expect(reachFrom(gapWorld(5), { row: 7, col: 2 }).canReach(7, 13)).toBe(false);
+    expect(reachFrom(gapWorld(5), { row: 7, col: 2 }, { dash: true }).canReach(7, 13)).toBe(true);
+    expect(reachFrom(gapWorld(9), { row: 7, col: 2 }, { dash: true }).canReach(7, 17)).toBe(true);
+    expect(reachFrom(gapWorld(10), { row: 7, col: 2 }, { dash: true }).canReach(7, 18)).toBe(false);
+  });
+});
+
+describe('reachability: P-H (C56, C99)', () => {
+  const w = (ph: 'red' | 'blue') => chamberWorld(P_H, ph);
+
+  it('the crate crosses only on the red bridge', { timeout: 30000 }, () => {
+    expect(reachFrom(w('red'), { row: 11, col: 5 }, { carrying: true }).canReach(11, 27)).toBe(true); // plate p (C100)
+    expect(reachFrom(w('blue'), { row: 11, col: 5 }, { carrying: true }).canReach(11, 27)).toBe(false);
+  });
+
+  it('home in Blue needs jump + Dash; a fall into the chasm escapes to the right only', { timeout: 30000 }, () => {
+    expect(reachFrom(w('blue'), { row: 11, col: 22 }).canReach(11, 5)).toBe(false);
+    expect(reachFrom(w('blue'), { row: 11, col: 22 }, { dash: true }).canReach(11, 5)).toBe(true);
+    const chasm = reachFrom(w('blue'), { row: 17, col: 12 });
+    expect(chasm.canReach(11, 20) && !chasm.canReach(11, 5)).toBe(true);
+  });
+
+  it('the tier with the only crystal is reachable from the right floor', { timeout: 30000 }, () => {
+    expect(reachFrom(w('red'), { row: 11, col: 22 }).canReach(8, 20)).toBe(true);
+  });
+
+  it('no melee swing, standing or jumping or dashing, ever reaches the high mirror (it is Bolt-only)', { timeout: 60000 }, () => {
+    for (const ph of ['red', 'blue'] as const) {
+      const world = w(ph);
+      const hits = { n: 0 };
+      const target = { isSolid: world.isSolid, isHittable: (r: number, c: number) => r === 2 && c === 24 };
+      reachFrom(world, { row: 11, col: 22 }, {
+        dash: true,
+        onFrame: (b, facing) => {
+          for (const dir of ['up', 'forward'] as const) {
+            for (const f of dir === 'up' ? [facing] : ([1, -1] as const)) if (cellsHitBySwing(swingBox(b, f, dir), f, dir, target).length) hits.n++;
+          }
+        },
+      });
+      expect(hits.n).toBe(0);
+    }
   });
 });

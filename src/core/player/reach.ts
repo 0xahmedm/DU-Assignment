@@ -70,6 +70,8 @@ interface Attempt {
   jump: boolean;
   jumpHoldFrames: number;
   runStart: boolean;
+  /** Frame on which Dash is pressed (only when the kit has Dash). */
+  dashAt?: number;
 }
 
 function attempts(): Attempt[] {
@@ -94,6 +96,22 @@ function attempts(): Attempt[] {
 
 const ATTEMPTS = attempts();
 
+/** Extra attempts with a Dash: running jumps dashing at different moments, and dashing off a ledge. */
+function dashAttempts(): Attempt[] {
+  const list: Attempt[] = [];
+  for (const dir of [-1, 1] as const) {
+    for (const runStart of [false, true]) {
+      for (const dashAt of [0, 4, 8, 12, 16, 20, 26, 32]) {
+        list.push({ dir, steerFrom: 0, steerFor: 999, jump: true, jumpHoldFrames: 999, runStart, dashAt });
+      }
+      for (const dashAt of [0, 6, 12]) list.push({ dir, steerFrom: 0, steerFor: 999, jump: false, jumpHoldFrames: 0, runStart, dashAt });
+    }
+  }
+  return list;
+}
+
+const DASH_ATTEMPTS = dashAttempts();
+
 /** Simulates one attempt from a standing spot; returns every segment it lands on along the way. */
 function simulate(
   world: ReachWorld,
@@ -103,6 +121,8 @@ function simulate(
   a: Attempt,
   carrying: boolean,
   p: MovementParams,
+  onFrame?: FrameCallback,
+  fromSeg: Segment = { row: floorRow, c0: -1, c1: -1 },
 ): Segment[] {
   let left = startLeft;
   let top = floorRow * TILE - H;
@@ -122,7 +142,14 @@ function simulate(
     const steering = f >= a.steerFrom && f < a.steerFrom + a.steerFor;
     s = stepMovement(
       s,
-      { move: steering ? a.dir : 0, jumpPressed: a.jump && f === 0, jumpHeld: a.jump && f < a.jumpHoldFrames, carrying },
+      {
+        move: steering ? a.dir : 0,
+        jumpPressed: a.jump && f === 0,
+        jumpHeld: a.jump && f < a.jumpHoldFrames,
+        carrying,
+        dashPressed: a.dashAt === f,
+        facing: a.dir === -1 ? -1 : 1,
+      },
       grounded,
       p,
       DT,
@@ -141,6 +168,7 @@ function simulate(
       s = { ...s, vy: 0 };
     } else top = ny;
     if (top > world.height * TILE) break;
+    onFrame?.({ left, top, right: left + W, bottom: top + H }, a.dir === -1 ? -1 : 1, fromSeg, a.dashAt !== undefined && f >= a.dashAt);
     const wasGrounded = grounded;
     grounded = overlaps(world, left, top + 1);
     if (grounded && !wasGrounded) {
@@ -175,11 +203,22 @@ export interface ReachResult {
   canReach(row: number, col: number): boolean;
 }
 
-/** Floods out from the segment the player stands on at (row = floor tile row, col). */
+/** Called for every simulated frame: the body box and the way it faces (melee-reach checks). */
+export type FrameCallback = (
+  body: { left: number; top: number; right: number; bottom: number },
+  facing: 1 | -1,
+  from: Segment,
+  dashed: boolean,
+) => void;
+
+/**
+ * Floods out from the segment the player stands on at (row = floor tile row, col).
+ * `dash` adds Dash attempts (kit with Dash); `onFrame` sees every frame of every attempt.
+ */
 export function reachFrom(
   world: ReachWorld,
   start: { row: number; col: number },
-  opts: { carrying?: boolean; params?: MovementParams } = {},
+  opts: { carrying?: boolean; params?: MovementParams; dash?: boolean; onFrame?: FrameCallback } = {},
 ): ReachResult {
   const p = opts.params ?? DEFAULT_MOVEMENT;
   const carrying = opts.carrying ?? false;
@@ -194,8 +233,8 @@ export function reachFrom(
   while (queue.length > 0) {
     const seg = queue.shift()!;
     for (const x of spots(world, seg)) {
-      for (const a of ATTEMPTS) {
-        for (const landed of simulate(world, segments, x, seg.row, a, carrying, p)) {
+      for (const a of opts.dash && !carrying ? [...ATTEMPTS, ...DASH_ATTEMPTS] : ATTEMPTS) {
+        for (const landed of simulate(world, segments, x, seg.row, a, carrying, p, opts.onFrame, seg)) {
           if (seen.has(segKey(landed))) continue;
           seen.set(segKey(landed), landed);
           queue.push(landed);

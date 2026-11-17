@@ -159,6 +159,8 @@ Details in the DOCX that the handoff left out:
 | C96 | **L-M: the small step beside M1 moves one tile left** (row 12, cols 15–16). As drawn it ended right under M1, which hangs one tile above it, so the 1.375-tile body could not get down past M1 to the exit floor: the exit was unreachable (found by the reachability checker before building). M1 is still hit with a forward attack from the step's right half (or a jump-attack from the floor beside it). | User, 2026-11-17 |
 | C97 | **L-H walker caged on the trapdoor** (consequence of C91). The walker starts in a 1-tile cage on top of the trapdoor (wall tiles at row 6, cols 15 and 17), so it paces in place; when the Bolted high mirror lights the receiver, the trapdoor opens under it and it drops onto `b`. No timing. The C41 undo is unchanged (kill it in the pen; Bolt the high mirror back first, or it respawns on the trapdoor and falls again). | User, 2026-11-17 |
 | C98 | **L-H left shaft rebuilt: five alternating 3-high steps** (rows 16 L, 13 R, 10 L, 7 R, 4 L = the Bolt ledge). As drawn on Day 1 the shaft could not be climbed: the first and fourth hops had a step overhanging the take-off spot (same headroom error as W-H), so the Bolt ledge was unreachable. Checker: shaft reaches the Bolt ledge; crate reaches `a`; pen enterable and escapable; gallery unreachable; beam chain lights the exit. | User, 2026-11-17 |
+| C99 | **P-H fix (Dash-aware checker, before building):** (1) the walker's box moves into a sealed pocket in the ground under the right floor (red roof over `qqq`, visible, unreachable by construction); the C56 raised box could be reached with jump + Dash, next to the walker. (2) Two housing blocks beside the high mirror's column (rows 3–4, cols 22–23): even without Dash a jump-attack from the tier reached the mirror, making the Bolt optional; now no swing reaches it in either colour. The up-Bolt from below works in Red and is shadowed in Blue (the C45 twist stands). | User, 2026-11-17 |
+| C100 | **P-H plate `p` moves from col 18 to col 27.** Playtesting the build: beside the low tier (20 px of headroom), a crate on `p` could not be hopped on the way back, so the jump + Dash home was unreachable (also true of the approved C49/C56 layout). | User, 2026-11-17 |
 | C93 | **W-H dispenser stays out of melee reach; hold-R is the fallback** for the rare stuck crate (a throw in the wrong colour lands safely on the floor; crates left on blue steps fall when the colours swap). | User, 2026-11-14 |
 | C41 | **L-H recovery: kill the walker to undo.** The walker lands in an open low-walled pen; killing it releases its plate and reverses the chain. Bolt the high mirror back first so the respawned walker doesn't fall again. | User, 2026-11-12 |
 | C30 | **Rulebook defaults (accepted without objection, not explicitly approved):** wires always visible and lit when powered; all plates identical (player/crate/enemy); lost crates respawn at a dispenser; carrying lowers jump; beams stop at walls/crates/enemies/solid phase blocks; blocks that would turn solid on an occupant stay ghosted until vacated; phase swaps only by hit or signal, never a timer. | User (no objection), 2026-11-12 |
@@ -576,6 +578,28 @@ EC................p............#
 - The box (cols 26–30, rows 5–8) is unreachable: its wall tops are 6 above the right ledge and 4 beyond the tier. The player walks under it.
 - The walker drops onto `qqq` on the Blue swap. The beam row (row 2) passes above the box; the up-Bolt column (col 24) is clear.
 - Solution: crate across the empty bridge → `p` · up-Bolt the mirror in Red · tier crystal → Blue (beam lit, walker drops, bridge vanishes, three lamps) · jump + Dash home. No step forces enemy contact; a failed Dash lands in an empty chasm.
+- **Revised on Day 4 (C99, C100).** Final grid:
+```
+P-H (C56 + C99 + C100, final)
+################################
+D.......................o......#
+DS....................../...R..<
+###...................##.......#
+#.....................##B......#
+#..............................#
+#...................*..........#
+#..............................#
+#U.................###.........#
+E..............................#
+EC.........................p...#
+###########RRRRR################
+###########.....#########.w.####
+###########.....#########RRR####
+###########....##########qqq####
+###########....#################
+###########....#################
+################################
+```
 
 **P-H "Eclipse": final chamber, original approved grid (C49; superseded by the revision above if approved).** Kit: base + Dash + Bolt. Starts Red. Exit `E` has three lamps: beam receiver `o`, crate plate `p`, walker plate strip `qqqq`.
 ```
@@ -1037,3 +1061,4 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
 - 2026-11-17 (Day 4): L-H redesign proposed and approved before building: walker caged on the trapdoor (C97, follows from the literal walker rule C91) and the left shaft rebuilt (C98, the Day 1 shaft was unclimbable). Both verified with the beam tracer and the reachability checker.
 - 2026-11-17 (Day 4): L-H built per C97/C98 and solved end to end in the game. Knockback default refined (my own default from Day 3, open to the user's objection): a horizontal beam **above the body centre** acts as a ceiling (bump down; sideways movement and steering carry on); vertical beams still push the player back sideways. Found on L-H: a full carry-jump onto the `a` step grazes the emitter's beam above it, and the old push threw the player off the step. Validator: an enemy may start on a (closed) trapdoor.
 - 2026-11-17 (Day 4): Dash implemented in the pure movement model: exactly 4 tiles in a straight horizontal line with gravity paused (C29), never while carrying (C50), invulnerable to beams during the Dash (C60; enemy contact follows with combat). Implementation defaults, open to the user's objection: usable in the air once per airtime (P-H's "jump + Dash" needs an air Dash), 0.35 s cooldown, 0.06 s of invulnerability after it ends. Measured: a running jump plus one Dash clears up to 9 tiles; only P-H has Dash in its kit, and it will be checked against this before building.
+- 2026-11-17 (Day 4): Reachability checker extended with Dash attempts and a per-frame hook (melee-reach checks). P-H checked before building → C99 (walker pocket, mirror housing); built; playtest found the crate on `p` blocked the way home → C100. P-H solved end to end in the game: **all nine chambers playable and solved end to end.**

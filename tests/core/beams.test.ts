@@ -6,6 +6,8 @@ import { beamContact, reflect, segmentLine, traceBeams } from '../../src/core/li
 import { L_E } from '../../src/data/chambers/L-E';
 import { L_H } from '../../src/data/chambers/L-H';
 import { L_M } from '../../src/data/chambers/L-M';
+import { P_H } from '../../src/data/chambers/P-H';
+import { boltStart, traceBolt } from '../../src/core/player/bolt';
 
 const fixture = (grid: string[], over: Partial<ChamberDef> = {}): ChamberDef => ({
   id: 'L-E',
@@ -216,5 +218,42 @@ describe('L-H "Chain Reaction" (C42, C97): the chain does what the design says',
     const t = settle(['b']);
     expect(t.lit.has('receiverExit')).toBe(false);
     for (const c of [20, 22, 24]) expect(t.cells.has(`16,${c}`)).toBe(true);
+  });
+});
+
+describe('P-H "Eclipse" (C45, C99): light needs Blue, the up-Bolt needs Red', () => {
+  const setup = () => {
+    const { model } = parseChamber(P_H);
+    const logic = new ChamberLogic(model!);
+    const lit = () => traceBeams(model!, { isSolid: (r, c) => logic.isSolid(r, c), mirrorAt: (r, c) => logic.mirrorAt(r, c), blocks: () => false }).lit;
+    const upBolt = () => {
+      const body = { left: 24 * 32 + 5, right: 24 * 32 + 27, top: 11 * 32 - 44, bottom: 11 * 32 }; // under the mirror
+      const s = boltStart(body, 1, 'up');
+      return traceBolt(s.cell, s.step, { isSolid: (r, c) => logic.isSolid(r, c), isHittable: (r, c) => logic.hittableAt(r, c) !== undefined }).hit;
+    };
+    return { logic, lit, upBolt };
+  };
+
+  it('an up-Bolt from the floor reaches the mirror in Red; in Blue the blue block shadows it', () => {
+    const { logic, upBolt } = setup();
+    expect(upBolt()).toEqual([2, 24]);
+    logic.phase = 'blue';
+    expect(upBolt()).toBeUndefined();
+  });
+
+  it('the beam reaches the receiver only with the mirror flipped AND in Blue (the red shutter open)', () => {
+    const { logic, lit } = setup();
+    expect(lit().size).toBe(0);
+    logic.hitMirror('mirror');
+    expect(lit().size).toBe(0); // Red: the shutter blocks
+    logic.hitCrystal('crystal', new Set());
+    expect(lit().has('receiver')).toBe(true);
+  });
+
+  it('Blue drops the roof of the walker (it lands on qqq) and removes the bridge', () => {
+    const { logic } = setup();
+    logic.hitCrystal('crystal', new Set());
+    expect(logic.isSolid(13, 26)).toBe(false);
+    expect(logic.isSolid(11, 13)).toBe(false);
   });
 });

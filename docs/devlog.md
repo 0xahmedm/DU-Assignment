@@ -90,6 +90,7 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 ---
 
 ## Day 4: Finish chambers, combat, brief change (in progress)
+- **P-H, the finale, solved end to end: all nine chambers now play.** The checker learned to Dash and to test melee reach; it found that the walker's box could be reached and the "Bolt-only" mirror could be hit by a jump-attack (C99). Playing the build found that the crate on `p` blocked the way home (C100).
 - **Dash:** added to the pure movement model (exactly 4 tiles, gravity paused, once per airtime, never while carrying), tested like the other metrics; jump + Dash clears 9 tiles. In the game it passes straight through a beam fence that holds a walking player back.
 - **L-H solved end to end in the game:** crate on `a`, climb the new shaft, one Bolt, and the chain runs by itself (trapdoor → caged walker onto `b` → locked mirror turns → exit). Beam knockback refined: an overhead beam now acts as a ceiling (found when a full jump onto the `a` step grazed the beam above it).
 - **L-H redesign, before building:** the beam tracer confirmed the chain works; the reachability checker showed the left shaft could not be climbed (Bolt ledge unreachable). With C91's literal walker rule, the walker also needed a cage on the trapdoor. Both approved (C97, C98).
@@ -98,3 +99,6 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 | # | What the AI got wrong | How it was found | Fix |
 |---|---|---|---|
 | 24 | L-H's left shaft (drawn by the AI on Day 1) could not be climbed: the first and fourth hops had a step overhanging the take-off spot (the third chamber with this headroom error). The AI's first fix lowered the bottom step, which walled the start off from the crate floor | Reachability checker before building; then the checker on the first fix (floor split in two) | Alternating 3-high steps with no overhangs (C98), verified by the checker |
+| 25 | P-H (drawn by the AI on Day 1, revised on Day 2): the "unreachable" walker box could be reached with jump + Dash, and the "Bolt-only" high mirror could be hit by a plain jump-attack from the tier. The Day 1 check only considered standing spots | Reachability checker extended with Dash and a melee-reach hook, run before building | Walker in a sealed pocket underground; housing blocks beside the mirror's column (C99); melee-reach regression test |
+| 26 | P-H's plate `p` sat beside the low tier, so with the crate on it the player could not get back to the chasm (in the approved layout too) | Playing the build to the end: the player was stuck between the crate and the tier | `p` moved to col 27 (C100) |
+| 27 | The AI's first data entry of C100 put `p` at col 26, not the approved 27 (one `.` short) | Playing it: the crate landed next to the plate, and the plate's lamp went out when the player walked away | Corrected to col 27; the row is now built by code with an asserted column |
