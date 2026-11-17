@@ -157,6 +157,8 @@ Details in the DOCX that the handoff left out:
 | C94 | **P-M: the Shieldbearer falls during the tower (accepted).** The phase is shared by the whole chamber (C28) and the tower needs Blue, so the bridge enemy always drops into the chasm at the first swap, before the player reaches the bridge (the Day 1 text assumed the player arrives in Red). The bridge step is "you arrive in Blue to a missing bridge with the enemy trapped below; swap to Red to restore it". No tower layout avoids this. | User, 2026-11-14 |
 | C95 | **P-M: the right half of the chasm is one tile deeper** (exit-side wall 4 high). As drawn, the chasm was 3 deep on both sides, so in Blue the player could drop in, get past the enemy and climb out to the exit without the swap. Falls still escape to the entry ledge. Checker-verified. | User, 2026-11-14 |
 | C96 | **L-M: the small step beside M1 moves one tile left** (row 12, cols 15–16). As drawn it ended right under M1, which hangs one tile above it, so the 1.375-tile body could not get down past M1 to the exit floor: the exit was unreachable (found by the reachability checker before building). M1 is still hit with a forward attack from the step's right half (or a jump-attack from the floor beside it). | User, 2026-11-17 |
+| C97 | **L-H walker caged on the trapdoor** (consequence of C91). The walker starts in a 1-tile cage on top of the trapdoor (wall tiles at row 6, cols 15 and 17), so it paces in place; when the Bolted high mirror lights the receiver, the trapdoor opens under it and it drops onto `b`. No timing. The C41 undo is unchanged (kill it in the pen; Bolt the high mirror back first, or it respawns on the trapdoor and falls again). | User, 2026-11-17 |
+| C98 | **L-H left shaft rebuilt: five alternating 3-high steps** (rows 16 L, 13 R, 10 L, 7 R, 4 L = the Bolt ledge). As drawn on Day 1 the shaft could not be climbed: the first and fourth hops had a step overhanging the take-off spot (same headroom error as W-H), so the Bolt ledge was unreachable. Checker: shaft reaches the Bolt ledge; crate reaches `a`; pen enterable and escapable; gallery unreachable; beam chain lights the exit. | User, 2026-11-17 |
 | C93 | **W-H dispenser stays out of melee reach; hold-R is the fallback** for the rare stuck crate (a throw in the wrong colour lands safely on the floor; crates left on blue steps fall when the colours swap). | User, 2026-11-14 |
 | C41 | **L-H recovery: kill the walker to undo.** The walker lands in an open low-walled pen; killing it releases its plate and reverses the chain. Bolt the high mirror back first so the respawned walker doesn't fall again. | User, 2026-11-12 |
 | C30 | **Rulebook defaults (accepted without objection, not explicitly approved):** wires always visible and lit when powered; all plates identical (player/crate/enemy); lost crates respawn at a dispenser; carrying lowers jump; beams stop at walls/crates/enemies/solid phase blocks; blocks that would turn solid on an occupant stay ghosted until vacated; phase swaps only by hit or signal, never a timer. | User (no objection), 2026-11-12 |
@@ -429,6 +431,30 @@ DS........C...........####
   - Standing on `b` yourself opens `E` only while you stand there, and `E` is far away, so the walker is the required persistent weight.
   - Crate on `b` + player on `a` likewise only opens `E` while the player stands on `a`.
   - The pen walls are 1 high (walker trapped, player hops in and out).
+- **Revised on Day 4 (C97 walker cage, C98 left shaft).** Final grid:
+```
+L-H (C97 + C98, final)
+##########################
+#.........o.........######
+E........./........\######
+E.........#.........######
+###.................######
+#...................######
+#..............#w#..######
+#..##..........#=##.######
+#...................######
+#...................######
+###.................######
+#.............#bbb#.######
+#....##############.######
+#..###....U..............#
+#....#.............\.....<
+#....#...................#
+###..o.............\...a.#
+D.....................####
+DS........C...........####
+##########################
+```
 
 **L-H "Chain Reaction": topology agreed (C38)**
 - Chain: Bolt high mirror → receiver opens trapdoor → walker drops onto plate Pb → Pb flips wired mirror Mb upstream → beam reroutes toward wired mirror Ma (plate Pa) → crate on Pa → exit receiver lit.
@@ -1008,3 +1034,4 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
 - 2026-11-17 (Day 3): Light system implemented (`src/core/light/beams.ts`): reflection table per C26, beams stop at solids (incl. closed doors and the active phase colour), crates and enemies (C30), light receivers, pass through the player. Implementation defaults, open to the user's objection: the beam pushes the player away from the beam line (sideways from a vertical beam; up/down plus a little sideways from a horizontal one) for 0.18 s, never a heart (C27); beams update every physics step. L-E entered: its section B row 6 was drawn 19 tiles wide in the Day 1 grid; one `.` added so the emitter sits on the wall and the mirror at col 10 as the text says (drawing error, not a design change).
 - 2026-11-17 (Day 3): L-M entered; the reachability checker showed the exit was unreachable (C96, fixed with user approval); beams verified against the design (start barrier, intended order lights the receiver, wrong order fills the gallery). Solved end to end in the game.
 - 2026-11-17 (Day 3): Bolt implemented (`src/core/player/bolt.ts`): forward Bolt along the upper-body row (C50), up-Bolt straight up from the head; flies until it hits the first crystal, mirror or dispenser (locked mirrors refuse, C42) or is stopped by a solid, including the active phase colour (P-H's blue block shadows it). Implementation defaults, open to the user's objection: the Bolt stops at the first target (it does not pierce; "Piercing Bolt" is the upgrade), 0.45 s cooldown, usable while carrying, and the hit lands when the visible dart arrives. Dev-only `?kit=` URL override added for testing.
+- 2026-11-17 (Day 4): L-H redesign proposed and approved before building: walker caged on the trapdoor (C97, follows from the literal walker rule C91) and the left shaft rebuilt (C98, the Day 1 shaft was unclimbable). Both verified with the beam tracer and the reachability checker.

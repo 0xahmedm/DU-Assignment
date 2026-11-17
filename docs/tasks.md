@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 4 · L-H redesign proposal (C91: the walker must fall through the trapdoor without walking into an open hole) → (user) approval
+**Next task →** Day 4 · Build L-H (C97, C98): data + regression tests (beam chain, shaft, pen), then solve it end to end in the game
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -71,10 +71,10 @@ How to use this file:
 - [x] Dev-only `?kit=` override to try abilities in any chamber
 - [x] Hold-R chamber reset (~1 s, fill ring)
 - [x] Day 3 routine: AI export (`docs/ai-logs/day3-*`, email and username redacted) · devlog · commit + tag `day3`
-- [ ] (user) Approve pushing the Day 3 commit and the `day3` tag
+- [x] (user) Approved: Day 3 commit and `day3` tag pushed
 
 ## Day 4: Finish chambers, combat, brief change
-- [ ] **L-H redesign proposal (C91):** the walker must fall through the trapdoor without walking into an open hole → (user) approval
+- [x] **L-H redesign approved:** walker caged on the trapdoor (C97); left shaft rebuilt as alternating 3-high steps (C98, the Day 1 shaft was unclimbable)
 - [ ] Plate-wired locked mirrors + L-H
 - [ ] Dash: 4 tiles; invulnerable to beams and enemies; not while carrying
 - [ ] P-H (C56 revision; three exit lamps)

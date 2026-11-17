@@ -86,3 +86,13 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 |---|---|---|---|
 | 22 | L-E's section B row 6 was drawn 19 tiles wide on Day 1 (one `.` missing between the mirror and the emitter) | The parser's row-width check rejected the data on entry | One `.` added; the layout text fixes the intended positions |
 | 23 | L-M's small step (drawn by the AI on Day 1) ended right under the M1 mirror block, one tile above it, so nobody could get down past M1 to the exit: the exit was unreachable | Reachability checker before building: the exit floor was not in the reachable set | Step moved one tile left (C96); regression test "exit floor reachable" |
+
+---
+
+## Day 4: Finish chambers, combat, brief change (in progress)
+- **L-H redesign, before building:** the beam tracer confirmed the chain works; the reachability checker showed the left shaft could not be climbed (Bolt ledge unreachable). With C91's literal walker rule, the walker also needed a cage on the trapdoor. Both approved (C97, C98).
+
+### AI bug log (Day 4)
+| # | What the AI got wrong | How it was found | Fix |
+|---|---|---|---|
+| 24 | L-H's left shaft (drawn by the AI on Day 1) could not be climbed: the first and fourth hops had a step overhanging the take-off spot (the third chamber with this headroom error). The AI's first fix lowered the bottom step, which walled the start off from the crate floor | Reachability checker before building; then the checker on the first fix (floor split in two) | Alternating 3-high steps with no overhangs (C98), verified by the checker |
