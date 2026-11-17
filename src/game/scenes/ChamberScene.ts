@@ -5,8 +5,9 @@ import { exposedFaces } from '../../core/chamber/collision';
 import { dropCell, feedingDispenser } from '../../core/chamber/dispensers';
 import { ChamberLogic, type HitResult } from '../../core/chamber/logic';
 import { beamContact, traceBeams, type BeamTrace } from '../../core/light/beams';
+import { BOLT, boltStart, traceBolt } from '../../core/player/bolt';
 import { parseChamber } from '../../core/chamber/parser';
-import type { ChamberId, ChamberModel } from '../../core/chamber/types';
+import type { Ability, ChamberId, ChamberModel } from '../../core/chamber/types';
 import { validateChamber } from '../../core/chamber/validator';
 import { PLAYER_BODY, TILE } from '../../core/player/metrics';
 import { CHAMBERS } from '../../data/chambers';
@@ -45,6 +46,8 @@ export class ChamberScene extends Phaser.Scene {
   private cellBodies: { r: number; c: number; body: Phaser.Physics.Arcade.StaticBody }[] = [];
   private pressed: ReadonlySet<string> = new Set();
   private beams: BeamTrace = { segments: [], lit: new Set(), cells: new Set() };
+  /** Cells overlapped by bodies at the last step (ghost rule for hits that land later, e.g. a Bolt). */
+  private lastOccupied: ReadonlySet<string> = new Set();
   private resetHeldMs = 0;
   private resetRing!: Phaser.GameObjects.Graphics;
   private solved = false;
@@ -107,7 +110,9 @@ export class ChamberScene extends Phaser.Scene {
     this.view = new ChamberView(this, this.model, this.logic);
     this.controls = new Controls(this);
     const [sr, sc] = this.model.start;
-    this.player = new Player(this, sc * TILE + TILE / 2, (sr + 1) * TILE - PLAYER_BODY.height / 2, this.controls, new Set(def.kit));
+    const kitOverride = this.registry.get('kitOverride') as readonly Ability[] | undefined; // dev only (main.ts)
+    const kit = new Set(kitOverride ?? def.kit);
+    this.player = new Player(this, sc * TILE + TILE / 2, (sr + 1) * TILE - PLAYER_BODY.height / 2, this.controls, kit);
     this.physics.add.collider(this.player.hitbox, solids);
 
     for (const s of this.model.spawns.filter((x) => x.kind === 'crate')) {
@@ -185,6 +190,9 @@ export class ChamberScene extends Phaser.Scene {
       });
       this.onHits(this.logic.resolveHits(cells, occupied));
     }
+    this.lastOccupied = occupied;
+    const bolt = this.player.takeBolt();
+    if (bolt) this.fireBolt(bolt.body, bolt.facing, bolt.dir);
 
     // Light: beams are blocked by crates and enemies (C30); lit receivers feed the signals.
     const blockers = new Set<string>();
@@ -211,6 +219,45 @@ export class ChamberScene extends Phaser.Scene {
     this.syncSolids();
     this.checkExit(bodies[0]!);
     this.updateReset(dt);
+  }
+
+  /**
+   * Bolt: the path is traced now (core/player/bolt); a bright dart flies along it and the hit is
+   * applied when it arrives, so what the player sees and what happens always match.
+   */
+  private fireBolt(body: Bounds, facing: 1 | -1, dir: 'forward' | 'up'): void {
+    const start = boltStart(body, facing, dir);
+    const path = traceBolt(start.cell, start.step, {
+      isSolid: (r, c) => this.logic.isSolid(r, c),
+      isHittable: (r, c) => this.logic.hittableAt(r, c) !== undefined,
+    });
+    const [dr, dc] = start.step;
+    const from =
+      dir === 'up'
+        ? { x: (body.left + body.right) / 2, y: body.top }
+        : { x: facing === 1 ? body.right : body.left, y: start.cell[0] * TILE + TILE / 2 };
+    const last = path.cells.at(-1) ?? start.cell;
+    // End at the target's centre, or at the face of whatever stopped it.
+    const to = {
+      x: last[1] * TILE + TILE / 2 + (path.hit ? 0 : (dc * TILE) / 2),
+      y: last[0] * TILE + TILE / 2 + (path.hit ? 0 : (dr * TILE) / 2),
+    };
+    const dist = Math.hypot(to.x - from.x, to.y - from.y);
+    const dart = this.add
+      .rectangle(from.x, from.y, dir === 'up' ? 4 : 14, dir === 'up' ? 14 : 4, PALETTE.lightCore)
+      .setStrokeStyle(2, PALETTE.light)
+      .setDepth(12);
+    this.tweens.add({
+      targets: dart,
+      x: to.x,
+      y: to.y,
+      duration: Math.max(30, (dist / BOLT.speed) * 1000),
+      onComplete: () => {
+        dart.destroy();
+        if (path.hit && this.logic) this.onHits(this.logic.resolveHits([path.hit], this.lastOccupied));
+        else this.view.puff(to.x, to.y, PALETTE.light);
+      },
+    });
   }
 
   /** Feedback for a swing's hits, and the physical part of dispenser recall. */

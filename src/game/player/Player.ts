@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { MELEE, swingBox, type Box, type SwingDir } from '../../core/combat/melee';
 import type { Ability } from '../../core/chamber/types';
 import { PLAYER_BODY, TILE } from '../../core/player/metrics';
+import { BOLT, type BoltDir } from '../../core/player/bolt';
 import { throwTarget } from '../../core/player/throw';
 import {
   DEFAULT_MOVEMENT,
@@ -34,6 +35,8 @@ export class Player {
   private knockTimer = 0;
   private knockDir: -1 | 0 | 1 = 0;
   private pendingSwing: { box: Box; facing: 1 | -1; dir: SwingDir } | undefined;
+  private boltCooldown = 0;
+  private pendingBolt: { body: Box; facing: 1 | -1; dir: BoltDir } | undefined;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -65,6 +68,12 @@ export class Player {
     if (this.controls.consume('throw')) this.throwCrate(grounded);
     this.swingCooldown = Math.max(0, this.swingCooldown - dt);
     if (this.controls.consume('attack') && this.swingCooldown === 0) this.swing();
+    this.boltCooldown = Math.max(0, this.boltCooldown - dt);
+    if (this.controls.consume('bolt') && this.abilities.has('bolt') && this.boltCooldown === 0) {
+      // Bolt (C23, C50): up while holding up, otherwise forward along the upper body.
+      this.pendingBolt = { body: this.bounds(), facing: this.facing, dir: this.controls.held('up') ? 'up' : 'forward' };
+      this.boltCooldown = BOLT.cooldown;
+    }
 
     this.knockTimer = Math.max(0, this.knockTimer - dt);
     const move = this.knockTimer > 0 ? this.knockDir : this.controls.horizontal();
@@ -128,6 +137,13 @@ export class Player {
     this.body.setVelocity(this.state.vx, this.state.vy);
     this.squash(0.8, 1.2);
     return true;
+  }
+
+  /** The Bolt fired this step, if any; the scene traces it (core/player/bolt). */
+  takeBolt(): { body: Box; facing: 1 | -1; dir: BoltDir } | undefined {
+    const b = this.pendingBolt;
+    this.pendingBolt = undefined;
+    return b;
   }
 
   /** Bounds of the physics body in world pixels. */

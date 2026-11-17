@@ -58,11 +58,11 @@ export class ChamberView {
     this.flashes.set(deviceId, this.scene.time.now);
   }
 
-  /** A small burst where a recalled crate vanished. */
-  puff(x: number, y: number): void {
+  /** A small burst (a recalled crate vanishing, a Bolt hitting a wall). */
+  puff(x: number, y: number, color: number = PALETTE.weight): void {
     for (let i = 0; i < 8; i++) {
       const a = (i / 8) * Math.PI * 2;
-      const bit = this.scene.add.rectangle(x, y, 6, 6, PALETTE.weight).setDepth(12);
+      const bit = this.scene.add.rectangle(x, y, 6, 6, color).setDepth(12);
       this.scene.tweens.add({
         targets: bit,
         x: x + Math.cos(a) * 22,

@@ -36,7 +36,9 @@ npm run build:single # dist-single/ (one self-contained index.html for the zip)
 ### URL options (development)
 - `?debug`: show physics bodies.
 - `?autotest`: drive the game loop with timers (used by automated in-browser checks).
-- `?chamber=<id>` and `?seed=<n>`: coming with level select and expeditions.
+- `?chamber=<id>`: open a chamber directly (e.g. `?chamber=L-M`); `?room=movement`: the movement test room.
+- `?kit=bolt,throw,dash` (dev builds only): replace the chamber's declared kit, to try abilities anywhere.
+- `?seed=<n>`: coming with expeditions.
 
 ## Architecture
 Clean architecture with an enforced dependency rule (ESLint + `tests/architecture.test.ts`):

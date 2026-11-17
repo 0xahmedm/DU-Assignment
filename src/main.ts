@@ -3,7 +3,7 @@
  * creates the Phaser game and registers scenes. Puzzle rules live in src/core, never here.
  */
 import Phaser from 'phaser';
-import type { ChamberId } from './core/chamber/types';
+import type { Ability, ChamberId } from './core/chamber/types';
 import { PALETTE } from './game/render/palette';
 import { ChamberScene } from './game/scenes/ChamberScene';
 import { MenuScene } from './game/scenes/MenuScene';
@@ -20,6 +20,13 @@ const route = {
   room: params.get('room') ?? undefined,
 };
 
+// Dev only: ?kit=bolt,throw,dash replaces every chamber's declared kit (C24), to try abilities in
+// chambers that don't grant them yet. Production builds ignore it.
+const ABILITIES: readonly Ability[] = ['throw', 'bolt', 'dash'];
+const kitOverride = import.meta.env.DEV && params.has('kit')
+  ? (params.get('kit') ?? '').split(',').filter((a): a is Ability => (ABILITIES as readonly string[]).includes(a))
+  : undefined;
+
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
@@ -35,6 +42,7 @@ const game = new Phaser.Game({
   callbacks: {
     preBoot: (g) => {
       if (route.chamber || route.room) g.registry.set('route', route);
+      if (kitOverride) g.registry.set('kitOverride', kitOverride);
     },
   },
   scene: [MenuScene, ChamberScene, TestRoomScene],

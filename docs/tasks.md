@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 3 · Bolt: forward along the upper-body row, up-Bolt; hits mirrors, crystals (enemies on Day 4)
+**Next task →** Day 3 routine (AI export · devlog · commit + tag `day3` · push with approval), then Day 4 · L-H redesign proposal (C91)
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -67,7 +67,8 @@ How to use this file:
 - [x] Emitters, mirrors (locked ones framed amber), receivers rendered; beams retraced every physics step; beam contact pushes the player back (C27)
 - [x] L-E entered and **solved end to end in the real game** (overhead beam stops a jump; walkway beam is a barrier); a 19-wide row in the Day 1 grid fixed at data entry
 - [x] L-M entered and **solved end to end in the real game**; checker found the exit unreachable → step moved (C96). "Grants Bolt" stored in data
-- [ ] Bolt: upper-body row; hits mirrors, crystals, enemies
+- [x] Bolt: forward along the upper-body row, up-Bolt from the head; hits the first crystal / mirror / dispenser on its line, stopped by solids incl. the active phase colour; kit-gated; verified in the game (P-E crystal from 7 tiles, L-E mirrors). Enemies: Day 4
+- [x] Dev-only `?kit=` override to try abilities in any chamber
 - [x] Hold-R chamber reset (~1 s, fill ring)
 - [ ] Day 3 routine
 

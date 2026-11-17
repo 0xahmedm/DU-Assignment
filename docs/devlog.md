@@ -71,6 +71,7 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 - **Beam tracer** in the engine-free core (`src/core/light/beams.ts`, 14 tests): mirrors, receivers, walls, doors, crates/enemies, phase colours as shutters; geometry and contact helpers for drawing and knockback.
 - **Light in the game:** emitters, mirrors (locked ones framed amber), receivers and pulsing cyan beams; beams are retraced every physics step and push the player back (never a heart, C27).
 - **L-E solved end to end in the game:** the overhead beam stops a jump, the walkway beam holds the player back, both mirrors light their receivers.
+- **Bolt:** forward along the upper body or straight up; hits the first crystal, mirror or dispenser on its line; tested in core and in the game (a P-E crystal from 7 tiles away, both L-E mirrors).
 - **L-M:** beams checked against the design before building (start barrier, intended order, wrong order); the reachability checker found the exit unreachable, fixed with the user (C96). Solved end to end in the game.
 
 ### AI bug log (Day 3)
