@@ -42,6 +42,8 @@ export class PatrolEnemy {
     private readonly spawnX: number,
     private readonly spawnBottom: number,
     readonly kind: PatrolKind,
+    /** Puzzle chambers respawn their enemies; expedition connectors do not (R1, C102). */
+    private readonly respawns = true,
   ) {
     const y = spawnBottom - kind.height / 2;
     this.rect = scene.add.rectangle(spawnX, y, kind.width, kind.height, PALETTE.enemy).setDepth(9);
@@ -64,6 +66,11 @@ export class PatrolEnemy {
 
   get alive(): boolean {
     return this.respawnIn <= 0;
+  }
+
+  /** Killed for good (a connector enemy, R1). */
+  get gone(): boolean {
+    return !this.alive && !this.respawns;
   }
 
   get facing(): 1 | -1 {
@@ -96,6 +103,7 @@ export class PatrolEnemy {
   /** One fixed physics step. */
   step(dt: number, world: WalkerWorld, player: Box): void {
     if (!this.alive) {
+      if (!this.respawns) return;
       this.respawnIn -= dt;
       if (this.alive) this.respawn();
       return;

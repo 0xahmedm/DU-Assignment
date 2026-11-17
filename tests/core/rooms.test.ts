@@ -3,25 +3,13 @@ import { parseChamber } from '../../src/core/chamber/parser';
 import type { ChamberDef, PhaseColor } from '../../src/core/chamber/types';
 import { validateChamber } from '../../src/core/chamber/validator';
 import { reachFrom } from '../../src/core/player/reach';
-import { tierFor, type RoomDef } from '../../src/core/run/rooms';
+import { roomToChamber, tierFor, type RoomDef } from '../../src/core/run/rooms';
+import { ChamberLogic } from '../../src/core/chamber/logic';
 import { CONNECTORS, EXIT_ROOM, REWARD_ROOM, START_ROOM } from '../../src/data/rooms/expedition';
 import { chamberWorld } from './reach.test';
 
 /** Rooms use the chamber legend, so they go through the same parser, validator and checker. */
-const asChamber = (room: RoomDef): ChamberDef => ({
-  id: 'W-E',
-  name: room.name,
-  mechanic: 'weight',
-  difficulty: 'easy',
-  prerequisites: [],
-  kit: [],
-  initialPhase: 'red',
-  sections: [{ id: 'A', grid: room.grid }],
-  links: [],
-  exitAlwaysOpen: 'expedition room',
-  solution: [],
-  intendedFeeling: '',
-});
+const asChamber = (room: RoomDef): ChamberDef => roomToChamber(room);
 
 const ROOMS = [START_ROOM, REWARD_ROOM, EXIT_ROOM, ...CONNECTORS];
 
@@ -75,5 +63,16 @@ describe('expedition rooms (C101)', () => {
     expect(tierFor({ mediums: 1, hards: 0 })).toBe('T2');
     expect(tierFor({ mediums: 2, hards: 1 })).toBe('T3');
     expect(tierFor({ mediums: 0, hards: 0 }, true)).toBe('T3');
+  });
+
+  it('an exit can be held shut and released (Arena, reward room; C102)', () => {
+    const { model } = parseChamber(roomToChamber(CONNECTORS.find((r) => r.id === 'arena')!));
+    const logic = new ChamberLogic(model!);
+    expect(logic.isOpen('exit')).toBe(true);
+    logic.holdClosed('exit', true);
+    expect(logic.isOpen('exit')).toBe(false);
+    expect(logic.isSolid(9, 31)).toBe(true);
+    logic.holdClosed('exit', false);
+    expect(logic.isOpen('exit')).toBe(true);
   });
 });

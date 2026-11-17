@@ -4,6 +4,8 @@
  */
 
 export type ChamberId = 'W-E' | 'W-M' | 'W-H' | 'L-E' | 'L-M' | 'L-H' | 'P-E' | 'P-M' | 'P-H';
+/** Expedition rooms go through the same parser and scene; their ids are prefixed (core/run/rooms). */
+export type RoomRef = `room:${string}`;
 export type Mechanic = 'weight' | 'light' | 'phase';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export type Ability = 'throw' | 'bolt' | 'dash';
@@ -35,7 +37,7 @@ export interface LinkDef {
 }
 
 export interface ChamberDef {
-  id: ChamberId;
+  id: ChamberId | RoomRef;
   name: string;
   mechanic: Mechanic;
   difficulty: Difficulty;

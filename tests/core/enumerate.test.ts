@@ -42,7 +42,7 @@ describe('logic-state enumerator (C51)', () => {
   for (const def of Object.values(CHAMBERS)) {
     it(`${def.id}: the intended configuration opens the exit`, () => {
       const { model } = parseChamber(def);
-      expect(evaluate(model!, INTENDED[def.id]).exitOpen).toBe(true);
+      expect(evaluate(model!, INTENDED[def.id as ChamberId]).exitOpen).toBe(true);
     });
   }
 
@@ -54,9 +54,10 @@ describe('logic-state enumerator (C51)', () => {
       const opening = all.filter((o) => o.exitOpen);
       lines.push(`## ${def.id} "${def.name}"`);
       lines.push(`- Inputs: phase ${inputs.phases.join('/')} · free mirrors [${inputs.mirrors.join(', ')}] · plates [${inputs.plates.join(', ')}] → ${all.length} configurations`);
-      lines.push(`- Intended: ${INTENDED[def.id].note}`);
+      const intended = INTENDED[def.id as ChamberId];
+      lines.push(`- Intended: ${intended.note}`);
       lines.push(`- The exit opens in ${opening.length} of ${all.length}:`);
-      for (const o of opening) lines.push(`  - ${same(INTENDED[def.id], o) ? '✓ ' : ''}${fmt(o)}`);
+      for (const o of opening) lines.push(`  - ${same(intended, o) ? '✓ ' : ''}${fmt(o)}`);
       lines.push('');
     }
     await expect(lines.join('\n')).toMatchFileSnapshot('../../docs/enumerator-report.md');

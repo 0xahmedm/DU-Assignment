@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import type { ChamberId } from '../../core/chamber/types';
+import type { Tier } from '../../core/run/rooms';
 import { CHAMBER_GRID, CHAMBERS } from '../../data/chambers';
+import { CONNECTORS, EXIT_ROOM, REWARD_ROOM, START_ROOM } from '../../data/rooms/expedition';
 import { cssHex, PALETTE } from '../render/palette';
 
 const MECHANICS = ['Weight', 'Light', 'Phase'];
@@ -21,11 +23,14 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     // A start route from the URL (?chamber=W-E / ?room=movement) is consumed once.
-    const route = this.registry.get('route') as { chamber?: ChamberId; room?: string } | undefined;
+    const route = this.registry.get('route') as { chamber?: ChamberId; room?: string; tier?: string } | undefined;
     if (route) {
       this.registry.remove('route');
       if (route.chamber) return void this.scene.start('Chamber', { id: route.chamber });
       if (route.room === 'movement') return void this.scene.start('TestRoom');
+      const room = [START_ROOM, REWARD_ROOM, EXIT_ROOM, ...CONNECTORS].find((r) => r.id === route.room);
+      const tier: Tier = route.tier === 'T2' || route.tier === 'T3' ? route.tier : 'T1';
+      if (room) return void this.scene.start('Chamber', { room: { def: room, tier } });
     }
 
     this.cameras.main.setBackgroundColor(PALETTE.background);

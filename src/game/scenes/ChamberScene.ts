@@ -7,7 +7,8 @@ import { ChamberLogic, type HitResult } from '../../core/chamber/logic';
 import { beamContact, traceBeams, type BeamTrace } from '../../core/light/beams';
 import { BOLT, boltStart, traceBolt } from '../../core/player/bolt';
 import { parseChamber } from '../../core/chamber/parser';
-import type { Ability, ChamberId, ChamberModel } from '../../core/chamber/types';
+import type { Ability, ChamberDef, ChamberId, ChamberModel } from '../../core/chamber/types';
+import { roomToChamber, type RewardChoice, type RoomDef, type Tier } from '../../core/run/rooms';
 import { validateChamber } from '../../core/chamber/validator';
 import { PLAYER_BODY, TILE } from '../../core/player/metrics';
 import { CHAMBERS } from '../../data/chambers';
@@ -21,6 +22,15 @@ import { ChamberView } from '../render/ChamberView';
 import { cssHex, PALETTE } from '../render/palette';
 
 const RESET_HOLD_MS = 1000; // hold R this long to reset (C51)
+
+/** What to play: a puzzle chamber by id, or an expedition room with its encounter tier (C101). */
+export interface PlayData {
+  id?: ChamberId;
+  room?: { def: RoomDef; tier: Tier; choices?: readonly RewardChoice[]; kit?: readonly Ability[] };
+}
+
+/** Game events a run controller listens to (the expedition loop, Day 5). */
+export const ROOM_EVENTS = { done: 'room-done', reward: 'reward-picked', runComplete: 'run-complete' } as const;
 /** Cells whose solidity changes during play (doors, trapdoors, exit, phase blocks). */
 const SWITCHABLE = new Set(['R', 'B', '|', 'K', '=', 'E']);
 const key = (r: number, c: number) => `${r},${c}`;
@@ -56,13 +66,22 @@ export class ChamberScene extends Phaser.Scene {
   /** Set during the defeat sequence (C54, C62): the step loop stops until the chamber restarts. */
   private defeated = false;
   private chamberId: ChamberId = 'W-E';
+  private play: PlayData = {};
+  private pedestals: { col: number; row: number; label: Phaser.GameObjects.Text; block: Phaser.GameObjects.Rectangle }[] = [];
+  private picked = false;
+  private cleared = false;
+  private info!: Phaser.GameObjects.Text;
 
   constructor() {
     super('Chamber');
   }
 
-  init(data: { id?: ChamberId }): void {
+  init(data: PlayData): void {
+    this.play = data.room ? data : { id: data.id ?? this.chamberId };
     this.chamberId = data.id ?? this.chamberId;
+    this.pedestals = [];
+    this.picked = false;
+    this.cleared = false;
     this.crates = [];
     this.enemies = [];
     this.cellBodies = [];
@@ -74,7 +93,8 @@ export class ChamberScene extends Phaser.Scene {
   }
 
   create(): void {
-    const def = CHAMBERS[this.chamberId];
+    const room = this.play.room;
+    const def: ChamberDef | undefined = room ? roomToChamber(room.def) : CHAMBERS[this.chamberId];
     if (!def) {
       this.showMessage(`Chamber ${this.chamberId} is not built yet.\nPress Esc for the menu.`);
       this.input.keyboard?.once('keydown-ESC', () => this.scene.start('Menu'));
@@ -116,7 +136,7 @@ export class ChamberScene extends Phaser.Scene {
     this.controls = new Controls(this);
     const [sr, sc] = this.model.start;
     const kitOverride = this.registry.get('kitOverride') as readonly Ability[] | undefined; // dev only (main.ts)
-    const kit = new Set(kitOverride ?? def.kit);
+    const kit = new Set(kitOverride ?? room?.kit ?? def.kit);
     this.player = new Player(this, sc * TILE + TILE / 2, (sr + 1) * TILE - PLAYER_BODY.height / 2, this.controls, kit);
     this.physics.add.collider(this.player.hitbox, solids);
 
@@ -128,9 +148,11 @@ export class ChamberScene extends Phaser.Scene {
     }
     // Patrolling enemies stand on their spawn cell's floor. No player collider: touching one is a
     // defeat (C55), checked every step. `enemies` holds every patroller.
-    for (const s of this.model.spawns.filter((x) => x.kind === 'walker' || x.kind === 'shieldbearer')) {
+    // Rooms take their enemies from the encounter tier (R4) and never respawn them (R1).
+    const spawns = room ? (room.def.tiers?.[room.tier] ?? []) : this.model.spawns.filter((x) => x.kind === 'walker' || x.kind === 'shieldbearer');
+    for (const s of spawns) {
       const kind = s.kind === 'walker' ? WALKER_KIND : SHIELDBEARER_KIND;
-      const enemy = new PatrolEnemy(this, s.cell[1] * TILE + TILE / 2, (s.cell[0] + 1) * TILE, kind);
+      const enemy = new PatrolEnemy(this, s.cell[1] * TILE + TILE / 2, (s.cell[0] + 1) * TILE, kind, !room);
       this.enemies.push(enemy);
       this.physics.add.collider(enemy.rect, solids);
       for (const c of this.crates) this.physics.add.collider(enemy.rect, c.rect);
@@ -141,7 +163,7 @@ export class ChamberScene extends Phaser.Scene {
     }
 
     this.add
-      .text(12, 10, `${def.id}  ${def.name}   |   hold R: reset   Esc: menu`, {
+      .text(12, 10, `${room ? `${def.name} (${room.tier})` : `${def.id}  ${def.name}`}   |   hold R: reset   Esc: menu`, {
         fontFamily: 'monospace',
         fontSize: '13px',
         color: cssHex(PALETTE.text),
@@ -150,6 +172,14 @@ export class ChamberScene extends Phaser.Scene {
       .setDepth(100);
     this.resetRing = this.add.graphics().setScrollFactor(0).setDepth(101);
     this.input.keyboard?.on('keydown-ESC', () => this.scene.start('Menu'));
+
+    this.info = this.add
+      .text(this.scale.width / 2, 40, '', { fontFamily: 'monospace', fontSize: '15px', color: cssHex(PALETTE.text), align: 'center', backgroundColor: '#000000aa', padding: { x: 10, y: 6 } })
+      .setOrigin(0.5, 0)
+      .setScrollFactor(0)
+      .setDepth(100)
+      .setVisible(false);
+    if (room) this.setUpRoom(room.def, room.choices);
 
     this.cameras.main.startFollow(this.player.hitbox, true, 0.15, 0.15);
     this.syncSolids();
@@ -201,7 +231,9 @@ export class ChamberScene extends Phaser.Scene {
       // Enemies inside the swing (C62): melee reach beats contact range, so a swing lands first.
       const fromX = (playerBox.left + playerBox.right) / 2;
       for (const w of alive) if (overlap(swing.box, w.bounds())) this.onEnemyHit(w, w.hit('melee', fromX));
+      this.tryPick(playerBox);
     }
+    this.updateRoomRules(playerBox);
     this.lastOccupied = occupied;
     const bolt = this.player.takeBolt();
     if (bolt) this.fireBolt(bolt.body, bolt.facing, bolt.dir);
@@ -335,9 +367,86 @@ export class ChamberScene extends Phaser.Scene {
       this.cameras.main.fadeOut(250, 0, 0, 0);
       this.cameras.main.once('camerafadeoutcomplete', () => {
         this.physics.world.timeScale = 1;
-        this.scene.restart({ id: this.chamberId });
+        this.scene.restart(this.play);
       });
     });
+  }
+
+  // --- expedition rooms (C101, C102) ------------------------------------------------------------
+
+  /** Pedestals (R3), the Seal altar, and exits held shut by the room rules (R2, R3). */
+  private setUpRoom(room: RoomDef, choices: readonly RewardChoice[] | undefined): void {
+    if (room.lockUntilCleared) this.logic.holdClosed('exit', true);
+    if (room.pedestals) {
+      this.logic.holdClosed('exit', true);
+      const offers = choices ?? PLACEHOLDER_CHOICES;
+      room.pedestals.forEach(([row, col], i) => {
+        const x = col * TILE + TILE / 2;
+        const y = (row + 1) * TILE;
+        const block = this.add.rectangle(x, y - 6, TILE - 6, 12, PALETTE.weight).setStrokeStyle(2, PALETTE.lightCore).setDepth(4);
+        const label = this.add
+          .text(x, y - 34, offers[i]?.name ?? '', { fontFamily: 'monospace', fontSize: '11px', color: cssHex(PALETTE.text), align: 'center' })
+          .setOrigin(0.5, 1)
+          .setDepth(4);
+        this.pedestals.push({ col, row, label, block });
+      });
+    }
+    if (room.altar) {
+      const [row, col] = room.altar;
+      this.add.rectangle(col * TILE + TILE / 2, (row + 1) * TILE - 10, TILE, 20, PALETTE.lightCore).setStrokeStyle(3, PALETTE.light).setDepth(4);
+    }
+  }
+
+  private pedestalUnder(player: Bounds): number {
+    const col = Math.floor((player.left + player.right) / 2 / TILE);
+    const row = Math.round(player.bottom / TILE) - 1;
+    return this.pedestals.findIndex((p) => p.col === col && p.row === row);
+  }
+
+  /** R3: attack while standing on a pedestal takes its upgrade; the others fade; the exit opens. */
+  private tryPick(player: Bounds): void {
+    const room = this.play.room;
+    if (!room?.def.pedestals || this.picked) return;
+    const i = this.pedestalUnder(player);
+    if (i < 0) return;
+    const choice = (room.choices ?? PLACEHOLDER_CHOICES)[i];
+    if (!choice) return;
+    this.picked = true;
+    Sfx.swap();
+    this.pedestals.forEach((p, j) => {
+      if (j === i) this.tweens.add({ targets: [p.block, p.label], y: '-=12', duration: 200 });
+      else this.tweens.add({ targets: [p.block, p.label], alpha: 0, duration: 300 });
+    });
+    this.logic.holdClosed('exit', false);
+    this.info.setText(`${choice.name}\n${choice.description}`).setVisible(true);
+    this.game.events.emit(ROOM_EVENTS.reward, choice);
+  }
+
+  /** Shows what a pedestal offers; opens the Arena when it is cleared (R2); the altar ends the run. */
+  private updateRoomRules(player: Bounds): void {
+    const room = this.play.room;
+    if (!room) return;
+    if (room.def.pedestals && !this.picked) {
+      const i = this.pedestalUnder(player);
+      const choice = (room.choices ?? PLACEHOLDER_CHOICES)[i];
+      this.info.setText(choice ? `${choice.name}\n${choice.description}\n(attack to take it)` : '').setVisible(Boolean(choice));
+    }
+    if (room.def.lockUntilCleared && !this.cleared && this.enemies.every((w) => w.gone)) {
+      this.cleared = true;
+      this.logic.holdClosed('exit', false);
+      Sfx.swap();
+      this.cameras.main.flash(120, 255, 255, 255, false);
+    }
+    if (room.def.altar) {
+      const [row, col] = room.def.altar;
+      const cell = { left: col * TILE, right: (col + 1) * TILE, top: row * TILE, bottom: (row + 1) * TILE };
+      if (overlap(player, cell)) {
+        this.solved = true;
+        this.player.body.setVelocity(0, 0);
+        this.game.events.emit(ROOM_EVENTS.runComplete);
+        this.showMessage('The seal is restored. Run complete!\nEsc: menu');
+      }
+    }
   }
 
   /** Feedback for a swing's hits, and the physical part of dispenser recall. */
@@ -398,8 +507,14 @@ export class ChamberScene extends Phaser.Scene {
     if (!inside) return;
     this.solved = true;
     this.player.body.setVelocity(0, 0);
-    this.showMessage(`${this.model.def.name}: solved!\nEnter: play again    Esc: menu`);
-    this.input.keyboard?.once('keydown-ENTER', () => this.scene.restart({ id: this.chamberId }));
+    if (this.play.room) {
+      // An expedition room: hand over to the run controller; standalone (URL), offer a replay.
+      if (this.game.events.listenerCount(ROOM_EVENTS.done) > 0) return void this.game.events.emit(ROOM_EVENTS.done, this.play.room.def.id);
+      this.showMessage(`${this.model.def.name}: cleared!\nEnter: play again    Esc: menu`);
+    } else {
+      this.showMessage(`${this.model.def.name}: solved!\nEnter: play again    Esc: menu`);
+    }
+    this.input.keyboard?.once('keydown-ENTER', () => this.scene.restart(this.play));
   }
 
   private updateReset(dt: number): void {
@@ -409,7 +524,7 @@ export class ChamberScene extends Phaser.Scene {
     const t = Math.min(1, this.resetHeldMs / RESET_HOLD_MS);
     g.lineStyle(4, PALETTE.text, 0.9).beginPath();
     g.arc(this.scale.width - 30, 30, 14, -Math.PI / 2, -Math.PI / 2 + t * Math.PI * 2).strokePath();
-    if (t >= 1) this.scene.restart({ id: this.chamberId });
+    if (t >= 1) this.scene.restart(this.play);
   }
 
   override update(): void {
@@ -436,3 +551,10 @@ export class ChamberScene extends Phaser.Scene {
 }
 
 const overlap = (a: Bounds, b: Bounds) => a.right > b.left && a.left < b.right && a.bottom > b.top && a.top < b.bottom;
+
+/** Shown when a reward room is opened on its own (URL), before the upgrade pool exists. */
+const PLACEHOLDER_CHOICES: readonly RewardChoice[] = [
+  { id: 'a', name: 'Upgrade A', description: 'placeholder (the upgrade pool fills these)' },
+  { id: 'b', name: 'Upgrade B', description: 'placeholder' },
+  { id: 'c', name: 'Upgrade C', description: 'placeholder' },
+];

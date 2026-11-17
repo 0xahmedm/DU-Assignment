@@ -54,6 +54,8 @@ export class ChamberLogic {
   private readonly ghosted = new Set<string>();
   private readonly deviceAt = new Map<string, Device>();
   private pressed = new Set<string>();
+  /** Doors held shut from outside the signal system (expedition rules: Arena, reward room; C102). */
+  private readonly held = new Set<string>();
   private litReceivers = new Set<string>();
   private pending: LogicEvents = { opened: [], closed: [], phaseSwapped: false, mirrorsFlipped: [] };
 
@@ -198,7 +200,13 @@ export class ChamberLogic {
   }
 
   isOpen(id: string): boolean {
-    return this.openDoors.has(id);
+    return this.openDoors.has(id) && !this.held.has(id);
+  }
+
+  /** Holds a door (e.g. the exit) shut regardless of its signals, or releases it. */
+  holdClosed(id: string, held: boolean): void {
+    if (held) this.held.add(id);
+    else this.held.delete(id);
   }
 
   mirrorState(id: string): MirrorState | undefined {
@@ -227,7 +235,7 @@ export class ChamberLogic {
       return active && !this.ghosted.has(cellKey(r, c));
     }
     const dev = this.deviceAt.get(cellKey(r, c));
-    if (dev && (dev.kind === 'door' || dev.kind === 'trapdoor' || dev.kind === 'exit')) return !this.openDoors.has(dev.id);
+    if (dev && (dev.kind === 'door' || dev.kind === 'trapdoor' || dev.kind === 'exit')) return !this.isOpen(dev.id);
     return symbolInfo(ch)?.tile === 'solid';
   }
 }

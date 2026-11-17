@@ -1,4 +1,4 @@
-import type { Cell } from '../chamber/types';
+import type { Cell, ChamberDef } from '../chamber/types';
 
 /**
  * Expedition rooms (C12, C61, C70; drafts approved Day 5 with rules R1–R4, C101–C102).
@@ -29,8 +29,37 @@ export interface RoomDef {
   lockUntilCleared?: boolean;
 }
 
+/** One upgrade offered on a reward pedestal (R3); the upgrade pool fills these in. */
+export interface RewardChoice {
+  id: string;
+  name: string;
+  description: string;
+}
+
 /** R4: the tier follows progress (walkers only at first, C70). */
 export function tierFor(solved: { mediums: number; hards: number }, remix = false): Tier {
   if (remix || solved.hards > 0) return 'T3';
   return solved.mediums > 0 ? 'T2' : 'T1';
+}
+
+/**
+ * A room as a chamber definition, so the chamber parser, validator, logic, renderer and checker
+ * all work on it unchanged. Its exit has no signals (a doorway); the room rules hold it shut where
+ * needed (Arena until cleared, reward room until a pick; C102).
+ */
+export function roomToChamber(room: RoomDef): ChamberDef {
+  return {
+    id: `room:${room.id}`,
+    name: room.name,
+    mechanic: 'weight',
+    difficulty: 'easy',
+    prerequisites: [],
+    kit: [],
+    initialPhase: 'red',
+    sections: [{ id: 'A', grid: room.grid }],
+    links: [],
+    exitAlwaysOpen: 'expedition room: opened by the room rules (C102)',
+    solution: [],
+    intendedFeeling: '',
+  };
 }

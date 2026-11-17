@@ -15,9 +15,11 @@ const debug = params.has('debug');
 // in-browser checks keep running when the page isn't being painted (e.g. a hidden preview pane).
 const autotest = params.has('autotest');
 // Start route: ?chamber=W-E opens a chamber directly (for reviewers and tests); ?room=movement the test room.
+// ?room=<id>&tier=T1|T2|T3 opens an expedition room on its own (C101).
 const route = {
   chamber: (params.get('chamber') ?? undefined) as ChamberId | undefined,
   room: params.get('room') ?? undefined,
+  tier: params.get('tier') ?? undefined,
 };
 
 // Dev only: ?kit=bolt,throw,dash replaces every chamber's declared kit (C24), to try abilities in

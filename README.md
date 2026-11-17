@@ -37,6 +37,7 @@ npm run build:single # dist-single/ (one self-contained index.html for the zip)
 - `?debug`: show physics bodies.
 - `?autotest`: drive the game loop with timers (used by automated in-browser checks).
 - `?chamber=<id>`: open a chamber directly (e.g. `?chamber=L-M`); `?room=movement`: the movement test room.
+- `?room=<id>&tier=T1|T2|T3`: open an expedition room on its own (`start`, `reward`, `exit`, `gap-run`, `corridor`, `shaft`, `red-floor`, `arena`).
 - `?kit=bolt,throw,dash` (dev builds only): replace the chamber's declared kit, to try abilities anywhere.
 - `?seed=<n>`: coming with expeditions.
 

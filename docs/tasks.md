@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 5 · Connector rooms in the game (room scene: grid + tier enemies, R1/R2) and the reward room (R3). Still waiting: (user) the Day 4 brief-change email
+**Next task →** Day 5 · Upgrade pool (C67, 10 upgrades, ability-gated) offered on the reward pedestals; Mend restores hearts (C66). Still waiting: (user) the Day 4 brief-change email
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -89,7 +89,8 @@ How to use this file:
 
 ## Day 5: Expedition loop
 - [x] Draft connector / start / reward / exit room grids → **approved** (C101, rules C102); entered as data with regression tests
-- [ ] Connector rooms + encounter tiers (data)
+- [x] Connector rooms + encounter tiers in the game: the chamber scene plays rooms (`?room=<id>&tier=`), enemies from the tier and never respawning (R1), the Arena's exit opens when cleared (R2), reward pedestals (R3, placeholder offers until the pool), the Seal altar ends the run. All 15 room × tier combinations load with their enemies grounded; Arena lock, reward pick and altar verified in the game
+- [ ] Playtest watch (red-floor arena): a walker standing on the one neutral tile beside the right bumper survives the swap and meets you at the far end
 - [ ] Reward room: pick 1 of 3; upgrade pool (10) with ability gating; Mend restores hearts
 - [ ] Progression graph, seals, save (localStorage) + reset progress
 - [ ] Run generator (seeded; frontier dealing; W-E first; final chamber alone), **or** fixed-layout fallback
