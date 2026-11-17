@@ -90,6 +90,7 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 ---
 
 ## Day 4: Finish chambers, combat, brief change (in progress)
+- **Dash:** added to the pure movement model (exactly 4 tiles, gravity paused, once per airtime, never while carrying), tested like the other metrics; jump + Dash clears 9 tiles. In the game it passes straight through a beam fence that holds a walking player back.
 - **L-H solved end to end in the game:** crate on `a`, climb the new shaft, one Bolt, and the chain runs by itself (trapdoor → caged walker onto `b` → locked mirror turns → exit). Beam knockback refined: an overhead beam now acts as a ceiling (found when a full jump onto the `a` step grazed the beam above it).
 - **L-H redesign, before building:** the beam tracer confirmed the chain works; the reachability checker showed the left shaft could not be climbed (Bolt ledge unreachable). With C91's literal walker rule, the walker also needed a cage on the trapdoor. Both approved (C97, C98).
 

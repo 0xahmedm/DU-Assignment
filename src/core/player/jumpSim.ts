@@ -91,3 +91,43 @@ function runGapJump(p: MovementParams, gapTiles: number, carrying: boolean, pres
   }
   return false;
 }
+
+/** Horizontal distance (px) a Dash covers from a standstill on flat ground (C29: 4 tiles). */
+export function simulateDashDistance(p: MovementParams): number {
+  let s = stepMovement(initialMovementState(), { move: 0, jumpPressed: false, jumpHeld: false, carrying: false, dashPressed: true, facing: 1 }, true, p, SIM_DT);
+  let x = s.vx * SIM_DT;
+  while (s.dashing) {
+    s = stepMovement(s, { move: 0, jumpPressed: false, jumpHeld: false, carrying: false, facing: 1 }, true, p, SIM_DT);
+    if (s.dashing) x += s.vx * SIM_DT;
+  }
+  return x;
+}
+
+/**
+ * The widest gap (tiles, floors at the same height) a running jump plus one Dash can clear,
+ * trying every Dash timing during the jump. P-H's return across a 5-tile chasm relies on it (C49).
+ */
+export function simulateJumpDashGap(p: MovementParams): number {
+  const width = PLAYER_BODY.width;
+  let best = 0;
+  for (let dashAt = 1; dashAt < 60; dashAt++) {
+    let s = { ...initialMovementState(), vx: p.runSpeed };
+    let left = -1; // body left edge just past the ledge end (x = 0): the last supported frame
+    let feetY = 0;
+    for (let frame = 0; frame < 600; frame++) {
+      s = stepMovement(
+        s,
+        { move: 1, jumpPressed: frame === 0, jumpHeld: true, carrying: false, dashPressed: frame === dashAt, facing: 1 },
+        frame === 0,
+        p,
+        SIM_DT,
+      );
+      left += s.vx * SIM_DT;
+      const prev = feetY;
+      feetY += s.vy * SIM_DT;
+      if (frame > 0 && prev < 0 && feetY >= 0) break; // back at take-off height
+    }
+    best = Math.max(best, left + width); // the far ledge must start before the body's right edge
+  }
+  return Math.floor((best - 1) / TILE);
+}

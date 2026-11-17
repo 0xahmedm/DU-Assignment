@@ -214,7 +214,8 @@ export class ChamberScene extends Phaser.Scene {
 
     // Beams are a barrier for the player: a push back, never a heart (C27).
     const touch = beamContact(this.beams.segments, bodies[0]!, TILE);
-    if (touch && this.player.knockback(touch.axis, touch.at)) this.cameras.main.shake(60, 0.002);
+    // Dashing makes the player immune to beams (C60): a Dash passes straight through a fence.
+    if (touch && !this.player.invulnerable && this.player.knockback(touch.axis, touch.at)) this.cameras.main.shake(60, 0.002);
     this.logic.takeEvents(); // feedback hooks (sound/particles) arrive with the FX pass
     this.syncSolids();
     this.checkExit(bodies[0]!);

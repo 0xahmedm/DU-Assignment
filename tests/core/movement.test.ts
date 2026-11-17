@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { METRICS, TILE } from '../../src/core/player/metrics';
-import { DEFAULT_MOVEMENT } from '../../src/core/player/movement';
-import { simulateGapJump, simulateMaxJumpHeight } from '../../src/core/player/jumpSim';
+import { DEFAULT_MOVEMENT, initialMovementState, stepMovement } from '../../src/core/player/movement';
+import { simulateDashDistance, simulateGapJump, simulateJumpDashGap, simulateMaxJumpHeight } from '../../src/core/player/jumpSim';
+
+/** Widest gap a running jump + one Dash clears (measured; see the Dash tests). */
+const JUMP_DASH_GAP_TILES = 9;
 
 // These tests are the contract between the movement feel (C58) and every chamber layout (C29).
 // A small safety margin keeps layouts robust against frame timing.
@@ -71,5 +74,39 @@ describe('simulation sanity (regression for AI bug #10: coyote sim pressed jump 
   it('the 5-tile limit is robust to a 5% faster run speed', () => {
     const faster = { ...DEFAULT_MOVEMENT, runSpeed: DEFAULT_MOVEMENT.runSpeed * 1.05 };
     expect(simulateGapJump(faster, { gapTiles: METRICS.gapTiles + 1, useCoyote: true })).toBe(false);
+  });
+});
+
+describe('Dash (C29, C50, C60)', () => {
+  it(`travels exactly ${METRICS.dashTiles} tiles`, () => {
+    expect(simulateDashDistance(DEFAULT_MOVEMENT)).toBeCloseTo(METRICS.dashTiles * TILE, 6);
+  });
+
+  it('jump + Dash clears the 5-tile chasm P-H needs (a running jump alone clears only 4)', () => {
+    const gap = simulateJumpDashGap(DEFAULT_MOVEMENT);
+    expect(gap).toBeGreaterThanOrEqual(5);
+    // Recorded so layouts can be checked against it (and so a change in feel is noticed).
+    expect(gap).toBe(JUMP_DASH_GAP_TILES);
+  });
+
+  it('never while carrying a crate (C50)', () => {
+    const s = stepMovement(initialMovementState(), { move: 1, jumpPressed: false, jumpHeld: false, carrying: true, dashPressed: true }, true, DEFAULT_MOVEMENT, 1 / 60);
+    expect(s.dashing).toBe(false);
+  });
+
+  it('once per airtime: a second Dash in the same jump is refused', () => {
+    const p = { ...DEFAULT_MOVEMENT, dashCooldown: 0 };
+    let s = stepMovement(initialMovementState(), { move: 1, jumpPressed: false, jumpHeld: false, carrying: false, dashPressed: true }, false, p, 1 / 60);
+    expect(s.dashing).toBe(true);
+    for (let i = 0; i < 12; i++) s = stepMovement(s, { move: 1, jumpPressed: false, jumpHeld: false, carrying: false }, false, p, 1 / 60);
+    s = stepMovement(s, { move: 1, jumpPressed: false, jumpHeld: false, carrying: false, dashPressed: true }, false, p, 1 / 60);
+    expect(s.dashing).toBe(false);
+    s = stepMovement(s, { move: 1, jumpPressed: false, jumpHeld: false, carrying: false, dashPressed: true }, true, p, 1 / 60); // landed
+    expect(s.dashing).toBe(true);
+  });
+
+  it('gravity is paused during a Dash (a straight line)', () => {
+    const s = stepMovement({ ...initialMovementState(), vy: 300 }, { move: 1, jumpPressed: false, jumpHeld: false, carrying: false, dashPressed: true }, false, DEFAULT_MOVEMENT, 1 / 60);
+    expect(s.vy).toBe(0);
   });
 });

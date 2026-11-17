@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 4 · Dash: 4 tiles; invulnerable to beams and enemies; not while carrying (then P-H)
+**Next task →** Day 4 · Teach the reachability checker to Dash, run it on P-H (C56 revision), then build P-H
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -76,7 +76,7 @@ How to use this file:
 ## Day 4: Finish chambers, combat, brief change
 - [x] **L-H redesign approved:** walker caged on the trapdoor (C97); left shaft rebuilt as alternating 3-high steps (C98, the Day 1 shaft was unclimbable)
 - [x] Plate-wired locked mirrors (amber frame, refuse hits) + L-H entered and **solved end to end in the real game** (crate on a → shaft → Bolt → trapdoor → walker on b → exit); beam chain, shaft, crate route and pen are regression tests
-- [ ] Dash: 4 tiles; invulnerable to beams and enemies; not while carrying
+- [x] Dash: exactly 4 tiles (fixed-distance, gravity paused), once per airtime, never while carrying (C50); invulnerable to beams during the Dash + 0.06 s (C60; enemies with combat); jump + Dash clears 9 tiles (measured, pinned by a test). Verified in the test room and through L-E's beam fence
 - [ ] P-H (C56 revision; three exit lamps)
 - [ ] Logic-state enumerator + test: every chamber's intended configuration lights its exit
 - [ ] Combat feel: melee reach ~1.3, knockback, hit-stop, shake, flash, sound

@@ -11,6 +11,8 @@ import {
   type MovementState,
 } from '../../core/player/movement';
 import type { Controls } from '../input/Controls';
+
+const DASH_GRACE = 0.06; // s of invulnerability after a Dash ends (C60)
 import { PALETTE } from '../render/palette';
 import type { Crate } from './Crate';
 
@@ -35,6 +37,8 @@ export class Player {
   private knockTimer = 0;
   private knockDir: -1 | 0 | 1 = 0;
   private knockLock = false;
+  /** A moment of invulnerability after a Dash ends, so crossing a beam fence never clips the edge. */
+  private dashGrace = 0;
   private pendingSwing: { box: Box; facing: 1 | -1; dir: SwingDir } | undefined;
   private boltCooldown = 0;
   private pendingBolt: { body: Box; facing: 1 | -1; dir: BoltDir } | undefined;
@@ -80,6 +84,13 @@ export class Player {
     const locked = this.knockTimer > 0 && this.knockLock;
     const move = locked ? this.knockDir : this.controls.horizontal();
     const before = this.state.jumpedSinceGrounded;
+    // Dash (C23, C29, C60): only with the ability in the kit; never while carrying (C50).
+    let dashPressed = this.controls.consume('dash') && this.abilities.has('dash') && !locked;
+    if (dashPressed && this.carried) {
+      this.scene.cameras.main.shake(60, 0.002); // refused: hands full
+      dashPressed = false;
+    }
+    const wasDashing = this.state.dashing;
     this.state = stepMovement(
       this.state,
       {
@@ -87,12 +98,20 @@ export class Player {
         jumpPressed: this.controls.consume('jump'),
         jumpHeld: this.controls.held('jump'),
         carrying: this.carried !== undefined,
+        dashPressed,
+        facing: this.facing,
       },
       grounded,
       DEFAULT_MOVEMENT,
       dt,
     );
     this.body.setVelocity(this.state.vx, this.state.vy);
+    if (this.state.dashing) {
+      if (!wasDashing) this.squash(1.3, 0.75);
+      this.afterimage();
+    }
+    if (wasDashing && !this.state.dashing) this.dashGrace = DASH_GRACE;
+    this.dashGrace = Math.max(0, this.dashGrace - dt);
 
     if (move !== 0 && !locked) this.facing = move;
     if (!before && this.state.jumpedSinceGrounded) this.squash(0.85, 1.18);
@@ -148,6 +167,19 @@ export class Player {
     this.body.setVelocity(this.state.vx, this.state.vy);
     this.squash(0.8, 1.2);
     return true;
+  }
+
+  /** Dashing (and a moment after): beams and enemy contact cannot touch the player (C60). */
+  get invulnerable(): boolean {
+    return this.state.dashing || this.dashGrace > 0;
+  }
+
+  /** A fading copy of the player at its current spot (Dash trail). */
+  private afterimage(): void {
+    const ghost = this.scene.add
+      .rectangle(this.hitbox.x, this.hitbox.y, PLAYER_BODY.width, PLAYER_BODY.height, PALETTE.player, 0.35)
+      .setDepth(9);
+    this.scene.tweens.add({ targets: ghost, alpha: 0, duration: 160, onComplete: () => ghost.destroy() });
   }
 
   /** The Bolt fired this step, if any; the scene traces it (core/player/bolt). */
