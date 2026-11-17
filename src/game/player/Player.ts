@@ -10,6 +10,7 @@ import {
   stepMovement,
   type MovementState,
 } from '../../core/player/movement';
+import { Sfx } from '../audio/Sfx';
 import type { Controls } from '../input/Controls';
 
 const DASH_GRACE = 0.06; // s of invulnerability after a Dash ends (C60)
@@ -107,7 +108,10 @@ export class Player {
     );
     this.body.setVelocity(this.state.vx, this.state.vy);
     if (this.state.dashing) {
-      if (!wasDashing) this.squash(1.3, 0.75);
+      if (!wasDashing) {
+        this.squash(1.3, 0.75);
+        Sfx.dash();
+      }
       this.afterimage();
     }
     if (wasDashing && !this.state.dashing) this.dashGrace = DASH_GRACE;

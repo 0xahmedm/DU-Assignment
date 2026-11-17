@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 4 · Combat feel: melee reach ~1.3, knockback, hit-stop, shake, flash, sound (then walker/Shieldbearer combat, hearts)
+**Next task →** Day 4 · Logic-state enumerator + test: every chamber's intended configuration lights its exit (and the Day 4 brief change when the email arrives)
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -79,9 +79,10 @@ How to use this file:
 - [x] Dash: exactly 4 tiles (fixed-distance, gravity paused), once per airtime, never while carrying (C50); invulnerable to beams during the Dash + 0.06 s (C60; enemies with combat); jump + Dash clears 9 tiles (measured, pinned by a test). Verified in the test room and through L-E's beam fence
 - [x] P-H entered and **solved end to end in the real game** (C56 + C99 walker pocket and mirror housing + C100 plate moved); three exit lamps; Bolt-only mirror proven by a melee-reach test. **All 9 chambers playable.**
 - [ ] Logic-state enumerator + test: every chamber's intended configuration lights its exit
-- [ ] Combat feel: melee reach ~1.3, knockback, hit-stop, shake, flash, sound
-- [ ] Walker combat (2 hits, respawn) · Shieldbearer full behaviour (front immunity, telegraphed turn)
-- [ ] Hearts: any hit or contact costs a heart; room reset; heart-loss sequence; off in level select
+- [x] Combat feel: melee reach 1.3, enemy knockback (~1 tile), 60 ms hit-stop, shake, flash, generated sounds (swing, hit, clang, kill, defeat, swap, mirror, Bolt, Dash)
+- [x] Walker combat (2 hits, respawn after 1.5 s) · Shieldbearer (front immune to melee and Bolt with a clang that pushes you back; 3 hits from behind; notices you behind it, shows "!", turns after 0.6 s) · Bolt hits the first enemy on its line · beams kill enemies (core-tested). Verified in the game (W-M walker, P-M Shieldbearer)
+- [x] Defeat on enemy contact (C55; not while dashing, C60): slow-motion flash, fade, chamber restarts at the entrance; hearts off in level select (C54). Hearts rules (3, lose one, run over at 0, Mend) in core and tested
+- [ ] Hearts in expeditions: take a heart on defeat, HUD, run over at 0 (with the expedition loop, Day 5)
 - [ ] **Day 4 brief change:** save the email → impact analysis vs the decision log → plan agreed with user → implement → document (devlog + GDD + decision log)
 - [ ] Day 4 routine
 

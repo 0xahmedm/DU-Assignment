@@ -12,6 +12,8 @@ import { validateChamber } from '../../core/chamber/validator';
 import { PLAYER_BODY, TILE } from '../../core/player/metrics';
 import { CHAMBERS } from '../../data/chambers';
 import { Controls } from '../input/Controls';
+import { touches, type HitOutcome } from '../../core/combat/enemies';
+import { Sfx } from '../audio/Sfx';
 import { PatrolEnemy, SHIELDBEARER_KIND, WALKER_KIND } from '../enemies/PatrolEnemy';
 import { Crate } from '../player/Crate';
 import { Player } from '../player/Player';
@@ -51,6 +53,8 @@ export class ChamberScene extends Phaser.Scene {
   private resetHeldMs = 0;
   private resetRing!: Phaser.GameObjects.Graphics;
   private solved = false;
+  /** Set during the defeat sequence (C54, C62): the step loop stops until the chamber restarts. */
+  private defeated = false;
   private chamberId: ChamberId = 'W-E';
 
   constructor() {
@@ -66,6 +70,7 @@ export class ChamberScene extends Phaser.Scene {
     this.beams = { segments: [], lit: new Set(), cells: new Set() };
     this.resetHeldMs = 0;
     this.solved = false;
+    this.defeated = false;
   }
 
   create(): void {
@@ -121,8 +126,8 @@ export class ChamberScene extends Phaser.Scene {
       this.physics.add.collider(crate.rect, solids);
       this.physics.add.collider(this.player.hitbox, crate.rect);
     }
-    // Patrolling enemies stand on their spawn cell's floor. No player collider: contact will cost a
-    // heart (Day 4). `enemies` holds every patroller.
+    // Patrolling enemies stand on their spawn cell's floor. No player collider: touching one is a
+    // defeat (C55), checked every step. `enemies` holds every patroller.
     for (const s of this.model.spawns.filter((x) => x.kind === 'walker' || x.kind === 'shieldbearer')) {
       const kind = s.kind === 'walker' ? WALKER_KIND : SHIELDBEARER_KIND;
       const enemy = new PatrolEnemy(this, s.cell[1] * TILE + TILE / 2, (s.cell[0] + 1) * TILE, kind);
@@ -149,20 +154,23 @@ export class ChamberScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player.hitbox, true, 0.15, 0.15);
     this.syncSolids();
     this.physics.world.on('worldstep', this.onStep, this);
-    this.events.once('shutdown', () => this.physics.world.off('worldstep', this.onStep, this));
+    // On restart Phaser may clear the physics world before this runs, so guard the lookup.
+    this.events.once('shutdown', () => this.physics.world?.off('worldstep', this.onStep, this));
   }
 
   private onStep(dt: number): void {
-    if (this.solved) return;
+    if (this.solved || this.defeated) return;
     this.player.step(dt, this.crates);
     const world = { isSolid: (r: number, c: number) => this.logic.isSolid(r, c) };
     for (const c of this.crates) c.stepFlight(dt, world.isSolid);
-    for (const w of this.enemies) w.step(world);
+    const playerBox = this.boundsOf(this.player.body);
+    for (const w of this.enemies) w.step(dt, world, playerBox);
+    const alive = this.enemies.filter((w) => w.alive);
 
     // Everything with weight: the player first (checkExit uses it), crates on the ground, walkers.
     const bodies: Bounds[] = [this.boundsOf(this.player.body)];
     for (const c of this.crates) if (!c.carried && !c.flying) bodies.push(this.boundsOf(c.body));
-    for (const w of this.enemies) bodies.push(w.bounds());
+    for (const w of alive) bodies.push(w.bounds());
 
     const occupied = new Set<string>();
     for (const b of bodies) {
@@ -189,6 +197,10 @@ export class ChamberScene extends Phaser.Scene {
         isHittable: (r, c) => this.logic.hittableAt(r, c) !== undefined,
       });
       this.onHits(this.logic.resolveHits(cells, occupied));
+      Sfx.swing();
+      // Enemies inside the swing (C62): melee reach beats contact range, so a swing lands first.
+      const fromX = (playerBox.left + playerBox.right) / 2;
+      for (const w of alive) if (overlap(swing.box, w.bounds())) this.onEnemyHit(w, w.hit('melee', fromX));
     }
     this.lastOccupied = occupied;
     const bolt = this.player.takeBolt();
@@ -202,7 +214,7 @@ export class ChamberScene extends Phaser.Scene {
       }
     };
     for (const c of this.crates) if (!c.carried && !c.flying) mark(this.boundsOf(c.body));
-    for (const w of this.enemies) mark(w.bounds());
+    for (const w of alive) mark(w.bounds());
     this.beams = traceBeams(this.model, {
       isSolid: (r, c) => this.logic.isSolid(r, c),
       mirrorAt: (r, c) => this.logic.mirrorAt(r, c),
@@ -211,6 +223,19 @@ export class ChamberScene extends Phaser.Scene {
     this.logic.setLitReceivers(this.beams.lit);
 
     this.logic.update({ pressedPlates: pressed, occupiedCells: occupied });
+
+    // Beams kill enemies outright (C27); an enemy stopping a beam is touching it.
+    for (const w of alive) {
+      const b = w.bounds();
+      const grown = { left: b.left - 4, right: b.right + 4, top: b.top - 4, bottom: b.bottom + 4 };
+      if (w.alive && beamContact(this.beams.segments, grown, TILE)) this.onEnemyHit(w, w.hit('beam', b.left));
+    }
+
+    // Any contact with an enemy is a defeat (C55), unless the player is dashing (C60).
+    if (!this.player.invulnerable && alive.some((w) => w.alive && touches(bodies[0]!, w.bounds()))) {
+      this.defeat();
+      return;
+    }
 
     // Beams are a barrier for the player: a push back, never a heart (C27).
     const touch = beamContact(this.beams.segments, bodies[0]!, TILE);
@@ -232,6 +257,18 @@ export class ChamberScene extends Phaser.Scene {
       isSolid: (r, c) => this.logic.isSolid(r, c),
       isHittable: (r, c) => this.logic.hittableAt(r, c) !== undefined,
     });
+    // An enemy on the line takes the Bolt first (it stops there; "Piercing Bolt" is an upgrade).
+    let target: PatrolEnemy | undefined;
+    for (let i = 0; i < path.cells.length && !target; i++) {
+      const [r, c] = path.cells[i]!;
+      const cell = { left: c * TILE, right: (c + 1) * TILE, top: r * TILE, bottom: (r + 1) * TILE };
+      target = this.enemies.find((w) => w.alive && overlap(cell, w.bounds()));
+      if (target) {
+        path.cells = path.cells.slice(0, i + 1);
+        path.hit = undefined;
+      }
+    }
+    Sfx.bolt();
     const [dr, dc] = start.step;
     const from =
       dir === 'up'
@@ -240,8 +277,8 @@ export class ChamberScene extends Phaser.Scene {
     const last = path.cells.at(-1) ?? start.cell;
     // End at the target's centre, or at the face of whatever stopped it.
     const to = {
-      x: last[1] * TILE + TILE / 2 + (path.hit ? 0 : (dc * TILE) / 2),
-      y: last[0] * TILE + TILE / 2 + (path.hit ? 0 : (dr * TILE) / 2),
+      x: last[1] * TILE + TILE / 2 + (path.hit || target ? 0 : (dc * TILE) / 2),
+      y: last[0] * TILE + TILE / 2 + (path.hit || target ? 0 : (dr * TILE) / 2),
     };
     const dist = Math.hypot(to.x - from.x, to.y - from.y);
     const dart = this.add
@@ -255,19 +292,64 @@ export class ChamberScene extends Phaser.Scene {
       duration: Math.max(30, (dist / BOLT.speed) * 1000),
       onComplete: () => {
         dart.destroy();
-        if (path.hit && this.logic) this.onHits(this.logic.resolveHits([path.hit], this.lastOccupied));
+        if (target) {
+          if (target.alive) this.onEnemyHit(target, target.hit('bolt', from.x));
+        } else if (path.hit && this.logic) this.onHits(this.logic.resolveHits([path.hit], this.lastOccupied));
         else this.view.puff(to.x, to.y, PALETTE.light);
       },
+    });
+  }
+
+  /** Feel of a hit on an enemy (C62): hit-stop, shake, sound; a clang pushes the player back. */
+  private onEnemyHit(enemy: PatrolEnemy, outcome: HitOutcome): void {
+    if (outcome === 'blocked') {
+      Sfx.clang();
+      this.cameras.main.shake(70, 0.003);
+      this.player.knockback('x', enemy.rect.x);
+      return;
+    }
+    if (outcome === 'killed') Sfx.kill();
+    else Sfx.hit();
+    this.cameras.main.shake(outcome === 'killed' ? 110 : 70, outcome === 'killed' ? 0.006 : 0.004);
+    this.hitStop(60);
+  }
+
+  /** Freeze the physics for a moment, so a hit lands with weight. */
+  private hitStop(ms: number): void {
+    this.physics.world.pause();
+    this.time.delayedCall(ms, () => this.physics.world.resume());
+  }
+
+  /**
+   * Defeat (C54, C62): a short slow-motion flash, a fade, and the chamber restarts with the player
+   * at its entrance. Hearts are off in level select (C54), so nothing else is lost here; during an
+   * expedition (Day 5) this is where a heart is taken.
+   */
+  private defeat(): void {
+    this.defeated = true;
+    Sfx.defeat();
+    this.player.body.setVelocity(0, 0);
+    this.physics.world.timeScale = 3; // slow motion
+    this.cameras.main.flash(180, 255, 80, 80, false);
+    this.time.delayedCall(350, () => {
+      this.cameras.main.fadeOut(250, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        this.physics.world.timeScale = 1;
+        this.scene.restart({ id: this.chamberId });
+      });
     });
   }
 
   /** Feedback for a swing's hits, and the physical part of dispenser recall. */
   private onHits(hit: HitResult): void {
     if (hit.crystal) {
+      Sfx.swap();
       this.view.flash(hit.crystal);
       this.cameras.main.flash(90, 255, 255, 255, false);
     }
     for (const id of hit.flipped) this.view.flash(id);
+    if (hit.flipped.length > 0) Sfx.mirror();
+    if (hit.locked.length > 0) Sfx.clang();
     if (hit.locked.length > 0) this.cameras.main.shake(70, 0.004); // "clang": locked to its plate (C42)
     for (const id of hit.dispensers) this.recall(id);
   }
@@ -352,3 +434,5 @@ export class ChamberScene extends Phaser.Scene {
       .setDepth(200);
   }
 }
+
+const overlap = (a: Bounds, b: Bounds) => a.right > b.left && a.left < b.right && a.bottom > b.top && a.top < b.bottom;
