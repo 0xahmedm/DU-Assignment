@@ -112,3 +112,8 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 | 26 | P-H's plate `p` sat beside the low tier, so with the crate on it the player could not get back to the chasm (in the approved layout too) | Playing the build to the end: the player was stuck between the crate and the tier | `p` moved to col 27 (C100) |
 | 27 | The AI's first data entry of C100 put `p` at col 26, not the approved 27 (one `.` short) | Playing it: the crate landed next to the plate, and the plate's lamp went out when the player walked away | Corrected to col 27; the row is now built by code with an asserted column |
 | 28 | The chamber's shutdown handler read `physics.world` after Phaser had already cleared it on restart (a defeat restarts the chamber), throwing on every restart | The browser console during the combat test | Guarded lookup (`physics.world?.off`) |
+
+---
+
+## Day 5: Expedition loop (in progress)
+- **Expedition rooms approved** (C101, C102): Start, Reward, Seal exit and five connectors (Gap run, Corridor, Shaft, Red-floor arena, Arena) with three encounter tiers each. Drafted as grids, checked with the validator and the reachability checker before review, now data with regression tests.

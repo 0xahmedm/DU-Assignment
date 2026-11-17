@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 4 · Brief change: (user) share the Day 4 email (save it in `docs/` or paste it) → impact analysis → plan agreed → implement. Meanwhile: Day 4 routine, then Day 5 room drafts
+**Next task →** Day 5 · Connector rooms in the game (room scene: grid + tier enemies, R1/R2) and the reward room (R3). Still waiting: (user) the Day 4 brief-change email
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -85,10 +85,10 @@ How to use this file:
 - [ ] Hearts in expeditions: take a heart on defeat, HUD, run over at 0 (with the expedition loop, Day 5)
 - [ ] **Day 4 brief change:** save the email → impact analysis vs the decision log → plan agreed with user → implement → document (devlog + GDD + decision log)
 - [x] Day 4 routine: AI export (`docs/ai-logs/day4-*`, redacted) · devlog · commit + tag `day4` (the brief change, when it arrives, is logged on top)
-- [ ] (user) Approve pushing the Day 4 commit and the `day4` tag
+- [x] (user) Approved: Day 4 commit and `day4` tag pushed
 
 ## Day 5: Expedition loop
-- [ ] Draft connector / start / reward / exit room grids → (user) approval
+- [x] Draft connector / start / reward / exit room grids → **approved** (C101, rules C102); entered as data with regression tests
 - [ ] Connector rooms + encounter tiers (data)
 - [ ] Reward room: pick 1 of 3; upgrade pool (10) with ability gating; Mend restores hearts
 - [ ] Progression graph, seals, save (localStorage) + reset progress
