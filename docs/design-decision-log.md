@@ -1,6 +1,9 @@
 # Design Decision Log (authoritative)
 
 
+
+> **Reading note:** sections below labelled "proposal" are the original discussion records, kept as written. Every one of them was decided: the outcome is in the *Confirmed decisions* table (C-numbers), and later revisions are in the *Change log* and in the revised grids marked "Revised" / "Superseded".
+
 ## Context
 
 This is pre-production for the Mid-Level Game Developer & Game Designer practical assignment.
@@ -183,7 +186,7 @@ capability: longer dash). The brief asks for 3 *puzzle mechanics*, not 3 abiliti
 - Difficulty from reasoning, not presentation or controls.
 - Reusable configurable components; level select for all 9.
 
-### Proposed selection criteria (awaiting user)
+### Proposed selection criteria (decided, see Confirmed decisions)
 - S1 Readable as plain shapes: state visible at a glance (R9).
 - S2 Deterministic and grid-based: designable by recipe and checkable (R10).
 - S3 Escalates across E/M/H without adding new rules.
@@ -230,7 +233,7 @@ Additional low-risk rules proposed with the Weight drafts:
 - **Proposed correction to C29:** Throw lands **5** tiles ahead (clears a 4-gap), not 3. Bug found while drawing W-H: landing 3 ahead clears only a 2-gap, which a carrying jump (3) already crosses, so Throw would be useless.
 - Point 3 dependency: a **walker** enemy that patrols, turns at walls *and* ledges, can't jump, falls with gravity, counts as weight, and respawns at its spawner if killed.
 
-### Weight chamber drafts (proposal, awaiting user; drawn against C29)
+### Weight chamber drafts (proposal, drawn against C29; decided, see Confirmed decisions)
 Legend: `#` solid · `.` air · `S` start · `D` entry · `E` exit · `|` internal door · `K` door · `=` trapdoor · lowercase letter = plate (sits on the tile below) · `C` crate · `U` crate dispenser · `w` walker spawn.
 
 **W-E "First Weight"**: teaches plate → door, weight must stay on the plate, crates are weight, carrying lowers your jump.
@@ -277,7 +280,7 @@ D......s..........x....E
 - Why it's Medium: three steps and one key insight ("the enemy is my second weight"), with vertical traversal through the right shaft.
 - Stuck states: the walker is killed → it respawns at `w`. The player can never be inside the slot (`s` and the trapdoor are on different floors). No pits.
 
-**W-H "Drop Delivery": full grid (proposal, awaiting user).** Kit: base + Throw. Starts in Red. Extra legend: `R` red block · `B` blue block · `1`/`2` phase crystals · `x`, `y` plates (exit needs x AND y) · `yyyyy` = one plate strip.
+**W-H "Drop Delivery": full grid (proposal; decided, see Confirmed decisions).** Kit: base + Throw. Starts in Red. Extra legend: `R` red block · `B` blue block · `1`/`2` phase crystals · `x`, `y` plates (exit needs x AND y) · `yyyyy` = one plate strip.
 ```
 ##########################
 ######...................#
@@ -347,7 +350,7 @@ DS.C............1..............E
 - Stuck states: crate thrown in the wrong phase → falls into the chasm → dispenser respawns it. Swapping while standing on a block of the colour that vanishes → you fall a level (lost position, not a softlock).
 - Alternative concept B, "Descent Shaft": a stack of alternating red/blue layers where every swap drops every crate one layer; place two crates so each comes to rest on its plate. A purer sequencing puzzle and more elegant, but harder to read.
 
-### Light chamber grids (proposal, awaiting user)
+### Light chamber grids (proposal; decided, see Confirmed decisions)
 Extra legend: `>` `<` `v` emitters (fire in that direction) · `o` receiver · `/` `\` mirrors (initial state; attack flips) · mirrors, emitters and receivers are solid blocks. Reflection: `/` turns →↑ ←↓ ↓← ↑→; `\` turns →↓ ←↑ ↓→ ↑←.
 
 **L-E "First Light"**
@@ -399,7 +402,7 @@ DS.......##.....##.....E
 - Deviation from the approved concept (C37): the concept said "up the climbing shaft". Drawn exactly, the shaft forced precise jumps around mirror blocks, so the same lesson moved to the gallery walkway.
 - **Revised in the Day 3 build (C96):** row 12 is now `DS.......##....##......E` (the small step moved one tile left, so the exit is reachable).
 
-**L-H "Chain Reaction": full grid (proposal, awaiting user).** Kit: base + Bolt. Extra legend: `a`/`b` plates (`bbb` = one strip) · `=` trapdoor · `U` dispenser · the mirror at col 19 row 14 is **Mb (wired to b)**, the one at col 19 row 16 is **Ma (wired to a)**.
+**L-H "Chain Reaction": full grid (proposal; decided, see Confirmed decisions).** Kit: base + Bolt. Extra legend: `a`/`b` plates (`bbb` = one strip) · `=` trapdoor · `U` dispenser · the mirror at col 19 row 14 is **Mb (wired to b)**, the one at col 19 row 16 is **Ma (wired to a)**.
 ```
 ##########################
 #.........o.........######
@@ -468,7 +471,7 @@ DS........C...........####
   - (b) The chain is permanent; a wrong order needs the chamber reset.
   - (c) Remove the catch.
 
-### Phase chamber grids (proposal, awaiting user)
+### Phase chamber grids (proposal; decided, see Confirmed decisions)
 Extra legend: `R` red block · `B` blue block · `*` phase crystal (**non-solid**: you walk through it and hit it with an attack; this is how crystals were already drawn in W-H). One state per chamber; it carries across sections.
 
 **P-E "First Phase"** (starts Red)
@@ -556,7 +559,7 @@ DS.............#
 ########################
 ```
 
-**P-H "Eclipse" revision for C55 (proposal, awaiting user).** The walker moves off the bridge into a raised box on the right (red roof over plate strip `qqq`, W-H pattern). The bridge and chasm become enemy-free; the bumpers are removed. Everything else is unchanged.
+**P-H "Eclipse" revision for C55 (proposal; decided, see Confirmed decisions).** The walker moves off the bridge into a raised box on the right (red roof over plate strip `qqq`, W-H pattern). The bridge and chasm become enemy-free; the bumpers are removed. Everything else is unchanged.
 ```
 ################################
 D.......................o......#
@@ -733,7 +736,7 @@ Assumption to confirm in Point 3: **melee hits forward and up**, so mirrors can 
 - Entry door, exit door; crate dispenser if the chamber has crates; reset (sub-topic 5).
 - Each chamber states: its **goal** (teach / test / twist), intended solution steps, stuck states and recovery.
 
-### Remaining Point 2 sub-topics (proposal, awaiting user)
+### Remaining Point 2 sub-topics (proposal; decided, see Confirmed decisions)
 **Solvability assurance (recommended: layered, cheap):**
 1. Every layout is drawn against the fixed design metrics (C29).
 2. Each chamber's data carries its authored solution as a step list, shown in a debug overlay.
@@ -798,7 +801,7 @@ Assumption to confirm in Point 3: **melee hits forward and up**, so mirrors can 
 - Armoured bridge enemy (C48).
 - Dedicated combat encounters live in the connector rooms (C12, C16).
 
-### Proposals (awaiting user)
+### Proposals (decided, see Confirmed decisions)
 **Movement feel package (numbers tuned on Day 1, constrained by C29):**
 - Fast ground acceleration and deceleration.
 - Variable jump: release early to cut the jump; reduced gravity near the apex for a little hang; higher fall gravity; capped fall speed.
@@ -839,7 +842,7 @@ A small upgrade system with meaningful choices. Upgrades affect movement, combat
 - A "reward choice" slot follows each chamber in an expedition (C12).
 - Hearts don't refill; how to regain them was parked here (C54).
 
-### Proposals (awaiting user)
+### Proposals (decided, see Confirmed decisions)
 - **Structure:** after each solved chamber, a reward room offers **pick 1 of 3** from a pool (seeded). Run-scoped, no currency or shop (an economy adds UI and balancing for 5% of the grade).
 - **Hard rule:** **no upgrade may change the movement metrics** (C29: jump, gaps, carry, Throw/Dash distance), because every layout depends on them. Movement upgrades are therefore limited to things like Dash cooldown.
 - **Ability-gated upgrades** appear only once the ability is owned, so the pool grows as permanent progress grows. Combinations then differ across runs (feeds Point 5).
@@ -872,7 +875,7 @@ At least one replay incentive (different routes, changing configurations, upgrad
 - Solved chambers and abilities persist (C7).
 - Upgrade combinations, incl. ability-gated upgrades (C64–C67).
 
-### Proposals (awaiting user)
+### Proposals (decided, see Confirmed decisions)
 - **Run template:** Start → [connector (combat) → chamber → reward pick] × N → exit, where N = chambers dealt.
   - Connectors come from the 5–6 templates × encounter variants, with no repeats within a run.
   - **Plus one optional ability-gated side room per run** once you own an ability (Throw/Bolt/Dash gate) that holds an extra reward pick. This gives "different routes" and keeps the Metroidvania flavour (C5).
@@ -887,7 +890,7 @@ At least one replay incentive (different routes, changing configurations, upgrad
 ### What the brief requires
 HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-generated assets; no purchases; prioritise feel, puzzle quality, reusability.
 
-### Proposals (awaiting user)
+### Proposals (decided, see Confirmed decisions)
 - **Stack:** **Phaser 3 (latest stable; confirm the exact version on Day 1) + TypeScript + Vite.**
   - Phaser is the most mature 2D web framework (tilemaps, Arcade physics, input, audio, cameras, particles) and the one AI tools know best, which matters when directing and checking AI.
   - TypeScript types catch AI mistakes and give the chamber data a schema.
@@ -915,7 +918,7 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
 - Enemies are puzzle pieces in W-M, W-H, L-H, P-M and P-H, so a *basic* walker and Shieldbearer (patrol, weight, falling) must exist before Day 4. Combat behaviour (attacks, damage, hearts) stays on Day 4.
 - Because all 9 layouts are already designed as data, Days 2–3 are mostly systems + data entry, not level design.
 
-### Proposed schedule (awaiting user)
+### Proposed schedule (decided, see Confirmed decisions)
 | Day | Build | Exit criteria |
 |---|---|---|
 | 1 | Repo + Vite/TS/Phaser + GitHub Pages pipeline; player controller + feel tuned to C29; chamber data format + parser + validator skeleton; test room; debug overlay; level-select stub | Movement hits the metrics in a test room; deploy works |
@@ -936,7 +939,7 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
   6. Upgrade pool trimmed to 6
   - **Never cut:** the 9 chambers, level select, reset, movement feel, playtests.
 
-### Compressed schedule (proposal, awaiting user; clock already at Day 2)
+### Compressed schedule (proposal, clock already at Day 2; decided as C80)
 | Day | Build |
 |---|---|
 | 1 (done) | Pre-production: design discussion + this decision log (no gameplay; Day 1 screenshot = design artefacts, labelled honestly) |
@@ -949,7 +952,7 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
 
 **Pre-applied cuts:** Spitter and side rooms are out of the plan (back only if ahead). Remix and encounter tiers are the next candidates.
 
-## Point 8: Playtesting (proposal, awaiting user)
+## Point 8: Playtesting (proposal; decided, see Confirmed decisions)
 - **Who/when:** ≥ 3 people who haven't seen the game; a quick early session on Day 5 evening if possible, main sessions on Day 6 morning.
 - **Session (~15 min):** think-aloud; no hints for 2 minutes after getting stuck. Order:
   1. W-E, L-E, P-E (from level select).
@@ -960,7 +963,7 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
 - **Built-in telemetry:** per-chamber time / resets / hearts lost logged and exportable to the clipboard. This gives hard numbers for the before/after.
 - **Iteration:** triage the top 3 issues, fix them, and capture at least one before/after (clip or screenshot + metric).
 
-## Point 9: Deliverables (proposal, awaiting user)
+## Point 9: Deliverables (proposal; decided, see Confirmed decisions)
 - **Build:**
   - GitHub Pages link.
   - A zip built as a **single self-contained HTML file** (via a single-file Vite plugin), so it opens by double-click without a local server.
@@ -981,7 +984,7 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
   - `docs/playtests/`
   - `docs/ASSETS.md` (font licence, generated SFX, everything else code)
 
-## Point 10: Follow-up call prep (proposal, awaiting user)
+## Point 10: Follow-up call prep (proposal; decided, see Confirmed decisions)
 - Keep the project runnable locally. Rehearse three live changes: edit a chamber grid, tune a metric (show the validator flagging a broken layout), add a device.
 - Prepare "intended feeling" notes per chamber (from each chamber's teach/test goal).
 - **AI bug stories ready from pre-production already:**
@@ -996,7 +999,7 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
   4. Why no wall jump.
   5. Why the generator only chains rooms.
 
-## Point 11: Evaluation alignment (proposal, awaiting user)
+## Point 11: Evaluation alignment (proposal; decided, see Confirmed decisions)
 | Criterion | Where we deliver it |
 |---|---|
 | Puzzles 30% | 3 interacting mechanics, 9 validated layouts, readability rules (C52) |
@@ -1068,3 +1071,4 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
 - 2026-11-17 (Day 4): Logic-state enumerator (C51) built and run on all nine chambers; report in `docs/enumerator-report.md`, kept as a file snapshot so any logic change shows up as a diff to review. Review: every intended end state opens its exit; P-H (the "light needs Blue" dilemma) and L-M (the mirror order) have exactly one opening configuration; the other chambers' extra opening configurations are gated physically (e.g. W-E opens with only `q` weighed down, but reaching `q` needs the crate on `p`; L-H opens with the high mirror Bolted back, but the walker only reaches `b` after it was Bolted). No unintended solution found.
 - 2026-11-17 (Day 5): Expedition room drafts approved (C101, rules C102). Grids entered as data (`src/data/rooms/expedition.ts`, types in `src/core/run/rooms.ts`) with regression tests (validator, reachability, every tier's enemies standing on solid ground, walkers only in T1).
 - 2026-11-17 (Day 5): Expedition rooms playable in the chamber scene (rooms are converted to chamber definitions, so every system works on them unchanged). Room ids are `room:<id>`; an exit can be held shut by room rules (`ChamberLogic.holdClosed`). Run hand-off through game events (`room-done`, `reward-picked`, `run-complete`) for the expedition controller. Implementation default, open to the user's objection: after a pick the reward room keeps the chosen upgrade's name and effect on screen as a confirmation.
+- 2026-11-17 (Day 5): Docs refreshed and an automated docs check added (`tests/docs.test.ts`, C86). Historical sections that still said "awaiting user" now point to the confirmed decisions; a reading note at the top explains how proposals, decisions and revisions relate.

@@ -29,8 +29,8 @@ The mechanics combine because each changes the others' rules:
 ### The nine chambers
 | | Easy (teach) | Medium (deepen) | Hard (combine) |
 |---|---|---|---|
-| **Weight** | *First Weight:* a crate keeps a door open; carrying lowers your jump | *Borrowed Weight:* trap an enemy on a plate so you can fetch the crate (grants **Throw**) | *Drop Delivery* (Weight × Phase): throw the crate in red, drop it onto its plate in blue |
-| **Light** | *First Light:* flip mirrors to power doors; beams block paths | *Order of Light:* set the far mirror before the beam fills your path (grants **Bolt**) | *Chain Reaction* (Light × Weight): one Bolt triggers enemy → plate → mirror → exit |
+| **Weight** | *First Weight:* a crate keeps a door open; carrying lowers your jump | *Borrowed Weight:* open a trapdoor as the walker crosses it; it drops onto the plate that opens the crate's door (grants **Throw**) | *Drop Delivery* (Weight × Phase): throw the crate in red, drop it onto its plate in blue |
+| **Light** | *First Light:* flip mirrors to power doors; beams block paths | *Order of Light:* set the far mirror before the beam fills your path (grants **Bolt**) | *Chain Reaction* (Light × Weight): one Bolt opens a trapdoor; the caged walker drops onto a plate, a plate-locked mirror turns, and the beam reaches the exit |
 | **Phase** | *First Phase:* swap colours from safe ground to cross | *Footing:* swap only from neutral footholds; your tower swaps have already dropped the bridge's guard into the chasm, so swap back to restore the bridge (grants **Dash**) | *Eclipse* (final, all three): light needs blue, the bridge needs red. Dash home through the dilemma |
 
 ## How solvability is ensured
@@ -41,13 +41,14 @@ The mechanics combine because each changes the others' rules:
   - A load-time validator checks grid sanity and wiring.
   - A logic enumerator tries every mirror/phase/plate combination and confirms the intended configuration lights the exit.
   - Each chamber stores its intended solution.
-  - A reachability checker runs the real movement model against each grid ("can the player, carrying a crate or not, get from here to there in this colour?"). It was added after the Day 1 drawings proved too optimistic about headroom, and it caught W-H's unclimbable staircase.
+  - A reachability checker runs the real movement model against each grid ("can the player, carrying a crate or not, with or without Dash, get from here to there in this colour?"). It was added after the Day 1 drawings proved too optimistic about headroom; it caught unclimbable or dead-end layouts in W-H, L-M, L-H and P-H before they were built, and a melee-reach check proves the finale's high mirror can only be hit with Bolt.
+  - The logic enumerator found no unintended solutions; the finale and L-M each have exactly one opening configuration (`docs/enumerator-report.md`).
 - **Recovery:**
   - A free hold-R reset.
   - Pits are always escapable, in either colour. (P-E's pit got an extra crystal after a scripted playtest found a fall in Red had no way out.)
   - Crate dispensers recall stuck crates.
   - Doors never close on objects.
-  - Defeat costs a heart and resets only the current room.
+  - In an expedition, defeat costs a heart and resets only the current room; in level select it simply restarts the chamber.
 
 ## How difficulty scales
 - **Teach → deepen → combine:** Easy isolates one idea and fails safely; Medium adds steps, order or a trap; Hard combines two mechanics across several sections.
@@ -55,14 +56,15 @@ The mechanics combine because each changes the others' rules:
 - Difficulty comes from **reasoning, not dexterity:** no timers, mirrors have only two positions, and the colour state is one bit per chamber.
 
 ## Platforming & combat
-- **Movement:** responsive, with fast acceleration, variable jump, apex hang, coyote time and jump buffering; no wall jump.
-- **Melee** hits forward and up, with hit-stop, knockback and screen shake.
-- **Hearts:** 3 per run; any hit or enemy contact costs a heart and resets the room; losing the last ends the run.
+- **Movement:** responsive, with fast acceleration, variable jump, apex hang, coyote time and jump buffering; no wall jump. The metrics are proven by tests on the same movement code the game runs.
+- **Abilities** (one from each Medium): **Throw** lands a crate exactly 5 tiles ahead; **Bolt** flies straight (forward or up) and hits the first target; **Dash** covers exactly 4 tiles with brief invulnerability.
+- **Melee** hits forward and up (reach beyond contact range), with a 60 ms hit-stop, knockback, screen shake, flashes and sounds generated in code.
+- **Hearts:** 3 per expedition; any enemy contact costs a heart and resets the room (beams only push you back); losing the last ends the run. Off in level select.
 - **Enemies:**
-  - The **Walker** patrols and turns at walls and at any gap, even an open trapdoor; it only falls when the floor vanishes under it (knock it off ledges, into beams, or drop it with a swap or a well-timed trapdoor).
-  - The **Shieldbearer** is immune from the front (jump over it and strike its back, or use the environment).
-- **Combat rooms** reuse the puzzle systems (ledges over pits, phase arenas, beam arenas).
-- **Dash** grants brief invulnerability.
+  - The **Walker** (2 hits) patrols and turns at walls and at any gap, even an open trapdoor; it only falls when the floor vanishes under it.
+  - The **Shieldbearer** (3 hits) blocks melee and Bolt from the front with a clang; strike its back, and it turns to face you after a telegraphed pause.
+  - Beams kill any enemy; puzzle-chamber enemies respawn at their spawner, connector enemies stay down.
+- **Combat rooms** reuse the puzzle systems: Gap run (ledge patrols over pits), Corridor (a Shieldbearer to jump), Shaft (a vertical climb), Red-floor arena (swap to drop the enemies) and Arena (the exit opens when it is cleared), each with three encounter tiers.
 
 ## Upgrades & replayability
 - **After each chamber, pick 1 of 3 run upgrades:**
@@ -81,7 +83,7 @@ The mechanics combine because each changes the others' rules:
 ## Schedule & why it was reordered
 - Hard chambers combine mechanics, and enemies are puzzle pieces, so all three mechanic systems and basic enemy movement are built across Days 2–3 instead of "one mechanic per day". Combat behaviour stays on Day 4.
 - Day 1 was spent entirely on design (all layouts were drawn as text grids before coding).
-- **TBD:** final account of actual vs planned.
+- **Actual so far:** Day 2 built the foundations and all three Weight chambers plus P-E and P-M (ahead of plan); Day 3 the Light system, L-E, L-M and Bolt; Day 4 L-H, Dash, the finale P-H, combat and the logic enumerator; Day 5 the expedition rooms. Playing each chamber as it was built exposed headroom and dead-end errors in the Day 1 drawings, so a reachability checker was added on Day 2 and every later chamber was checked before it was built. **TBD:** the rest of Days 5–7.
 
 ## Day 4 brief change
 **TBD:** the change, its impact and how it was handled.

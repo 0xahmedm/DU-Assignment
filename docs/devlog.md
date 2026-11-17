@@ -116,5 +116,6 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 ---
 
 ## Day 5: Expedition loop (in progress)
+- **Docs check:** every living doc was brought up to date, and a test now fails if code and docs drift (unknown decision ids, broken links or screenshots, a missing Next-task pointer, undocumented chambers or rooms, gaps in the AI bug log). It immediately found a stale Day 1 screenshot name in the plan.
 - **Rooms in the game:** the chamber scene now plays expedition rooms (tier enemies that never respawn, the Arena lock, reward pedestals, the Seal altar), reachable on their own with `?room=<id>&tier=`. Every room × tier loads correctly; the Arena lock, the reward pick and the altar were checked in the game.
 - **Expedition rooms approved** (C101, C102): Start, Reward, Seal exit and five connectors (Gap run, Corridor, Shaft, Red-floor arena, Arena) with three encounter tiers each. Drafted as grids, checked with the validator and the reachability checker before review, now data with regression tests.

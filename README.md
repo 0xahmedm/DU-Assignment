@@ -6,6 +6,7 @@ A browser-playable 2D puzzle action-platformer prototype: **9 puzzle chambers** 
 
 ## Play
 - **Online:** https://0xahmedm.github.io/DU-Assignment/ (try `?chamber=W-E` to open a chamber directly).
+- **What's playable:** the level select (3 × 3) opens all nine chambers; the expedition rooms open on their own with `?room=<id>`. The full expedition loop (runs, upgrades, save) is being built.
 - **Offline:** unzip the release and double-click `index.html` (a single self-contained file; no server needed).
 
 ## Controls
@@ -20,6 +21,7 @@ A browser-playable 2D puzzle action-platformer prototype: **9 puzzle chambers** 
 | Bolt (ability) | F or I |
 | Dash (ability) | Shift or O |
 | Reset chamber | hold R |
+| Menu | Esc |
 
 ## Run locally
 Requires Node 20.19+ (developed on Node 24).

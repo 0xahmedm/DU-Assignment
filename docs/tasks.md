@@ -90,6 +90,7 @@ How to use this file:
 ## Day 5: Expedition loop
 - [x] Draft connector / start / reward / exit room grids → **approved** (C101, rules C102); entered as data with regression tests
 - [x] Connector rooms + encounter tiers in the game: the chamber scene plays rooms (`?room=<id>&tier=`), enemies from the tier and never respawning (R1), the Arena's exit opens when cleared (R2), reward pedestals (R3, placeholder offers until the pool), the Seal altar ends the run. All 15 room × tier combinations load with their enemies grounded; Arena lock, reward pick and altar verified in the game
+- [x] Docs refreshed (GDD combat/rooms/schedule, README, ASSETS, implementation plan as built, decision-log labels) + automated docs check `tests/docs.test.ts` (decision ids, links, screenshots, Next-task pointer, chambers/rooms documented, AI bug numbering)
 - [ ] Playtest watch (red-floor arena): a walker standing on the one neutral tile beside the right bumper survives the swap and meets you at the far end
 - [ ] Reward room: pick 1 of 3; upgrade pool (10) with ability gating; Mend restores hearts
 - [ ] Progression graph, seals, save (localStorage) + reset progress

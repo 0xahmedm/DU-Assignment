@@ -19,7 +19,7 @@ You are continuing a 7-working-day practical assignment (Mid-Level Game Develope
 - **Export this entire pre-production conversation** (the full Claude Code transcript, corrections and dead ends included) to `docs/ai-logs/day1-preproduction-claude.md`. It counts as Day 1 work.
 - Store the ChatGPT handoff as `docs/ai-logs/day1-preproduction-chatgpt-handoff.md`.
   - **Note to user:** the handoff is a *summary*. The brief requires *full* conversation exports, so also export the complete ChatGPT conversation into `docs/ai-logs/`.
-- Day 1 screenshot: `docs/screenshots/day1-design.png` showing the design artefacts (decision log / chamber grids), labelled honestly as pre-production.
+- Day 1 screenshot: `docs/screenshots/day1-projectFolder.png` (as saved by the user) showing the design artefacts (decision log / chamber grids), labelled honestly as pre-production.
 
 ## Step 1: produce the implementation plan first (for user approval)
 1. Create the `docs/` set below and seed it:
@@ -72,18 +72,25 @@ You are continuing a 7-working-day practical assignment (Mid-Level Game Develope
 - Every core system is unit-testable headless.
 
 ```
-src/core/     engine-free TS, unit-tested: grid + tiles, signal bus (OR/AND), devices
-              (plate, crate, dispenser+recall, door, trapdoor, crystal, phase blocks + ghost
-              rule, emitter, 2-state mirror, plate-wired locked mirror, receiver, lamp),
-              beam tracer (incl. phase shutters, crates/enemies block), chamber parser,
-              validator, logic-state enumerator, progression graph, seeded RNG, run generator
-src/game/     Phaser layer: boot/menu/level-select/chamber/expedition scenes, player controller,
-              enemies, rendering of tiles/devices, FX (hit-stop, shake, particles), audio, HUD
-src/data/     chambers/W-E.ts … P-H.ts, rooms/ (connectors, start, reward, exit),
-              encounters/ (tiers), upgrades.ts
-tests/        Vitest: core systems + validator + enumerator over all 9 chambers
+src/core/     engine-free TS, unit-tested (as built):
+              chamber/  types, legend, parser (stitching), validator, logic (signals, doors,
+                        phase + ghost rule, locked mirrors, exit hold), collision faces,
+                        dispensers, enumerate (logic-state enumerator)
+              light/    beams (tracer, geometry, contact)
+              player/   metrics (C29), movement (incl. Dash), jumpSim, throw, bolt,
+                        reach (reachability checker incl. Dash and melee-reach hook)
+              combat/   melee (swing area, cells hit), enemies (hit rules, notice, contact)
+              enemies/  walker (shared patrol), shieldbearer
+              run/      hearts, rooms (RoomDef, tiers, roomToChamber)
+src/game/     Phaser layer: scenes (menu, chamber + rooms, test room), player, enemies,
+              render (chamber view, solids, palette), input, audio (generated SFX)
+src/data/     chambers/W-E.ts … P-H.ts, rooms/expedition.ts (start, reward, exit, 5 connectors
+              with tiers), rooms/movementTest.ts
+tests/        Vitest: one file per core system + chambers, rooms, reachability, enumerator
+              (file snapshot docs/enumerator-report.md), architecture guard
 docs/         implementation-plan.md, tasks.md, design-decision-log.md, GDD.md, devlog.md
-              (incl. AI bug log), ASSETS.md, ai-logs/, screenshots/, playtests/
+              (incl. AI bug log), ASSETS.md, enumerator-report.md, expedition-rooms-draft.md,
+              ai-logs/, screenshots/, playtests/
 ```
 
 ## Chamber data format (C53)
@@ -212,7 +219,7 @@ No wall jump; no metric-changing upgrades; no full procedural world; no paid ass
 
 ---
 
-## Step 1 plan (awaiting user approval, 2026-11-14)
+## Step 1 plan (approved 2026-11-14; repo structure updated to what was built)
 
 ### Verified environment (2026-11-14)
 - Node 24.19.0, npm 10.7.0, git 2.45.1. **GitHub CLI not installed**, so the user creates the GitHub repo on the website and the remote is connected manually.
@@ -222,28 +229,25 @@ No wall jump; no metric-changing upgrades; no full procedural world; no paid ass
   - typescript-eslint 8.72.2 supports TypeScript **< 6.1**, so TypeScript is pinned to **6.0.3** (TS 7.0 is not yet supported by the linter).
 - Exact versions are pinned in `package.json`.
 
-### Repo structure
+### Repo structure (as built)
 ```
-G:\Du
-├─ index.html · package.json · tsconfig.json · vite.config.ts · vitest.config.ts · eslint.config.js · README.md · .gitignore
-├─ .github/workflows/pages.yml             build + test + deploy to GitHub Pages
+G:\Du\DU Assignment
+├─ index.html · package.json · tsconfig.json · vite.config.ts · eslint.config.js · README.md · .gitignore · .gitattributes
+├─ .github/workflows/pages.yml             typecheck + lint + test + build + deploy to GitHub Pages
 ├─ src/
-│  ├─ main.ts                              composition root (wires core + data + game)
+│  ├─ main.ts                              composition root (URL options, Phaser game, scenes)
 │  ├─ core/                                NO phaser / DOM / window / localStorage
-│  │  ├─ ports.ts                          Clock, Rng, Storage interfaces
-│  │  ├─ grid/                             Grid, Tile, coords, solidity queries
-│  │  ├─ signals/                          SignalBus (OR/AND), links
-│  │  ├─ devices/                          plate, door, trapdoor, crate, dispenser, crystal, emitter, mirror, receiver, lamp
-│  │  ├─ phase/                            PhaseSystem + ghost rule
-│  │  ├─ light/                            BeamTracer
-│  │  ├─ chamber/                          types, legend, parser, ChamberState, validator, enumerator
-│  │  ├─ player/                           metrics.ts (C29) + derived physics constants, kit
-│  │  ├─ combat/                           melee.ts: swing area + which cells a swing hits (no hits through walls)
-│  │  └─ run/                              progression graph, seals, hearts, upgrades, rng, generator
-│  ├─ data/                                chambers/*.ts · rooms/*.ts · encounters/*.ts · upgrades.ts
-│  └─ game/                                scenes/ · player/ · enemies/ · render/ · fx/ · audio/ · ui/ · adapters/
-└─ tests/                                  core/*.test.ts · chambers.test.ts · architecture.test.ts
+│  │  ├─ chamber/                          types, legend, parser, validator, logic, collision, dispensers, enumerate
+│  │  ├─ light/                            beams
+│  │  ├─ player/                           metrics, movement, jumpSim, throw, bolt, reach
+│  │  ├─ combat/                           melee, enemies
+│  │  ├─ enemies/                          walker, shieldbearer
+│  │  └─ run/                              hearts, rooms (next: upgrades, progression, generator, rng)
+│  ├─ data/                                chambers/*.ts · rooms/expedition.ts · rooms/movementTest.ts
+│  └─ game/                                scenes/ · player/ · enemies/ · render/ · input/ · audio/
+└─ tests/                                  core/*.test.ts · architecture.test.ts
 ```
+The planned `ports.ts`, `grid/`, `signals/`, `devices/` and `phase/` folders were folded into `chamber/` (one `ChamberLogic` owns signals, doors, phase and mirrors), which kept the core smaller and easier to explain.
 
 ### Chamber data schema (core types; data files only import these)
 ```ts
