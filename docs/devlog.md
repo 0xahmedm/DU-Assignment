@@ -32,7 +32,7 @@ Daily entries (5 lines max) plus an **AI bug log**: what the AI got wrong, how i
 2. Built the chamber pipeline (grids → parser → validator → engine-free logic) and the systems for Weight and Phase: plates, doors, crates, dispensers, phase + ghost rule, melee, Throw, walker, Shieldbearer.
 3. Six chambers playable from level select; W-E, W-M, W-H, P-E and P-M each solved end to end in the real game with scripted input.
 4. Playing the Day 1 drawings exposed headroom and dead-end bugs (P-E, W-H, P-M, walker rule): each fix agreed with the user (C90–C95), and a headless reachability checker now tests layouts before they are built.
-5. 106 automated tests; AI conversation exported (`docs/ai-logs/day2-*`, email redacted); screenshots in `docs/screenshots/day2-*`.
+5. 106 automated tests; AI conversation exported (`docs/ai-logs/day2-*`, email redacted); screenshots in `docs/screenshots/day2-*`. Privacy fix: the Day 1 raw export contained the user's email (added by the app to the session context); replaced with a redacted copy (the user chose not to rewrite git history).
 
 - Scaffolded the project: Vite 8, TypeScript 6.0.3 (TS 7 isn't supported by typescript-eslint yet), Phaser 3.90.0 (C87), Vitest, ESLint.
 - Clean-architecture guard: ESLint rule + test. Proven by planting a violation, which both caught.
