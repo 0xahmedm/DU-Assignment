@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# File snapshots compared byte for byte by tests: keep LF everywhere.
+docs/enumerator-report.md text eol=lf
