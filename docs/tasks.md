@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 3 · L-M (run the reachability checker + beam checks first); grants Bolt
+**Next task →** Day 3 · Bolt: forward along the upper-body row, up-Bolt; hits mirrors, crystals (enemies on Day 4)
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -47,6 +47,8 @@ How to use this file:
 - [x] Day 2 gameplay screenshot → `docs/screenshots/day2-W-E-first-playable.png` (saved via the dev-only `/__screenshot` endpoint)
 - [x] Day 2 routine: AI export (`docs/ai-logs/day2-*`, email redacted) · devlog · commit + tag `day2`
 - [x] (user) Approved: Day 2 commit and `day2` tag pushed; Day 1 raw export replaced with an email-redacted copy (history left as is, user's choice)
+- [ ] Playtest watch (L-M): M1 is hit only from the small step's right half or with a jump-attack; reach 1.3 tiles is just enough
+- [ ] Polish: receiver→door wires are thin cyan lines that can be mistaken for beams; give light wires their own look (e.g. dashed)
 - [ ] Polish: centre chambers smaller than the screen (empty band below W-E / beside W-M); moved to Day 7 polish if not done earlier
 
 ## Day 3: Weight, Phase, Light (extended)
@@ -56,7 +58,7 @@ How to use this file:
 - [x] Throw: fixed arc, **lands exactly 5 ahead** verified in the test room (from col 25 → col 30 across the 4-gap; from col 32 → col 37, into the 5-gap); ground only; kit-gated (refused in W-E)
 - [x] W-H entered and **solved end to end in the real game**; Day 1 grid was unclimbable → widened diagonal staircase (C92); dispenser: hold-R fallback (C93)
 - [x] Reachability checker (`core/player/reach.ts`): real movement model vs the grid; calibrated on all C29 metrics; W-E/W-H routes are tests
-- [ ] Run the reachability checker on each remaining chamber (~~P-M~~, ~~L-E~~ done, L-M, L-H, P-H) **before** entering it; key routes become tests
+- [ ] Run the reachability checker on each remaining chamber (~~P-M~~, ~~L-E~~, ~~L-M~~ done, L-H, P-H) **before** entering it; key routes become tests
 - [x] P-E entered and **solved end to end in the real game**; red-phase pit dead end found and fixed with a pit crystal (C90), escape verified in both colours
 - [x] Shieldbearer (basic movement: shared patrol, 1 x 1.5 tiles, front shield drawn) + P-M entered and **solved end to end in the real game**; checker found the bridge issues → C94 (accepted), C95 (chasm deepened). "Grants Dash" stored in data
 - [x] Melee forward + up (basic hit detection on mirrors, crystals, dispensers): reach 1.3 tiles from the body edge, never through walls; crystal hits verified in the game (P-E), mirror hits unit-tested (no Light chamber yet)
@@ -64,7 +66,7 @@ How to use this file:
 - [x] `core/light`: beam tracer (reflection table, blockers incl. phase colours, doors, crates, enemies; receivers; loop-safe) + tests
 - [x] Emitters, mirrors (locked ones framed amber), receivers rendered; beams retraced every physics step; beam contact pushes the player back (C27)
 - [x] L-E entered and **solved end to end in the real game** (overhead beam stops a jump; walkway beam is a barrier); a 19-wide row in the Day 1 grid fixed at data entry
-- [ ] L-M; grants Bolt
+- [x] L-M entered and **solved end to end in the real game**; checker found the exit unreachable → step moved (C96). "Grants Bolt" stored in data
 - [ ] Bolt: upper-body row; hits mirrors, crystals, enemies
 - [x] Hold-R chamber reset (~1 s, fill ring)
 - [ ] Day 3 routine

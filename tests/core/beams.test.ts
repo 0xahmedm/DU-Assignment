@@ -4,6 +4,7 @@ import { parseChamber } from '../../src/core/chamber/parser';
 import type { ChamberDef } from '../../src/core/chamber/types';
 import { beamContact, reflect, segmentLine, traceBeams } from '../../src/core/light/beams';
 import { L_E } from '../../src/data/chambers/L-E';
+import { L_M } from '../../src/data/chambers/L-M';
 
 const fixture = (grid: string[], over: Partial<ChamberDef> = {}): ChamberDef => ({
   id: 'L-E',
@@ -133,5 +134,38 @@ describe('L-E "First Light" (C39): the beams do what the design says', () => {
     const t = run();
     expect(t.lit.has('receiverB')).toBe(true);
     for (const r of [7, 8, 9, 10]) expect(t.cells.has(`${r},29`)).toBe(false);
+  });
+});
+
+describe('L-M "Order of Light" (C40): the beams do what the design says', () => {
+  const setup = (flip: string[]) => {
+    const { model } = parseChamber(L_M);
+    const logic = new ChamberLogic(model!);
+    for (const m of flip) logic.hitMirror(m);
+    return traceBeams(model!, { isSolid: (r, c) => logic.isSolid(r, c), mirrorAt: (r, c) => logic.mirrorAt(r, c), blocks: () => false });
+  };
+
+  it('start: M1 drops a barrier in front of the exit (col 18, rows 11-12); nothing lit', () => {
+    const t = setup([]);
+    expect(t.lit.size).toBe(0);
+    expect(t.cells.has('11,18') && t.cells.has('12,18')).toBe(true);
+  });
+
+  it('M3, M2, then M1: the beam climbs, runs along the gallery, lights the receiver; the barrier is gone', () => {
+    const t = setup(['M3', 'M2', 'M1']);
+    expect(t.lit.has('receiver')).toBe(true);
+    expect(t.cells.has('11,18') || t.cells.has('12,18')).toBe(false);
+  });
+
+  it('wrong order (M1 + M2 before M3): the beam fills the gallery walkway and drops at col 2', () => {
+    const t = setup(['M1', 'M2']);
+    expect(t.lit.size).toBe(0);
+    for (const c of [3, 8, 12, 17]) expect(t.cells.has(`7,${c}`)).toBe(true); // along the walkway, body height
+    expect(t.cells.has('10,2')).toBe(true); // the barrier at col 2
+  });
+
+  it('M2 set alone sends nothing along the gallery (the beam never reaches it while M1 is wrong)', () => {
+    const t = setup(['M2']);
+    expect(t.cells.has('7,10')).toBe(false);
   });
 });

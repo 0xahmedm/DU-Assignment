@@ -5,6 +5,7 @@ import type { ChamberDef, PhaseColor } from '../../src/core/chamber/types';
 import { reachFrom, type ReachWorld } from '../../src/core/player/reach';
 import { W_E } from '../../src/data/chambers/W-E';
 import { L_E } from '../../src/data/chambers/L-E';
+import { L_M } from '../../src/data/chambers/L-M';
 import { P_M } from '../../src/data/chambers/P-M';
 import { W_H } from '../../src/data/chambers/W-H';
 import { MOVEMENT_TEST_ROOM } from '../../src/data/rooms/movementTest';
@@ -130,5 +131,15 @@ describe('reachability: P-M (C47, C95)', () => {
 describe('reachability: L-E (C39)', () => {
   it('section B: the floating platform next to the mirror can be climbed from the floor', { timeout: 30000 }, () => {
     expect(reachFrom(chamberWorld(L_E, 'red'), { row: 11, col: 21 }).canReach(8, 27)).toBe(true);
+  });
+});
+
+describe('reachability: L-M (C40)', () => {
+  it('the gallery (through the hole), both ends of it, the step beside M1 and the exit floor are reachable from the start', { timeout: 30000 }, () => {
+    const r = reachFrom(chamberWorld(L_M, 'red'), { row: 13, col: 2 });
+    expect(r.canReach(8, 3)).toBe(true); // gallery, M3 end
+    expect(r.canReach(8, 17)).toBe(true); // gallery, M2 end
+    expect(r.canReach(12, 15)).toBe(true); // small step next to M1 (C96)
+    expect(r.canReach(13, 20)).toBe(true); // exit floor (beyond M1's barrier, which the checker ignores)
   });
 });
