@@ -5,6 +5,7 @@ import type { ChamberDef, PhaseColor } from '../../src/core/chamber/types';
 import { reachFrom, type ReachWorld } from '../../src/core/player/reach';
 import { W_E } from '../../src/data/chambers/W-E';
 import { L_E } from '../../src/data/chambers/L-E';
+import { L_H } from '../../src/data/chambers/L-H';
 import { L_M } from '../../src/data/chambers/L-M';
 import { P_M } from '../../src/data/chambers/P-M';
 import { W_H } from '../../src/data/chambers/W-H';
@@ -141,5 +142,24 @@ describe('reachability: L-M (C40)', () => {
     expect(r.canReach(8, 17)).toBe(true); // gallery, M2 end
     expect(r.canReach(12, 15)).toBe(true); // small step next to M1 (C96)
     expect(r.canReach(13, 20)).toBe(true); // exit floor (beyond M1's barrier, which the checker ignores)
+  });
+});
+
+describe('reachability: L-H (C98)', () => {
+  const world = () => chamberWorld(L_H, 'red');
+
+  it('the left shaft reaches the Bolt ledge beside the exit; the gallery stays out of reach', { timeout: 30000 }, () => {
+    const r = reachFrom(world(), { row: 19, col: 2 });
+    expect(r.canReach(4, 1)).toBe(true);
+    expect(r.canReach(7, 17)).toBe(false);
+  });
+
+  it('the crate can be carried to the a step', { timeout: 30000 }, () => {
+    expect(reachFrom(world(), { row: 19, col: 11 }, { carrying: true }).canReach(17, 23)).toBe(true);
+  });
+
+  it('the pen can be entered and left again (C41 undo)', { timeout: 30000 }, () => {
+    expect(reachFrom(world(), { row: 19, col: 2 }).canReach(12, 16)).toBe(true);
+    expect(reachFrom(world(), { row: 12, col: 16 }).canReach(19, 5)).toBe(true);
   });
 });

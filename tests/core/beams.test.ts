@@ -4,6 +4,7 @@ import { parseChamber } from '../../src/core/chamber/parser';
 import type { ChamberDef } from '../../src/core/chamber/types';
 import { beamContact, reflect, segmentLine, traceBeams } from '../../src/core/light/beams';
 import { L_E } from '../../src/data/chambers/L-E';
+import { L_H } from '../../src/data/chambers/L-H';
 import { L_M } from '../../src/data/chambers/L-M';
 
 const fixture = (grid: string[], over: Partial<ChamberDef> = {}): ChamberDef => ({
@@ -167,5 +168,53 @@ describe('L-M "Order of Light" (C40): the beams do what the design says', () => 
   it('M2 set alone sends nothing along the gallery (the beam never reaches it while M1 is wrong)', () => {
     const t = setup(['M2']);
     expect(t.cells.has('7,10')).toBe(false);
+  });
+});
+
+describe('L-H "Chain Reaction" (C42, C97): the chain does what the design says', () => {
+  const setup = () => {
+    const { model } = parseChamber(L_H);
+    const logic = new ChamberLogic(model!);
+    /** One settled step: trace, feed the receivers, update signals (twice, as the chain ripples). */
+    const settle = (plates: string[]) => {
+      let t = traceBeams(model!, { isSolid: (r, c) => logic.isSolid(r, c), mirrorAt: (r, c) => logic.mirrorAt(r, c), blocks: () => false });
+      for (let i = 0; i < 3; i++) {
+        logic.setLitReceivers(t.lit);
+        logic.update({ pressedPlates: new Set(plates), occupiedCells: new Set() });
+        t = traceBeams(model!, { isSolid: (r, c) => logic.isSolid(r, c), mirrorAt: (r, c) => logic.mirrorAt(r, c), blocks: () => false });
+      }
+      return t;
+    };
+    return { logic, settle };
+  };
+
+  it('start: nothing lit, the trapdoor under the caged walker is closed', () => {
+    const { logic, settle } = setup();
+    expect(settle([]).lit.size).toBe(0);
+    expect(logic.isOpen('trapdoor')).toBe(false);
+  });
+
+  it('the plate-wired mirrors are locked (C42): hits do not flip them', () => {
+    const { logic } = setup();
+    expect(logic.hitMirror('Mb')).toBe(false);
+    expect(logic.hitMirror('Ma')).toBe(false);
+  });
+
+  it('crate on a, then Bolt the high mirror: trapdoor opens; walker on b; the beam reaches the exit receiver', () => {
+    const { logic, settle } = setup();
+    logic.hitMirror('Mh');
+    settle(['a']);
+    expect(logic.isOpen('trapdoor')).toBe(true);
+    const t = settle(['a', 'b']); // the walker has dropped onto b
+    expect(t.lit.has('receiverExit')).toBe(true);
+    expect(logic.isOpen('exit')).toBe(true);
+  });
+
+  it('wrong order (Bolt before the crate): the rerouted beam fences the a step (row 16, cols 20-24)', () => {
+    const { logic, settle } = setup();
+    logic.hitMirror('Mh');
+    const t = settle(['b']);
+    expect(t.lit.has('receiverExit')).toBe(false);
+    for (const c of [20, 22, 24]) expect(t.cells.has(`16,${c}`)).toBe(true);
   });
 });

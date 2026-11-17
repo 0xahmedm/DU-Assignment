@@ -71,10 +71,10 @@ export function validateChamber(model: ChamberModel): ValidationReport {
     }
   }
 
-  // Enemies must start standing on something.
+  // Enemies must start standing on something (a trapdoor counts: it starts closed, L-H C97).
   for (const s of model.spawns.filter((x) => x.kind !== 'crate')) {
     const below = at(s.cell[0] + 1, s.cell[1]);
-    if (symbolInfo(below)?.tile === 'empty') warnings.push(`${id}: ${s.kind} at row ${s.cell[0]} col ${s.cell[1]} starts in mid-air`);
+    if (symbolInfo(below)?.tile === 'empty' && below !== '=') warnings.push(`${id}: ${s.kind} at row ${s.cell[0]} col ${s.cell[1]} starts in mid-air`);
   }
 
   return { errors, warnings };
