@@ -90,6 +90,7 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 ---
 
 ## Day 4: Finish chambers, combat, brief change (in progress)
+- **Logic-state enumerator:** every phase × mirror × plate combination of every chamber; the intended end states all open their exits, and every other opening configuration is listed in `docs/enumerator-report.md` and was reviewed: no unintended solution. The finale has exactly one.
 - **Combat:** walker (2 hits) and Shieldbearer (front immune with a clang, 3 hits from behind, telegraphed turn) in the engine-free core with tests; hit-stop, shake, flash and code-generated sounds; enemy contact is a defeat (slow-motion flash, fade, chamber restart) unless you are dashing. Verified in the game on W-M and P-M.
 - **P-H, the finale, solved end to end: all nine chambers now play.** The checker learned to Dash and to test melee reach; it found that the walker's box could be reached and the "Bolt-only" mirror could be hit by a jump-attack (C99). Playing the build found that the crate on `p` blocked the way home (C100).
 - **Dash:** added to the pure movement model (exactly 4 tiles, gravity paused, once per airtime, never while carrying), tested like the other metrics; jump + Dash clears 9 tiles. In the game it passes straight through a beam fence that holds a walking player back.

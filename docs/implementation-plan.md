@@ -281,7 +281,7 @@ interface ChamberDef {
   - Seeded RNG determinism; generator (no repeated connectors); hearts state machine; upgrade gating.
 - **Chamber tests:**
   - All 9 chambers parse and validate.
-  - The **enumerator** confirms the intended configuration lights each exit and lists any other configurations that also do (reviewed by hand).
+  - The **enumerator** confirms the intended configuration lights each exit and lists any other configurations that also do (reviewed by hand). Built Day 4: `docs/enumerator-report.md` is a file snapshot of that list.
 - **Architecture test:** `src/core` imports nothing from `phaser` or the DOM (plus the ESLint rule).
 - **Manual (each build):**
   - Movement test room metrics.
