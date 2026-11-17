@@ -26,10 +26,18 @@ Daily entries (5 lines max) plus an **AI bug log**: what the AI got wrong, how i
 
 ---
 
-## Day 2: Foundations (in progress)
+## Day 2: Foundations, Weight and Phase (done; extended day)
+**Summary (5 lines)**
+1. Built the foundations: Vite/TS/Phaser scaffold, clean-architecture guard, Pages deploy, single-file build, a pure movement model proven against every C29 metric.
+2. Built the chamber pipeline (grids → parser → validator → engine-free logic) and the systems for Weight and Phase: plates, doors, crates, dispensers, phase + ghost rule, melee, Throw, walker, Shieldbearer.
+3. Six chambers playable from level select; W-E, W-M, W-H, P-E and P-M each solved end to end in the real game with scripted input.
+4. Playing the Day 1 drawings exposed headroom and dead-end bugs (P-E, W-H, P-M, walker rule): each fix agreed with the user (C90–C95), and a headless reachability checker now tests layouts before they are built.
+5. 106 automated tests; AI conversation exported (`docs/ai-logs/day2-*`, email redacted); screenshots in `docs/screenshots/day2-*`.
+
 - Scaffolded the project: Vite 8, TypeScript 6.0.3 (TS 7 isn't supported by typescript-eslint yet), Phaser 3.90.0 (C87), Vitest, ESLint.
 - Clean-architecture guard: ESLint rule + test. Proven by planting a violation, which both caught.
 - Movement model lives in `src/core/player/movement.ts` as a pure function. `tests/core/movement.test.ts` proves the C29 metrics: full jump 3.57 tiles, tap 1.35, carry 2.69; gap 4 yes / 5 never (even with perfect coyote, robust to +5% speed); carry gap 3 yes / 4 never.
+- The Phaser player runs that same function once per fixed 60 Hz physics step. All metrics were re-verified in the real game with scripted key input in the movement test room (`?autotest`).
 - Chamber pipeline: data grids → stitching parser → validator → engine-free `ChamberLogic` (signals, doors, exit lamps, phase + ghost rule, locked mirrors), all unit-tested (49 tests).
 - **W-E is playable and was solved end to end in the real game** with scripted input following its stored solution.
 - **Melee (forward + up) and P-E.** The swing's reach and "no hits through walls" live in `src/core/combat/melee.ts` (unit-tested). Crystal hits swap the phase; dispensers recall their crate. P-E was solved end to end in the game.
@@ -37,7 +45,6 @@ Daily entries (5 lines max) plus an **AI bug log**: what the AI got wrong, how i
 - **Throw.** A scripted arc in `src/core/player/throw.ts` (tested): always lands on the tile 5 columns ahead. Verified across the test room's 4-gap (lands) and 5-gap (falls in), and refused in chambers whose kit lacks it.
 - **W-H and a reachability checker.** W-H as drawn on Day 1 could not be climbed. A new headless checker runs the real movement model against a grid; it confirmed the bug, verified the fix (C92) and now guards the routes as tests. W-H was then solved end to end in the game.
 - **Shieldbearer and P-M.** P-M was run through the reachability checker before building: the tower held up; the bridge had two issues, both settled with the user (C94, C95). Solved end to end in the game.
-- The Phaser player runs that same function once per fixed 60 Hz physics step. All metrics were re-verified in the real game with scripted key input in the movement test room (`?autotest`).
 
 ### AI bug log (Day 2)
 | # | What the AI got wrong | How it was found | Fix |

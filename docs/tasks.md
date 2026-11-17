@@ -45,8 +45,9 @@ How to use this file:
 - [x] `core`: phase system + ghost rule + tests (rendering done; crystal hits arrive with melee on Day 3)
 - [x] Level-select stub (3 × 3) + `?chamber=`, `?room=movement`, `?debug`
 - [x] Day 2 gameplay screenshot → `docs/screenshots/day2-W-E-first-playable.png` (saved via the dev-only `/__screenshot` endpoint)
-- [ ] Day 2 routine: AI export · devlog · commit + tag `day2` · (user) approve push
-- [ ] Polish: centre chambers shorter than the screen (empty band below W-E)
+- [x] Day 2 routine: AI export (`docs/ai-logs/day2-*`, email redacted) · devlog · commit + tag `day2`
+- [ ] (user) Approve pushing the Day 2 commit and the `day2` tag
+- [ ] Polish: centre chambers smaller than the screen (empty band below W-E / beside W-M); moved to Day 7 polish if not done earlier
 
 ## Day 3: Weight, Phase, Light (extended)
 - [x] W-E data entered; **solved end to end in the real game** with scripted input (Day 2, ahead of plan); hold-R reset implemented
