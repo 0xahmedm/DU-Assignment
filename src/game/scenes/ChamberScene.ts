@@ -4,6 +4,7 @@ import { cellsHitBySwing } from '../../core/combat/melee';
 import { exposedFaces } from '../../core/chamber/collision';
 import { dropCell, feedingDispenser } from '../../core/chamber/dispensers';
 import { ChamberLogic, type HitResult } from '../../core/chamber/logic';
+import { beamContact, traceBeams, type BeamTrace } from '../../core/light/beams';
 import { parseChamber } from '../../core/chamber/parser';
 import type { ChamberId, ChamberModel } from '../../core/chamber/types';
 import { validateChamber } from '../../core/chamber/validator';
@@ -43,6 +44,7 @@ export class ChamberScene extends Phaser.Scene {
   private enemies: PatrolEnemy[] = [];
   private cellBodies: { r: number; c: number; body: Phaser.Physics.Arcade.StaticBody }[] = [];
   private pressed: ReadonlySet<string> = new Set();
+  private beams: BeamTrace = { segments: [], lit: new Set(), cells: new Set() };
   private resetHeldMs = 0;
   private resetRing!: Phaser.GameObjects.Graphics;
   private solved = false;
@@ -58,6 +60,7 @@ export class ChamberScene extends Phaser.Scene {
     this.enemies = [];
     this.cellBodies = [];
     this.pressed = new Set();
+    this.beams = { segments: [], lit: new Set(), cells: new Set() };
     this.resetHeldMs = 0;
     this.solved = false;
   }
@@ -183,7 +186,27 @@ export class ChamberScene extends Phaser.Scene {
       this.onHits(this.logic.resolveHits(cells, occupied));
     }
 
+    // Light: beams are blocked by crates and enemies (C30); lit receivers feed the signals.
+    const blockers = new Set<string>();
+    const mark = (b: Bounds) => {
+      for (let r = Math.floor(b.top / TILE); r <= Math.floor((b.bottom - 1) / TILE); r++) {
+        for (let c = Math.floor(b.left / TILE); c <= Math.floor((b.right - 1) / TILE); c++) blockers.add(key(r, c));
+      }
+    };
+    for (const c of this.crates) if (!c.carried && !c.flying) mark(this.boundsOf(c.body));
+    for (const w of this.enemies) mark(w.bounds());
+    this.beams = traceBeams(this.model, {
+      isSolid: (r, c) => this.logic.isSolid(r, c),
+      mirrorAt: (r, c) => this.logic.mirrorAt(r, c),
+      blocks: (r, c) => blockers.has(key(r, c)),
+    });
+    this.logic.setLitReceivers(this.beams.lit);
+
     this.logic.update({ pressedPlates: pressed, occupiedCells: occupied });
+
+    // Beams are a barrier for the player: a push back, never a heart (C27).
+    const touch = beamContact(this.beams.segments, bodies[0]!, TILE);
+    if (touch && this.player.knockback(touch.axis, touch.at)) this.cameras.main.shake(60, 0.002);
     this.logic.takeEvents(); // feedback hooks (sound/particles) arrive with the FX pass
     this.syncSolids();
     this.checkExit(bodies[0]!);
@@ -263,7 +286,7 @@ export class ChamberScene extends Phaser.Scene {
     if (!this.model || !this.player) return;
     this.player.render();
     for (const w of this.enemies) w.render();
-    this.view.draw(this.pressed);
+    this.view.draw(this.pressed, this.beams);
   }
 
   private showMessage(text: string): void {

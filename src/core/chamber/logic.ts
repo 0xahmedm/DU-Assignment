@@ -205,6 +205,12 @@ export class ChamberLogic {
     return this.mirrorStates.get(id);
   }
 
+  /** The current state of the mirror at this cell, if there is one (for the beam tracer). */
+  mirrorAt(r: number, c: number): MirrorState | undefined {
+    const d = this.deviceAt.get(cellKey(r, c));
+    return d?.kind === 'mirror' ? this.mirrorStates.get(d.id) : undefined;
+  }
+
   isMirrorLocked(id: string): boolean {
     return this.wiredMirrors.has(id);
   }

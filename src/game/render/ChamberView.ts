@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import type { ChamberLogic } from '../../core/chamber/logic';
 import { symbolInfo } from '../../core/chamber/legend';
-import type { ChamberModel, Device } from '../../core/chamber/types';
+import type { ChamberModel, Device, Dir } from '../../core/chamber/types';
+import { segmentLine, type BeamTrace } from '../../core/light/beams';
 import { TILE } from '../../core/player/metrics';
 import { PALETTE } from './palette';
 
@@ -42,10 +43,11 @@ export class ChamberView {
   }
 
   /** Redraw everything that can change. */
-  draw(pressedPlates: ReadonlySet<string>): void {
+  draw(pressedPlates: ReadonlySet<string>, beams?: BeamTrace): void {
     const g = this.dynamic.clear();
     this.drawWires(g);
-    for (const d of this.model.devices) this.drawDevice(g, d, pressedPlates);
+    for (const d of this.model.devices) this.drawDevice(g, d, pressedPlates, beams);
+    if (beams) this.drawBeams(g, beams);
     this.drawPhaseBlocks(g);
     this.drawExitLamps(g);
     this.drawFlashes(g);
@@ -105,7 +107,18 @@ export class ChamberView {
     }
   }
 
-  private drawDevice(g: Phaser.GameObjects.Graphics, d: Device, pressed: ReadonlySet<string>): void {
+  /** Beams: a soft cyan glow with a white core (C52: Light = cyan / white). */
+  private drawBeams(g: Phaser.GameObjects.Graphics, beams: BeamTrace): void {
+    const pulse = 0.75 + 0.25 * Math.sin(this.scene.time.now / 90);
+    for (const seg of beams.segments) {
+      const l = segmentLine(seg, TILE);
+      g.lineStyle(10, PALETTE.light, 0.22 * pulse).lineBetween(l.x1, l.y1, l.x2, l.y2);
+      g.lineStyle(4, PALETTE.light, 0.85).lineBetween(l.x1, l.y1, l.x2, l.y2);
+      g.lineStyle(1.5, PALETTE.lightCore, 0.95).lineBetween(l.x1, l.y1, l.x2, l.y2);
+    }
+  }
+
+  private drawDevice(g: Phaser.GameObjects.Graphics, d: Device, pressed: ReadonlySet<string>, beams?: BeamTrace): void {
     switch (d.kind) {
       case 'plate':
         for (const [r, c] of d.cells) {
@@ -154,8 +167,46 @@ export class ChamberView {
         );
         break;
       }
+      case 'emitter': {
+        // A dark block with a cyan lens on the side it fires from.
+        const [r, c] = d.cells[0]!;
+        const x = c * TILE;
+        const y = r * TILE;
+        g.fillStyle(0x1d2a33, 1).fillRect(x + 2, y + 2, TILE - 4, TILE - 4);
+        const lens: Record<Dir, [number, number, number, number]> = {
+          right: [x + TILE - 8, y + 9, 6, TILE - 18],
+          left: [x + 2, y + 9, 6, TILE - 18],
+          up: [x + 9, y + 2, TILE - 18, 6],
+          down: [x + 9, y + TILE - 8, TILE - 18, 6],
+        };
+        g.fillStyle(PALETTE.light, 1).fillRect(...lens[d.dir ?? 'right']);
+        break;
+      }
+      case 'mirror': {
+        // A framed tile with the reflecting diagonal. Locked (plate-wired, C42): amber frame.
+        const [r, c] = d.cells[0]!;
+        const x = c * TILE;
+        const y = r * TILE;
+        const locked = this.logic.isMirrorLocked(d.id);
+        g.fillStyle(0x23262d, 1).fillRect(x, y, TILE, TILE);
+        g.lineStyle(2, locked ? PALETTE.weight : PALETTE.dim, 1).strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
+        const state = this.logic.mirrorState(d.id);
+        g.lineStyle(4, PALETTE.lightCore, 1);
+        if (state === '/') g.lineBetween(x + 5, y + TILE - 5, x + TILE - 5, y + 5);
+        else g.lineBetween(x + 5, y + 5, x + TILE - 5, y + TILE - 5);
+        break;
+      }
+      case 'receiver': {
+        // A socket that glows when a beam reaches it.
+        const { x, y } = center(d);
+        const lit = beams?.lit.has(d.id) ?? false;
+        g.fillStyle(0x1d2a33, 1).fillRect(x - TILE / 2 + 2, y - TILE / 2 + 2, TILE - 4, TILE - 4);
+        g.lineStyle(3, lit ? PALETTE.light : PALETTE.dim, 1).strokeCircle(x, y, 9);
+        if (lit) g.fillStyle(PALETTE.lightCore, 1).fillCircle(x, y, 6);
+        break;
+      }
       default:
-        break; // light devices are drawn by the Day 3 renderer
+        break;
     }
   }
 

@@ -4,6 +4,7 @@ import { parseChamber } from '../../src/core/chamber/parser';
 import type { ChamberDef, PhaseColor } from '../../src/core/chamber/types';
 import { reachFrom, type ReachWorld } from '../../src/core/player/reach';
 import { W_E } from '../../src/data/chambers/W-E';
+import { L_E } from '../../src/data/chambers/L-E';
 import { P_M } from '../../src/data/chambers/P-M';
 import { W_H } from '../../src/data/chambers/W-H';
 import { MOVEMENT_TEST_ROOM } from '../../src/data/rooms/movementTest';
@@ -123,5 +124,11 @@ describe('reachability: P-M (C47, C95)', () => {
     expect(reachFrom(blue(), { row: 8, col: 17 }).canReach(8, 33)).toBe(false);
     expect(reachFrom(blue(), { row: 12, col: 28 }).canReach(8, 17)).toBe(true);
     expect(reachFrom(red(), { row: 8, col: 17 }).canReach(8, 33)).toBe(true);
+  });
+});
+
+describe('reachability: L-E (C39)', () => {
+  it('section B: the floating platform next to the mirror can be climbed from the floor', { timeout: 30000 }, () => {
+    expect(reachFrom(chamberWorld(L_E, 'red'), { row: 11, col: 21 }).canReach(8, 27)).toBe(true);
   });
 });

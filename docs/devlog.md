@@ -63,3 +63,16 @@ Daily entries (5 lines max) plus an **AI bug log**: what the AI got wrong, how i
 | 21 | P-M's bridge (drawn by the AI on Day 1) assumed the player arrives in Red with the enemy still on the bridge. With one phase per chamber (C28) and a tower that needs Blue, the enemy always falls during the tower. The chasm was also 3 deep on the exit side, so in Blue the exit could be reached through it | Reachability checker run before building P-M (exit side reachable from the chasm in Blue), then reading the phase sequence of the whole chamber | User accepted the first (C94); the chasm's right half is one tile deeper (C95); regression tests |
 
 Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode` init field in Chrome, and Phaser 3 reads `keyCode`. The in-browser harness defines it on the event explicitly. A hidden preview pane also stops requestAnimationFrame, hence the `?autotest` timer-driven loop.
+
+
+---
+
+## Day 3: Light (in progress)
+- **Beam tracer** in the engine-free core (`src/core/light/beams.ts`, 14 tests): mirrors, receivers, walls, doors, crates/enemies, phase colours as shutters; geometry and contact helpers for drawing and knockback.
+- **Light in the game:** emitters, mirrors (locked ones framed amber), receivers and pulsing cyan beams; beams are retraced every physics step and push the player back (never a heart, C27).
+- **L-E solved end to end in the game:** the overhead beam stops a jump, the walkway beam holds the player back, both mirrors light their receivers.
+
+### AI bug log (Day 3)
+| # | What the AI got wrong | How it was found | Fix |
+|---|---|---|---|
+| 22 | L-E's section B row 6 was drawn 19 tiles wide on Day 1 (one `.` missing between the mirror and the emitter) | The parser's row-width check rejected the data on entry | One `.` added; the layout text fixes the intended positions |

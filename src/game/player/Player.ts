@@ -30,6 +30,9 @@ export class Player {
   private facing: 1 | -1 = 1;
   private wasGrounded = true;
   private swingCooldown = 0;
+  /** Beam knockback (C27): while > 0 the player is pushed in `knockDir` and cannot steer. */
+  private knockTimer = 0;
+  private knockDir: -1 | 0 | 1 = 0;
   private pendingSwing: { box: Box; facing: 1 | -1; dir: SwingDir } | undefined;
 
   constructor(
@@ -63,7 +66,8 @@ export class Player {
     this.swingCooldown = Math.max(0, this.swingCooldown - dt);
     if (this.controls.consume('attack') && this.swingCooldown === 0) this.swing();
 
-    const move = this.controls.horizontal();
+    this.knockTimer = Math.max(0, this.knockTimer - dt);
+    const move = this.knockTimer > 0 ? this.knockDir : this.controls.horizontal();
     const before = this.state.jumpedSinceGrounded;
     this.state = stepMovement(
       this.state,
@@ -79,7 +83,7 @@ export class Player {
     );
     this.body.setVelocity(this.state.vx, this.state.vy);
 
-    if (move !== 0) this.facing = move;
+    if (move !== 0 && this.knockTimer === 0) this.facing = move;
     if (!before && this.state.jumpedSinceGrounded) this.squash(0.85, 1.18);
     if (grounded && !this.wasGrounded) this.squash(1.2, 0.8);
     this.wasGrounded = grounded;
@@ -102,6 +106,28 @@ export class Player {
     const s = this.pendingSwing;
     this.pendingSwing = undefined;
     return s;
+  }
+
+  /**
+   * A beam touched the player (C27: a barrier, never a heart). Push away from the beam line:
+   * sideways from a vertical beam, up or down from a horizontal one (plus a little sideways, away
+   * from where the player was heading). Returns false while a push is still running.
+   */
+  knockback(axis: 'x' | 'y', at: number): boolean {
+    if (this.knockTimer > 0) return false;
+    const KNOCK_TIME = 0.18;
+    if (axis === 'x') {
+      this.knockDir = this.hitbox.x < at ? -1 : this.hitbox.x > at ? 1 : ((-this.facing) as -1 | 1);
+      this.state = { ...this.state, vx: this.knockDir * 300, vy: Math.min(this.state.vy, -220) };
+    } else {
+      this.knockDir = (-this.facing) as -1 | 1;
+      const down = this.hitbox.y > at;
+      this.state = { ...this.state, vx: this.knockDir * 200, vy: down ? 260 : -300 };
+    }
+    this.knockTimer = KNOCK_TIME;
+    this.body.setVelocity(this.state.vx, this.state.vy);
+    this.squash(0.8, 1.2);
+    return true;
   }
 
   /** Bounds of the physics body in world pixels. */
