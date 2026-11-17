@@ -67,7 +67,14 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 
 ---
 
-## Day 3: Light (in progress)
+## Day 3: Light (done)
+**Summary (5 lines)**
+1. Closed Day 2: AI conversations exported with the user's email redacted; the Day 1 raw export already on GitHub was found to contain it and was replaced with a redacted copy (history left as is, user's choice).
+2. Built the Light system in the engine-free core: beam tracer (mirrors, receivers, walls, doors, crates/enemies, phase colours as shutters), beams drawn and pushing the player back.
+3. L-E and L-M entered and each solved end to end in the real game; beams tested against each chamber's design, including L-M's wrong order.
+4. Checking before building paid off again: a 19-wide row in L-E (parser) and an unreachable exit in L-M (reachability checker, fixed with the user, C96).
+5. Bolt (forward along the upper body, up-Bolt) built and verified; 8 chambers playable; 136 tests; AI log `docs/ai-logs/day3-*`; screenshots `docs/screenshots/day3-*`.
+
 - **Beam tracer** in the engine-free core (`src/core/light/beams.ts`, 14 tests): mirrors, receivers, walls, doors, crates/enemies, phase colours as shutters; geometry and contact helpers for drawing and knockback.
 - **Light in the game:** emitters, mirrors (locked ones framed amber), receivers and pulsing cyan beams; beams are retraced every physics step and push the player back (never a heart, C27).
 - **L-E solved end to end in the game:** the overhead beam stops a jump, the walkway beam holds the player back, both mirrors light their receivers.
