@@ -24,6 +24,7 @@ import {
 } from '../../core/run/upgrades';
 import { MELEE, swingBox } from '../../core/combat/melee';
 import { loseHeart } from '../../core/run/hearts';
+import { Telemetry } from '../telemetry';
 import type { Device } from '../../core/chamber/types';
 import { validateChamber } from '../../core/chamber/validator';
 import { PLAYER_BODY, TILE } from '../../core/player/metrics';
@@ -252,6 +253,10 @@ export class ChamberScene extends Phaser.Scene {
       this.offers = room.choices ?? (run && room.def.pedestals ? offersFor(run) : []);
       this.setUpRoom(room.def);
     }
+    // Playtest telemetry (C81): chambers and combat rooms (start, reward and exit rooms aren't challenges).
+    if (!room || room.def.kind === 'connector') {
+      Telemetry.enter(def.id, room ? 'room' : 'chamber', this.play.expedition ? 'expedition' : 'select', this.play.expedition?.seed);
+    }
 
     this.cameras.main.startFollow(this.player.hitbox, true, 0.15, 0.15);
     this.syncSolids();
@@ -262,6 +267,7 @@ export class ChamberScene extends Phaser.Scene {
 
   private onStep(dt: number): void {
     if (this.solved || this.defeated) return;
+    Telemetry.tick(dt * 1000);
     this.player.step(dt, this.crates);
     const world = { isSolid: (r: number, c: number) => this.logic.isSolid(r, c) };
     for (const c of this.crates) c.stepFlight(dt, world.isSolid);
@@ -485,6 +491,7 @@ export class ChamberScene extends Phaser.Scene {
     this.cameras.main.flash(180, 255, 80, 80, false);
     let runOver = false;
     const run = this.play.run;
+    Telemetry.defeat(run !== undefined);
     if (run) {
       const lost = loseHeart(run.hearts);
       this.play.run = { ...run, hearts: lost.hearts };
@@ -504,6 +511,7 @@ export class ChamberScene extends Phaser.Scene {
 
   /** Out of hearts (C54): the run ends. The run controller takes over; opened alone, back to the menu. */
   private endRun(): void {
+    Telemetry.end('run-over');
     this.physics.world.timeScale = 1;
     this.physics.world.pause();
     this.game.events.emit(ROOM_EVENTS.runOver, this.play.run);
@@ -676,6 +684,7 @@ export class ChamberScene extends Phaser.Scene {
     if (!inside) return;
     this.solved = true;
     this.player.body.setVelocity(0, 0);
+    Telemetry.end('solved');
     // In an expedition: a short fade, then hand over to the run controller with the run's state.
     if (this.play.expedition && this.game.events.listenerCount(ROOM_EVENTS.done) > 0) {
       Sfx.swap();
@@ -698,7 +707,10 @@ export class ChamberScene extends Phaser.Scene {
     const t = Math.min(1, this.resetHeldMs / RESET_HOLD_MS);
     g.lineStyle(4, PALETTE.text, 0.9).beginPath();
     g.arc(this.scale.width - 30, 30, 14, -Math.PI / 2, -Math.PI / 2 + t * Math.PI * 2).strokePath();
-    if (t >= 1) this.scene.restart(this.play);
+    if (t >= 1) {
+      Telemetry.reset();
+      this.scene.restart(this.play);
+    }
   }
 
   override update(): void {

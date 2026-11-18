@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 5 · Telemetry: per-chamber time / resets / hearts lost + clipboard export. Still waiting: (user) the Day 4 brief-change email
+**Next task →** Day 5 · Day 5 routine (screenshot, AI export, devlog, commit + tag `day5`). Still waiting: (user) the Day 4 brief-change email
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -98,7 +98,7 @@ How to use this file:
 - [x] Run generator (seeded; frontier dealing; W-E first; final chamber alone): `core/run/generator.ts` (+ `rng.ts`), Start → [connector → chamber → reward] × N → exit, connectors never repeated, tier from progress, with tests (determinism, frontier/easiest-first, W-E first, P-H alone, 4 runs cover all 9). No fixed-layout fallback needed
 - [x] Expedition controller (`game/expedition.ts`): plays the steps, carries hearts and upgrades, saves each solve at once, grants a new ability for the rest of the run, banner after a solve, summary at the Seal altar; Esc / run over / run complete return to the menu
 - [x] Menu: New expedition / Replay seed (last seed remembered, digits edit it) / Chamber select (3 × 3); seed and room n/11 in the HUD; `?expedition&seed=` route. Verified in the game: a full seed-42 run (11 rooms, 3 solves saved, end summary), a second run dealing the Mediums (Dash granted mid-run), a run lost to hearts (progress kept), a Remix run
-- [ ] Telemetry: per-chamber time / resets / hearts lost + clipboard export
+- [x] Telemetry (C81): `core/run/telemetry.ts` (one record per attempt at a chamber or combat room: active time, hold-R resets, defeats, hearts lost, solved / left / run over; log kept in localStorage, newest 500; Markdown report) with tests; recorder in `game/telemetry.ts`; menu: "Playtest stats: N attempts [copy] [clear]", C copies. Verified in the game: a W-M attempt across a reset and a defeat, an expedition (seed, solved, left), an Arena heart lost, the copied report
 - [ ] Remix expeditions (only if time, C78): dealing (any 3 chambers), T3 and all abilities come with the generator and work; the best-run timer is left
 - [ ] Day 5 routine
 

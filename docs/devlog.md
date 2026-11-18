@@ -116,6 +116,7 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 ---
 
 ## Day 5: Expedition loop (in progress)
+- **Playtest telemetry:** every attempt at a chamber or combat room records time, resets, defeats and hearts lost; the menu copies a Markdown report for the playtest notes.
 - **Expedition loop playable:** a seeded generator deals chambers from the progression frontier between connector and reward rooms; the controller carries hearts and upgrades through the run, saves every solve and ends at the Seal altar. The menu starts new runs or replays a seed, and turns into Remix once all seals are restored.
 - **Hearts and progress:** defeats in an expedition now cost hearts and end the run at zero. Permanent progress (unlocks, abilities, seals) lives in a tested core module with a forgiving save; the menu shows it and can reset it.
 - **Upgrade pool:** the reward pedestals now deal 3 of the 10 upgrades (seeded, gated by owned abilities); all ten work in the game and Mend heals. Hearts and upgrades show in the HUD. Testing found that a standing Bolt flew over walkers; the user decided it should hit them (C103: enemies are hit in front of any part of the body, puzzles unchanged) and that Piercing Bolt hits first landed only when the dart reached the wall (fixed: each enemy is hit as the dart passes).

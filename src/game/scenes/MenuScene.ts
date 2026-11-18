@@ -7,6 +7,7 @@ import { CHAMBER_GRID, CHAMBERS } from '../../data/chambers';
 import { CONNECTORS, EXIT_ROOM, REWARD_ROOM, START_ROOM } from '../../data/rooms/expedition';
 import { Expedition } from '../expedition';
 import { browserStore, PROGRESS_GRAPH } from '../progress';
+import { copyText, Telemetry } from '../telemetry';
 import { cssHex, PALETTE } from '../render/palette';
 
 const MECHANICS = ['Weight', 'Light', 'Phase'];
@@ -36,6 +37,7 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     Expedition.stop();
+    Telemetry.end('left');
     const route = this.registry.get('route') as { chamber?: ChamberId; room?: string; tier?: string; expedition?: boolean } | undefined;
     const urlSeed = this.registry.get('seed') as number | undefined;
     // A start route from the URL (?chamber=W-E / ?room=movement / ?expedition) is consumed once.
@@ -89,8 +91,31 @@ export class MenuScene extends Phaser.Scene {
     this.replay.on('pointerover', () => this.select(ROW.replay, 0));
     test.on('pointerover', () => this.select(ROW.test, 0));
 
+    // Playtest stats (C81): copy the report to the clipboard, or clear it (twice).
+    const n = Telemetry.count();
+    const stats = this.add.text(512, 486, `Playtest stats: ${n} attempt${n === 1 ? '' : 's'}`, style(12, PALETTE.dim)).setOrigin(1, 0.5);
+    const copy = this.add.text(522, 486, '[copy]', style(12, PALETTE.text)).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
+    const clear = this.add.text(582, 486, '[clear]', style(12, PALETTE.dim)).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
+    const copyStats = async () => {
+      const report = Telemetry.report();
+      const ok = await copyText(report);
+      if (!ok) console.log(report); // last resort: the console
+      if (stats.active) stats.setText(ok ? 'Copied to the clipboard' : 'Copy blocked: report printed to the console');
+    };
+    let clearArmed = false;
+    copy.on('pointerdown', () => void copyStats());
+    clear.on('pointerdown', () => {
+      if (!clearArmed) {
+        clearArmed = true;
+        clear.setText('[clear: again]').setColor('#ff6b6b');
+        return;
+      }
+      Telemetry.clear();
+      this.scene.restart();
+    });
+
     // Reset progress (C76), with a second press to confirm.
-    const reset = this.add.text(512, 500, 'Reset progress', style(12, PALETTE.dim)).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const reset = this.add.text(512, 512, 'Reset progress', style(12, PALETTE.dim)).setOrigin(0.5).setInteractive({ useHandCursor: true });
     let armed = false;
     const tryReset = () => {
       if (!armed) {
@@ -106,7 +131,7 @@ export class MenuScene extends Phaser.Scene {
       this.scene.restart();
     };
     reset.on('pointerdown', tryReset);
-    this.add.text(512, 540, 'arrows: choose   Enter: play   digits: edit the seed   Delete: reset progress   Esc (in play): this menu', style(12, PALETTE.dim)).setOrigin(0.5);
+    this.add.text(512, 548, 'arrows: choose   Enter: play   digits: seed   C: copy stats   Delete: reset progress   Esc (in play): menu', style(12, PALETTE.dim)).setOrigin(0.5);
 
     const kb = this.input.keyboard!;
     kb.on('keydown-UP', () => this.select(this.selRow - 1, this.selCol));
@@ -115,6 +140,7 @@ export class MenuScene extends Phaser.Scene {
     kb.on('keydown-RIGHT', () => this.select(this.selRow, this.selCol + 1));
     kb.on('keydown-ENTER', () => this.rows[this.selRow]?.[this.selCol]?.emit('pointerdown'));
     kb.on('keydown-DELETE', tryReset);
+    kb.on('keydown-C', () => void copyStats());
     // Typing a seed (C72): digits edit the Replay seed; Backspace deletes one.
     kb.on('keydown', (e: KeyboardEvent) => {
       if (/^[0-9]$/.test(e.key) && this.seedText.length < MAX_SEED_DIGITS) {

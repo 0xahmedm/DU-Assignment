@@ -242,9 +242,9 @@ G:\Du\DU Assignment
 │  │  ├─ player/                           metrics, movement, jumpSim, throw, bolt, reach
 │  │  ├─ combat/                           melee, enemies
 │  │  ├─ enemies/                          walker, shieldbearer
-│  │  └─ run/                              hearts, rooms, upgrades (+ seeded rng), progression (+ save), generator, rng
+│  │  └─ run/                              hearts, rooms, upgrades (+ seeded rng), progression (+ save), generator, rng, telemetry
 │  ├─ data/                                chambers/*.ts · rooms/expedition.ts · rooms/movementTest.ts
-│  └─ game/                                scenes/ · player/ · enemies/ · render/ · input/ · audio/ · progress.ts (graph + localStorage) · expedition.ts (run controller)
+│  └─ game/                                scenes/ · player/ · enemies/ · render/ · input/ · audio/ · progress.ts (graph + localStorage) · expedition.ts (run controller) · telemetry.ts (recorder + clipboard)
 └─ tests/                                  core/*.test.ts · architecture.test.ts
 ```
 The planned `ports.ts`, `grid/`, `signals/`, `devices/` and `phase/` folders were folded into `chamber/` (one `ChamberLogic` owns signals, doors, phase and mirrors), which kept the core smaller and easier to explain.

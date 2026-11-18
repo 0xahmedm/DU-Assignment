@@ -24,6 +24,7 @@ A browser-playable 2D puzzle action-platformer prototype: **9 puzzle chambers** 
 | Menu | Esc |
 | Reset progress (menu) | Delete, twice |
 | Type a seed to replay (menu) | digits, Backspace |
+| Copy playtest stats (menu) | C |
 
 ## Run locally
 Requires Node 20.19+ (developed on Node 24).
