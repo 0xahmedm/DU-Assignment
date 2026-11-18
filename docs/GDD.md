@@ -84,7 +84,7 @@ The mechanics combine because each changes the others' rules:
 ## Schedule & why it was reordered
 - Hard chambers combine mechanics, and enemies are puzzle pieces, so all three mechanic systems and basic enemy movement are built across Days 2–3 instead of "one mechanic per day". Combat behaviour stays on Day 4.
 - Day 1 was spent entirely on design (all layouts were drawn as text grids before coding).
-- **Actual so far:** Day 2 built the foundations and all three Weight chambers plus P-E and P-M (ahead of plan); Day 3 the Light system, L-E, L-M and Bolt; Day 4 L-H, Dash, the finale P-H, combat and the logic enumerator; Day 5 the expedition rooms. Playing each chamber as it was built exposed headroom and dead-end errors in the Day 1 drawings, so a reachability checker was added on Day 2 and every later chamber was checked before it was built. **TBD:** the rest of Days 5–7.
+- **Actual so far:** Day 2 built the foundations and all three Weight chambers plus P-E and P-M (ahead of plan); Day 3 the Light system, L-E, L-M and Bolt; Day 4 L-H, Dash, the finale P-H, combat and the logic enumerator; Day 5 the expedition rooms, the ten upgrades, permanent progress and save, the seeded run generator and expedition loop, and playtest telemetry. Playing each chamber as it was built exposed headroom and dead-end errors in the Day 1 drawings, so a reachability checker was added on Day 2 and every later chamber was checked before it was built. **TBD:** Days 6–7.
 
 ## Day 4 brief change
 **TBD:** the change, its impact and how it was handled.

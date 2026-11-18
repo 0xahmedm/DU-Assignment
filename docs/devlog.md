@@ -115,7 +115,14 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 
 ---
 
-## Day 5: Expedition loop (in progress)
+## Day 5: Expedition loop (loop done; Remix timer and the Day 4 brief change open)
+**Summary (5 lines)**
+1. The expedition loop is playable: a seeded generator deals up to three frontier chambers between combat and reward rooms (W-E first, P-H alone, no repeated rooms); a controller carries hearts and upgrades and saves every solve; the menu has New expedition / Replay seed, and Remix after the third seal.
+2. Upgrades: all ten from C67 in the reward rooms, seeded and gated by owned abilities; Mend heals; hearts run out in expeditions. The user decided the Bolt should hit walkers (C103).
+3. Permanent progress (unlocks, abilities, seals) lives in a tested core module with a forgiving localStorage save and a reset; built-in playtest telemetry copies a Markdown report.
+4. The expedition rooms were approved (C101, C102) and made playable, and an automated docs check now keeps the docs in step with the code.
+5. 281 automated tests; AI logs `docs/ai-logs/day5-*` (emails redacted); screenshots `docs/screenshots/day5-*`. Still open: the Day 4 brief change (waiting for the email) and the Remix best-run timer.
+
 - **Playtest telemetry:** every attempt at a chamber or combat room records time, resets, defeats and hearts lost; the menu copies a Markdown report for the playtest notes.
 - **Expedition loop playable:** a seeded generator deals chambers from the progression frontier between connector and reward rooms; the controller carries hearts and upgrades through the run, saves every solve and ends at the Seal altar. The menu starts new runs or replays a seed, and turns into Remix once all seals are restored.
 - **Hearts and progress:** defeats in an expedition now cost hearts and end the run at zero. Permanent progress (unlocks, abilities, seals) lives in a tested core module with a forgiving save; the menu shows it and can reset it.
@@ -123,3 +130,11 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 - **Docs check:** every living doc was brought up to date, and a test now fails if code and docs drift (unknown decision ids, broken links or screenshots, a missing Next-task pointer, undocumented chambers or rooms, gaps in the AI bug log). It immediately found a stale Day 1 screenshot name in the plan.
 - **Rooms in the game:** the chamber scene now plays expedition rooms (tier enemies that never respawn, the Arena lock, reward pedestals, the Seal altar), reachable on their own with `?room=<id>&tier=`. Every room × tier loads correctly; the Arena lock, the reward pick and the altar were checked in the game.
 - **Expedition rooms approved** (C101, C102): Start, Reward, Seal exit and five connectors (Gap run, Corridor, Shaft, Red-floor arena, Arena) with three encounter tiers each. Drafted as grids, checked with the validator and the reachability checker before review, now data with regression tests.
+
+### AI bug log (Day 5)
+| # | What the AI got wrong | How it was found | Fix |
+|---|---|---|---|
+| 29 | The AI asked the user to double-click a single-file build made at the start of Day 2 and never rebuilt it, so it showed only the movement test room | The user tried it | Rebuilt; the task notes that `dist-single/` is gitignored and must be rebuilt by hand, and the Day 7 zip step says to rebuild first |
+| 30 | The forward Bolt (built on Day 3 to C50's "upper-body row") flew one row above a walker on flat ground, so it could never hit one; Day 4 had checked Bolt hits only on the taller Shieldbearer | Verifying Piercing Bolt in the Arena | User decision C103: enemies are hit in front of any part of the body (one lane per body row), puzzle targets unchanged; core tests |
+| 31 | Piercing Bolt's first version hit the enemies it passed only when the dart reached the far wall | Timing the hits in the game | Each enemy is hit as the dart passes it |
+| 32 | While testing, the AI read the result before the Bolt's 1.2 s flight had ended and briefly concluded Piercing Bolt was broken | Instrumenting `fireBolt`: the Bolt had fired; the hits landed after the check | Waited for the flight; the timing fix in #31 came out of the same look |
