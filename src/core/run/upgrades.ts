@@ -1,6 +1,7 @@
 import type { Ability } from '../chamber/types';
 import { TILE } from '../player/metrics';
 import { mend, newHearts, type Hearts } from './hearts';
+import { rng, shuffled, subSeed } from './rng';
 import type { RewardChoice } from './rooms';
 
 /**
@@ -53,30 +54,12 @@ export function eligibleUpgrades(owned: ReadonlySet<Ability>, taken: readonly Up
   return UPGRADES.filter((u) => (!u.needs || owned.has(u.needs)) && (u.repeatable || !taken.includes(u.id)));
 }
 
-/** Small seeded generator (mulberry32): the same seed always deals the same offers (C64, replays). */
-export function rng(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 /**
  * The offer for one reward room: up to 3 different upgrades, seeded by the run seed and how many
  * picks came before, so a replayed seed deals the same offers if the same choices are made.
  */
 export function dealOffers(seed: number, pickIndex: number, owned: ReadonlySet<Ability>, taken: readonly UpgradeId[], count = 3): Upgrade[] {
-  const pool = eligibleUpgrades(owned, taken);
-  const next = rng((seed ^ Math.imul(pickIndex + 1, 0x9e3779b1)) >>> 0);
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(next() * (i + 1));
-    [pool[i], pool[j]] = [pool[j]!, pool[i]!];
-  }
-  return pool.slice(0, count);
+  return shuffled(eligibleUpgrades(owned, taken), rng(subSeed(seed, pickIndex))).slice(0, count);
 }
 
 /** What one run carries from room to room (C10): hearts and upgrades. The expedition owns it. */

@@ -48,6 +48,8 @@ export interface PlayData {
   id?: ChamberId;
   room?: { def: RoomDef; tier: Tier; choices?: readonly RewardChoice[]; kit?: readonly Ability[] };
   run?: RunState;
+  /** Set by the expedition controller: the seed and where we are (HUD, C72), and a one-off banner. */
+  expedition?: { seed: number; step: number; total: number; remix: boolean; banner?: string };
 }
 
 const GUARD_GRACE = 1; // s of invulnerability after Guard absorbs a hit
@@ -109,7 +111,7 @@ export class ChamberScene extends Phaser.Scene {
   }
 
   init(data: PlayData): void {
-    this.play = data.room ? data : { id: data.id ?? this.chamberId, run: data.run };
+    this.play = data.room ? data : { ...data, id: data.id ?? this.chamberId };
     this.dashHit = new Set();
     this.insight = { targets: [] };
     this.hud = undefined;
@@ -232,6 +234,18 @@ export class ChamberScene extends Phaser.Scene {
         .setScrollFactor(0)
         .setDepth(100);
       this.refreshHud();
+    }
+    // A one-off banner from the run controller (e.g. "W-M solved: Throw unlocked"); not repeated
+    // when the room restarts after a defeat or a reset.
+    const banner = this.play.expedition?.banner;
+    if (banner) {
+      this.play = { ...this.play, expedition: { ...this.play.expedition!, banner: undefined } };
+      const t = this.add
+        .text(this.scale.width / 2, 96, banner, { fontFamily: 'monospace', fontSize: '18px', color: cssHex(PALETTE.lightCore), align: 'center', backgroundColor: '#000000cc', padding: { x: 14, y: 8 } })
+        .setOrigin(0.5, 0)
+        .setScrollFactor(0)
+        .setDepth(150);
+      this.tweens.add({ targets: t, alpha: 0, delay: 2600, duration: 600, onComplete: () => t.destroy() });
     }
     if (this.fx.insight) this.insightG = this.add.graphics().setDepth(7);
     if (room) {
@@ -560,7 +574,15 @@ export class ChamberScene extends Phaser.Scene {
     if (!this.hud || !run) return;
     const hearts = '♥'.repeat(run.hearts.current) + '♡'.repeat(Math.max(0, run.hearts.max - run.hearts.current));
     const names = run.upgrades.filter((u) => u !== 'mend').map((u) => upgradeById(u).name);
-    this.hud.setText(`${hearts}${names.length ? `   ${names.join(' · ')}` : ''}`);
+    const e = this.play.expedition;
+    const where = e ? `   ${e.remix ? 'Remix ' : ''}seed ${e.seed} · room ${e.step}/${e.total}` : '';
+    this.hud.setText(`${hearts}${where}${names.length ? `   ${names.join(' · ')}` : ''}`);
+  }
+
+  /** The run controller's end screen (run complete): a message, then Enter → menu. */
+  showEnd(text: string): void {
+    this.showMessage(`${text}\nEnter: menu`);
+    this.input.keyboard?.once('keydown-ENTER', () => this.scene.start('Menu'));
   }
 
   /** Shows what a pedestal offers; opens the Arena when it is cleared (R2); the altar ends the run. */
@@ -584,8 +606,14 @@ export class ChamberScene extends Phaser.Scene {
       if (overlap(player, cell)) {
         this.solved = true;
         this.player.body.setVelocity(0, 0);
-        this.game.events.emit(ROOM_EVENTS.runComplete);
-        this.showMessage('The seal is restored. Run complete!\nEsc: menu');
+        // The run controller writes the summary; a room opened alone just says so.
+        if (this.play.expedition && this.game.events.listenerCount(ROOM_EVENTS.runComplete) > 0) {
+          Sfx.swap();
+          this.cameras.main.flash(250, 255, 255, 255, false);
+          this.game.events.emit(ROOM_EVENTS.runComplete, this.play.run);
+          return;
+        }
+        this.showMessage('Run complete!\nEsc: menu');
       }
     }
   }
@@ -648,9 +676,14 @@ export class ChamberScene extends Phaser.Scene {
     if (!inside) return;
     this.solved = true;
     this.player.body.setVelocity(0, 0);
+    // In an expedition: a short fade, then hand over to the run controller with the run's state.
+    if (this.play.expedition && this.game.events.listenerCount(ROOM_EVENTS.done) > 0) {
+      Sfx.swap();
+      this.cameras.main.fadeOut(300, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => this.game.events.emit(ROOM_EVENTS.done, this.model.def.id, this.play.run));
+      return;
+    }
     if (this.play.room) {
-      // An expedition room: hand over to the run controller; standalone (URL), offer a replay.
-      if (this.game.events.listenerCount(ROOM_EVENTS.done) > 0) return void this.game.events.emit(ROOM_EVENTS.done, this.play.room.def.id);
       this.showMessage(`${this.model.def.name}: cleared!\nEnter: play again    Esc: menu`);
     } else {
       this.showMessage(`${this.model.def.name}: solved!\nEnter: play again    Esc: menu`);

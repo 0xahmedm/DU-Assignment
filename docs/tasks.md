@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 5 · Run generator (seeded; frontier dealing; W-E first; final chamber alone) + expedition controller and menu (New expedition / Replay seed). Still waiting: (user) the Day 4 brief-change email
+**Next task →** Day 5 · Telemetry: per-chamber time / resets / hearts lost + clipboard export. Still waiting: (user) the Day 4 brief-change email
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -94,11 +94,12 @@ How to use this file:
 - [ ] Playtest watch (red-floor arena): a walker standing on the one neutral tile beside the right bumper survives the swap and meets you at the far end
 - [x] Reward room: pick 1 of 3; upgrade pool (10) with ability gating; Mend restores hearts. Pool, seeded dealing, gating and effects in core with tests (`core/run/upgrades.ts`, `core/light/insight.ts`); all ten verified in the game (dev-only `?upgrades=`, `?seed=`); run state (hearts + upgrades) shown in the HUD
 - [x] A standing forward Bolt passed over walkers (it flies on the upper-body row). User decided: the Bolt hits walkers (C103): enemies are hit in front of any part of the body, puzzle targets still only on the upper-body row. Core tests + verified in the game
-- [x] Progression graph, seals, save (localStorage) + reset progress: `core/run/progression.ts` (unlocks from prerequisites, frontier easiest first, abilities from Mediums, seals from Hards, final chamber, versioned save that tolerates garbage and blocked storage) with tests on the real chamber data; menu shows seals / abilities / solved ✓ and resets (Delete or click, twice). Verified in the game with a written save. Recording a solve happens in the expedition controller (next task)
-- [ ] Run generator (seeded; frontier dealing; W-E first; final chamber alone), **or** fixed-layout fallback
-- [ ] Menu: New expedition / Replay seed / Chamber select (3 × 3); seed in the HUD
+- [x] Progression graph, seals, save (localStorage) + reset progress: `core/run/progression.ts` (unlocks from prerequisites, frontier easiest first, abilities from Mediums, seals from Hards, final chamber, versioned save that tolerates garbage and blocked storage) with tests on the real chamber data; menu shows seals / abilities / solved ✓ and resets (Delete or click, twice). Verified in the game with a written save. Solves are recorded by the expedition controller
+- [x] Run generator (seeded; frontier dealing; W-E first; final chamber alone): `core/run/generator.ts` (+ `rng.ts`), Start → [connector → chamber → reward] × N → exit, connectors never repeated, tier from progress, with tests (determinism, frontier/easiest-first, W-E first, P-H alone, 4 runs cover all 9). No fixed-layout fallback needed
+- [x] Expedition controller (`game/expedition.ts`): plays the steps, carries hearts and upgrades, saves each solve at once, grants a new ability for the rest of the run, banner after a solve, summary at the Seal altar; Esc / run over / run complete return to the menu
+- [x] Menu: New expedition / Replay seed (last seed remembered, digits edit it) / Chamber select (3 × 3); seed and room n/11 in the HUD; `?expedition&seed=` route. Verified in the game: a full seed-42 run (11 rooms, 3 solves saved, end summary), a second run dealing the Mediums (Dash granted mid-run), a run lost to hearts (progress kept), a Remix run
 - [ ] Telemetry: per-chamber time / resets / hearts lost + clipboard export
-- [ ] Remix expeditions (only if time, C78)
+- [ ] Remix expeditions (only if time, C78): dealing (any 3 chambers), T3 and all abilities come with the generator and work; the best-run timer is left
 - [ ] Day 5 routine
 
 ## Day 6: Playtesting

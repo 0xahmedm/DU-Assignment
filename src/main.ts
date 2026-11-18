@@ -21,6 +21,8 @@ const route = {
   chamber: (params.get('chamber') ?? undefined) as ChamberId | undefined,
   room: params.get('room') ?? undefined,
   tier: params.get('tier') ?? undefined,
+  // ?expedition starts a run at once (with ?seed= for a given seed).
+  expedition: params.has('expedition'),
 };
 
 // Dev only: ?kit=bolt,throw,dash replaces every chamber's declared kit (C24), to try abilities in
@@ -50,7 +52,7 @@ const game = new Phaser.Game({
   },
   callbacks: {
     preBoot: (g) => {
-      if (route.chamber || route.room) g.registry.set('route', route);
+      if (route.chamber || route.room || route.expedition) g.registry.set('route', route);
       if (kitOverride) g.registry.set('kitOverride', kitOverride);
       if (upgradeOverride) g.registry.set('upgradeOverride', upgradeOverride);
       if (seed !== undefined) g.registry.set('seed', seed);
