@@ -102,6 +102,7 @@ How to use this file:
 - [ ] Remix expeditions (only if time, C78): dealing (any 3 chambers), T3 and all abilities come with the generator and work; the best-run timer is left
 - [x] Day 5 routine: screenshot `docs/screenshots/day5-expedition-reward-room-seed-42.png`; AI export `docs/ai-logs/day5-claude-part1*` (the Day 4 session's last part: rooms and docs check) and `day5-claude-part2*` (this session), emails redacted; devlog summary + AI bug log 29–32; commit + tag `day5`
 - [x] (user) Asked to commit to GitHub: Day 5 commits and the `day5` tag pushed
+- [x] (user) Asked: the Day 3 and Day 4 raw exports re-redacted (they still held the git author email); every AI log now scans clean. Earlier copies remain in git history
 
 ## Day 6: Playtesting
 - [ ] Notes template + session script (three Easys, a Medium, a Hard, one run)
