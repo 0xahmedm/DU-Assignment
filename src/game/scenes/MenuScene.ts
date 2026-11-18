@@ -141,12 +141,18 @@ export class MenuScene extends Phaser.Scene {
     kb.on('keydown-ENTER', () => this.rows[this.selRow]?.[this.selCol]?.emit('pointerdown'));
     kb.on('keydown-DELETE', tryReset);
     kb.on('keydown-C', () => void copyStats());
-    // Typing a seed (C72): digits edit the Replay seed; Backspace deletes one.
+    // Typing a seed (C72): the first digit replaces the remembered seed, the next ones append;
+    // Backspace deletes one.
+    let typing = false;
     kb.on('keydown', (e: KeyboardEvent) => {
-      if (/^[0-9]$/.test(e.key) && this.seedText.length < MAX_SEED_DIGITS) {
-        this.seedText = (this.seedText === '0' ? '' : this.seedText) + e.key;
+      if (/^[0-9]$/.test(e.key)) {
+        const base = typing && this.seedText !== '0' ? this.seedText : '';
+        typing = true;
+        if (base.length >= MAX_SEED_DIGITS) return;
+        this.seedText = base + e.key;
         this.select(ROW.replay, 0);
       } else if (e.key === 'Backspace') {
+        typing = true;
         this.seedText = this.seedText.slice(0, -1);
         this.select(ROW.replay, 0);
       } else return;

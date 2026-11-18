@@ -2,7 +2,7 @@
 
 A browser-playable 2D puzzle action-platformer prototype: **9 puzzle chambers** across three interacting mechanics (**Weight**, **Light**, **Phase**), combat, upgrades and seeded expeditions. Built for the Mid-Level Game Developer & Game Designer practical assignment.
 
-> Design docs live in [`docs/`](docs/): [GDD](docs/GDD.md) · [decision log](docs/design-decision-log.md) · [implementation plan](docs/implementation-plan.md) · [tasks](docs/tasks.md) · [devlog + AI bug log](docs/devlog.md) · [assets](docs/ASSETS.md)
+> Design docs live in [`docs/`](docs/): [GDD](docs/GDD.md) · [decision log](docs/design-decision-log.md) · [implementation plan](docs/implementation-plan.md) · [tasks](docs/tasks.md) · [devlog + AI bug log](docs/devlog.md) · [assets](docs/ASSETS.md) · [playtest kit](docs/playtests/session-script.md)
 
 ## Play
 - **Online:** https://0xahmedm.github.io/DU-Assignment/ (try `?chamber=W-E` to open a chamber directly).

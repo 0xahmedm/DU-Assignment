@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 6 · Notes template + session script (three Easys, a Medium, a Hard, one run; the menu's playtest stats give the numbers). Still waiting: (user) the Day 4 brief-change email
+**Next task →** Day 6 · (user) Playtests 1–3, run with [`docs/playtests/session-script.md`](playtests/session-script.md); notes in `docs/playtests/playtest-N.md`. Still waiting: (user) the Day 4 brief-change email
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -105,7 +105,7 @@ How to use this file:
 - [x] (user) Asked: the Day 3 and Day 4 raw exports re-redacted (they still held the git author email); every AI log now scans clean. Earlier copies remain in git history
 
 ## Day 6: Playtesting
-- [ ] Notes template + session script (three Easys, a Medium, a Hard, one run)
+- [x] Notes template + session script (three Easys, a Medium, a Hard, one run): [`session-script.md`](playtests/session-script.md) (setup, words to say, order + time caps, rotation covering all nine chambers, stuck/hint rules, what to watch per chamber, questions), [`notes-template.md`](playtests/notes-template.md), [`playtest-summary.md`](playtests/playtest-summary.md) (triage + before/after). Menu: the first digit typed now replaces the remembered seed (it used to append, and a 6-digit seed blocked typing)
 - [ ] (user) Playtest 1 → `docs/playtests/`
 - [ ] (user) Playtest 2 → `docs/playtests/`
 - [ ] (user) Playtest 3 → `docs/playtests/`
