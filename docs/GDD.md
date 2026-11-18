@@ -57,7 +57,7 @@ The mechanics combine because each changes the others' rules:
 
 ## Platforming & combat
 - **Movement:** responsive, with fast acceleration, variable jump, apex hang, coyote time and jump buffering; no wall jump. The metrics are proven by tests on the same movement code the game runs.
-- **Abilities** (one from each Medium): **Throw** lands a crate exactly 5 tiles ahead; **Bolt** flies straight (forward or up) and hits the first target; **Dash** covers exactly 4 tiles with brief invulnerability.
+- **Abilities** (one from each Medium): **Throw** lands a crate exactly 5 tiles ahead; **Bolt** flies straight (forward or up) and hits the first target (any enemy in front of you, puzzle targets at chest height); **Dash** covers exactly 4 tiles with brief invulnerability.
 - **Melee** hits forward and up (reach beyond contact range), with a 60 ms hit-stop, knockback, screen shake, flashes and sounds generated in code.
 - **Hearts:** 3 per expedition; any enemy contact costs a heart and resets the room (beams only push you back); losing the last ends the run. Off in level select.
 - **Enemies:**
@@ -73,6 +73,7 @@ The mechanics combine because each changes the others' rules:
   - Puzzle help: Insight, Throw Sight.
 - Ability-specific upgrades appear only once the ability is owned.
 - Hearts come back only by choosing Mend, so survival competes with power.
+- Only Mend can be taken twice. Long Reach lengthens the swing against enemies only, so every puzzle keeps the reach it was designed for.
 - **Replay comes from:**
   - Seeded layouts (the seed is shown and replayable).
   - Different chambers dealt each run.

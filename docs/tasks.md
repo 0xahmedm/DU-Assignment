@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 5 · Upgrade pool (C67, 10 upgrades, ability-gated) offered on the reward pedestals; Mend restores hearts (C66). Still waiting: (user) the Day 4 brief-change email
+**Next task →** Day 5 · Run generator (seeded; frontier dealing; W-E first; final chamber alone) + expedition controller and menu (New expedition / Replay seed). Still waiting: (user) the Day 4 brief-change email
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -31,7 +31,7 @@ How to use this file:
 - [x] Pages enabled; the Actions workflow (typecheck + lint + tests + build + deploy) passed on GitHub
 - [x] Live Pages URL verified: https://0xahmedm.github.io/DU-Assignment/ (game loads; `?chamber=W-E` works; dev hook absent)
 - [x] Single-file build target (`npm run build:single` → one 1.2 MB `dist-single/index.html`, no external references, dev hook stripped)
-- [ ] (user) Double-click `G:\Du\DU Assignment\dist-single\index.html` and confirm the game opens (the browser pane can't open file:// pages)
+- [x] (user) Double-click `G:\Du\DU Assignment\dist-single\index.html` and confirm the game opens: confirmed on Day 5 after a rebuild (the Day 2 copy was stale and showed only the movement room; `dist-single/` is gitignored and must be rebuilt by hand)
 - [x] `core/player/metrics.ts`: C29 metrics + derived physics constants (gravity, jump velocity, run speed)
 - [x] Player controller: run, variable jump, apex hang, fall cap, coyote time, jump buffer (C58)
 - [x] Movement test room with tile markers: **jump 3 / gap 4 verified**
@@ -82,7 +82,7 @@ How to use this file:
 - [x] Combat feel: melee reach 1.3, enemy knockback (~1 tile), 60 ms hit-stop, shake, flash, generated sounds (swing, hit, clang, kill, defeat, swap, mirror, Bolt, Dash)
 - [x] Walker combat (2 hits, respawn after 1.5 s) · Shieldbearer (front immune to melee and Bolt with a clang that pushes you back; 3 hits from behind; notices you behind it, shows "!", turns after 0.6 s) · Bolt hits the first enemy on its line · beams kill enemies (core-tested). Verified in the game (W-M walker, P-M Shieldbearer)
 - [x] Defeat on enemy contact (C55; not while dashing, C60): slow-motion flash, fade, chamber restarts at the entrance; hearts off in level select (C54). Hearts rules (3, lose one, run over at 0, Mend) in core and tested
-- [ ] Hearts in expeditions: take a heart on defeat, HUD, run over at 0 (with the expedition loop, Day 5)
+- [x] Hearts in expeditions: a defeat with a run costs a heart (HUD ♥♥♡), the room restarts; at 0 the run is over (`run-over` event for the expedition controller; opened alone: message, Enter → menu). Verified in the Arena (3 → 2 → 1 → 0); level select unchanged
 - [ ] **Day 4 brief change:** save the email → impact analysis vs the decision log → plan agreed with user → implement → document (devlog + GDD + decision log)
 - [x] Day 4 routine: AI export (`docs/ai-logs/day4-*`, redacted) · devlog · commit + tag `day4` (the brief change, when it arrives, is logged on top)
 - [x] (user) Approved: Day 4 commit and `day4` tag pushed
@@ -92,8 +92,9 @@ How to use this file:
 - [x] Connector rooms + encounter tiers in the game: the chamber scene plays rooms (`?room=<id>&tier=`), enemies from the tier and never respawning (R1), the Arena's exit opens when cleared (R2), reward pedestals (R3, placeholder offers until the pool), the Seal altar ends the run. All 15 room × tier combinations load with their enemies grounded; Arena lock, reward pick and altar verified in the game
 - [x] Docs refreshed (GDD combat/rooms/schedule, README, ASSETS, implementation plan as built, decision-log labels) + automated docs check `tests/docs.test.ts` (decision ids, links, screenshots, Next-task pointer, chambers/rooms documented, AI bug numbering)
 - [ ] Playtest watch (red-floor arena): a walker standing on the one neutral tile beside the right bumper survives the swap and meets you at the far end
-- [ ] Reward room: pick 1 of 3; upgrade pool (10) with ability gating; Mend restores hearts
-- [ ] Progression graph, seals, save (localStorage) + reset progress
+- [x] Reward room: pick 1 of 3; upgrade pool (10) with ability gating; Mend restores hearts. Pool, seeded dealing, gating and effects in core with tests (`core/run/upgrades.ts`, `core/light/insight.ts`); all ten verified in the game (dev-only `?upgrades=`, `?seed=`); run state (hearts + upgrades) shown in the HUD
+- [x] A standing forward Bolt passed over walkers (it flies on the upper-body row). User decided: the Bolt hits walkers (C103): enemies are hit in front of any part of the body, puzzle targets still only on the upper-body row. Core tests + verified in the game
+- [x] Progression graph, seals, save (localStorage) + reset progress: `core/run/progression.ts` (unlocks from prerequisites, frontier easiest first, abilities from Mediums, seals from Hards, final chamber, versioned save that tolerates garbage and blocked storage) with tests on the real chamber data; menu shows seals / abilities / solved ✓ and resets (Delete or click, twice). Verified in the game with a written save. Recording a solve happens in the expedition controller (next task)
 - [ ] Run generator (seeded; frontier dealing; W-E first; final chamber alone), **or** fixed-layout fallback
 - [ ] Menu: New expedition / Replay seed / Chamber select (3 × 3); seed in the HUD
 - [ ] Telemetry: per-chamber time / resets / hearts lost + clipboard export
@@ -114,7 +115,7 @@ How to use this file:
 - [ ] `ASSETS.md` final; README run/test instructions
 - [ ] (user) 5-minute voiceover video
 - [ ] All AI exports collected; one screenshot per day present
-- [ ] Final Pages deploy + single-file zip
+- [ ] Final Pages deploy + single-file zip (run `npm run build:single` first; the file doesn't rebuild itself)
 - [ ] Follow-up call prep: rehearse 3 live changes, AI bug stories, answers to likely challenges
 
 ## Stretch (only if ahead; C78/C80)

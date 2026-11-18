@@ -4,11 +4,27 @@ import { cellsHitBySwing } from '../../core/combat/melee';
 import { exposedFaces } from '../../core/chamber/collision';
 import { dropCell, feedingDispenser } from '../../core/chamber/dispensers';
 import { ChamberLogic, type HitResult } from '../../core/chamber/logic';
-import { beamContact, traceBeams, type BeamTrace } from '../../core/light/beams';
-import { BOLT, boltStart, traceBolt } from '../../core/player/bolt';
+import { beamContact, segmentLine, traceBeams, type BeamTrace, type BeamWorld } from '../../core/light/beams';
+import { nearestFreeMirror, nearestSource, targetsOf, withMirrorFlipped } from '../../core/light/insight';
+import { BOLT, boltEnemyLanes, boltStart, enemiesOnLanes, traceBolt } from '../../core/player/bolt';
 import { parseChamber } from '../../core/chamber/parser';
 import type { Ability, ChamberDef, ChamberId, ChamberModel } from '../../core/chamber/types';
 import { roomToChamber, type RewardChoice, type RoomDef, type Tier } from '../../core/run/rooms';
+import {
+  effectsOf,
+  newRun,
+  NO_UPGRADES,
+  offersFor,
+  takeUpgrade,
+  upgradeById,
+  UPGRADES,
+  type RunState,
+  type UpgradeEffects,
+  type UpgradeId,
+} from '../../core/run/upgrades';
+import { MELEE, swingBox } from '../../core/combat/melee';
+import { loseHeart } from '../../core/run/hearts';
+import type { Device } from '../../core/chamber/types';
 import { validateChamber } from '../../core/chamber/validator';
 import { PLAYER_BODY, TILE } from '../../core/player/metrics';
 import { CHAMBERS } from '../../data/chambers';
@@ -23,14 +39,21 @@ import { cssHex, PALETTE } from '../render/palette';
 
 const RESET_HOLD_MS = 1000; // hold R this long to reset (C51)
 
-/** What to play: a puzzle chamber by id, or an expedition room with its encounter tier (C101). */
+/**
+ * What to play: a puzzle chamber by id, or an expedition room with its encounter tier (C101).
+ * `run` is the expedition's hearts and upgrades (C10); without it there are none (level select,
+ * C67). A room opened alone (URL) gets a fresh run so its pedestals and upgrades can be tried.
+ */
 export interface PlayData {
   id?: ChamberId;
   room?: { def: RoomDef; tier: Tier; choices?: readonly RewardChoice[]; kit?: readonly Ability[] };
+  run?: RunState;
 }
 
+const GUARD_GRACE = 1; // s of invulnerability after Guard absorbs a hit
+
 /** Game events a run controller listens to (the expedition loop, Day 5). */
-export const ROOM_EVENTS = { done: 'room-done', reward: 'reward-picked', runComplete: 'run-complete' } as const;
+export const ROOM_EVENTS = { done: 'room-done', reward: 'reward-picked', runComplete: 'run-complete', runOver: 'run-over' } as const;
 /** Cells whose solidity changes during play (doors, trapdoors, exit, phase blocks). */
 const SWITCHABLE = new Set(['R', 'B', '|', 'K', '=', 'E']);
 const key = (r: number, c: number) => `${r},${c}`;
@@ -71,13 +94,26 @@ export class ChamberScene extends Phaser.Scene {
   private picked = false;
   private cleared = false;
   private info!: Phaser.GameObjects.Text;
+  private fx: UpgradeEffects = NO_UPGRADES;
+  private offers: readonly RewardChoice[] = [];
+  private guardLeft = 0;
+  /** Enemies already hit by the current Dash (Phantom Dash hits each once). */
+  private dashHit = new Set<PatrolEnemy>();
+  private hud: Phaser.GameObjects.Text | undefined;
+  /** Insight (C67): the beam a flip of the nearest free mirror would make, and plate targets. */
+  private insight: { mirror?: Device; ghost?: BeamTrace; targets: Device[] } = { targets: [] };
+  private insightG: Phaser.GameObjects.Graphics | undefined;
 
   constructor() {
     super('Chamber');
   }
 
   init(data: PlayData): void {
-    this.play = data.room ? data : { id: data.id ?? this.chamberId };
+    this.play = data.room ? data : { id: data.id ?? this.chamberId, run: data.run };
+    this.dashHit = new Set();
+    this.insight = { targets: [] };
+    this.hud = undefined;
+    this.insightG = undefined;
     this.chamberId = data.id ?? this.chamberId;
     this.pedestals = [];
     this.picked = false;
@@ -137,7 +173,18 @@ export class ChamberScene extends Phaser.Scene {
     const [sr, sc] = this.model.start;
     const kitOverride = this.registry.get('kitOverride') as readonly Ability[] | undefined; // dev only (main.ts)
     const kit = new Set(kitOverride ?? room?.kit ?? def.kit);
-    this.player = new Player(this, sc * TILE + TILE / 2, (sr + 1) * TILE - PLAYER_BODY.height / 2, this.controls, kit);
+    // A room opened alone (URL) gets a fresh run, so its pedestals deal real offers (C64). The
+    // dev-only ?upgrades= also gives a URL-opened chamber a run, to try Insight / Throw Sight.
+    const devUpgrades = this.registry.get('upgradeOverride') as UpgradeId[] | undefined; // dev only (main.ts)
+    if ((room || devUpgrades) && !this.play.run) {
+      const seed = (this.registry.get('seed') as number | undefined) ?? Math.floor(Math.random() * 2 ** 31);
+      const run = newRun(seed, [...kit]);
+      this.play.run = devUpgrades ? devUpgrades.reduce(takeUpgrade, run) : run;
+    }
+    const run = this.play.run;
+    this.fx = run ? effectsOf(run.upgrades) : NO_UPGRADES;
+    this.guardLeft = this.fx.guardPerRoom;
+    this.player = new Player(this, sc * TILE + TILE / 2, (sr + 1) * TILE - PLAYER_BODY.height / 2, this.controls, kit, this.fx);
     this.physics.add.collider(this.player.hitbox, solids);
 
     for (const s of this.model.spawns.filter((x) => x.kind === 'crate')) {
@@ -179,7 +226,18 @@ export class ChamberScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(100)
       .setVisible(false);
-    if (room) this.setUpRoom(room.def, room.choices);
+    if (run) {
+      this.hud = this.add
+        .text(12, 30, '', { fontFamily: 'monospace', fontSize: '13px', color: cssHex(PALETTE.text) })
+        .setScrollFactor(0)
+        .setDepth(100);
+      this.refreshHud();
+    }
+    if (this.fx.insight) this.insightG = this.add.graphics().setDepth(7);
+    if (room) {
+      this.offers = room.choices ?? (run && room.def.pedestals ? offersFor(run) : []);
+      this.setUpRoom(room.def);
+    }
 
     this.cameras.main.startFollow(this.player.hitbox, true, 0.15, 0.15);
     this.syncSolids();
@@ -229,8 +287,11 @@ export class ChamberScene extends Phaser.Scene {
       this.onHits(this.logic.resolveHits(cells, occupied));
       Sfx.swing();
       // Enemies inside the swing (C62): melee reach beats contact range, so a swing lands first.
+      // Long Reach lengthens the swing against enemies only; puzzle hits above keep MELEE.reach.
       const fromX = (playerBox.left + playerBox.right) / 2;
-      for (const w of alive) if (overlap(swing.box, w.bounds())) this.onEnemyHit(w, w.hit('melee', fromX));
+      const enemyBox = this.fx.enemyReachBonus ? swingBox(playerBox, swing.facing, swing.dir, MELEE.reach + this.fx.enemyReachBonus) : swing.box;
+      const mods = { damage: this.fx.meleeDamage, knockbackScale: this.fx.knockbackScale, stagger: this.fx.shieldStagger };
+      for (const w of alive) if (overlap(enemyBox, w.bounds())) this.onEnemyHit(w, w.hit('melee', fromX, mods));
       this.tryPick(playerBox);
     }
     this.updateRoomRules(playerBox);
@@ -247,12 +308,24 @@ export class ChamberScene extends Phaser.Scene {
     };
     for (const c of this.crates) if (!c.carried && !c.flying) mark(this.boundsOf(c.body));
     for (const w of alive) mark(w.bounds());
-    this.beams = traceBeams(this.model, {
+    const beamWorld: BeamWorld = {
       isSolid: (r, c) => this.logic.isSolid(r, c),
       mirrorAt: (r, c) => this.logic.mirrorAt(r, c),
       blocks: (r, c) => blockers.has(key(r, c)),
-    });
+    };
+    this.beams = traceBeams(this.model, beamWorld);
     this.logic.setLitReceivers(this.beams.lit);
+    if (this.fx.insight) {
+      const px = (playerBox.left + playerBox.right) / 2;
+      const py = (playerBox.top + playerBox.bottom) / 2;
+      const mirror = nearestFreeMirror(this.model, (id) => this.logic.isMirrorLocked(id), px, py);
+      const source = nearestSource(this.model, px, py);
+      this.insight = {
+        mirror,
+        ghost: mirror ? traceBeams(this.model, withMirrorFlipped(beamWorld, mirror)) : undefined,
+        targets: source ? [source, ...targetsOf(this.model, source.id)] : [],
+      };
+    }
 
     this.logic.update({ pressedPlates: pressed, occupiedCells: occupied });
 
@@ -263,10 +336,30 @@ export class ChamberScene extends Phaser.Scene {
       if (w.alive && beamContact(this.beams.segments, grown, TILE)) this.onEnemyHit(w, w.hit('beam', b.left));
     }
 
+    // Phantom Dash (C67): a Dash hits each enemy it passes through once, through the shield.
+    if (this.fx.dashHits && this.player.dashing) {
+      for (const w of alive) {
+        if (!w.alive || this.dashHit.has(w) || !touches(bodies[0]!, w.bounds(), 0)) continue;
+        this.dashHit.add(w);
+        this.onEnemyHit(w, w.hit('melee', w.rect.x - w.facing * TILE, { knockbackScale: this.fx.knockbackScale }));
+      }
+    } else if (this.dashHit.size > 0) this.dashHit.clear();
+
     // Any contact with an enemy is a defeat (C55), unless the player is dashing (C60).
-    if (!this.player.invulnerable && alive.some((w) => w.alive && touches(bodies[0]!, w.bounds()))) {
-      this.defeat();
-      return;
+    const toucher = this.player.invulnerable ? undefined : alive.find((w) => w.alive && touches(bodies[0]!, w.bounds()));
+    if (toucher) {
+      // Guard (C67): the first hit in each room is absorbed: pushed back, a moment of safety.
+      if (this.guardLeft > 0) {
+        this.guardLeft--;
+        Sfx.clang();
+        this.cameras.main.flash(120, 255, 209, 102, false);
+        this.player.knockback('x', toucher.rect.x);
+        this.player.protect(GUARD_GRACE);
+        this.view.puff(this.player.hitbox.x, this.player.hitbox.y, PALETTE.lightCore);
+      } else {
+        this.defeat();
+        return;
+      }
     }
 
     // Beams are a barrier for the player: a push back, never a heart (C27).
@@ -289,30 +382,42 @@ export class ChamberScene extends Phaser.Scene {
       isSolid: (r, c) => this.logic.isSolid(r, c),
       isHittable: (r, c) => this.logic.hittableAt(r, c) !== undefined,
     });
-    // An enemy on the line takes the Bolt first (it stops there; "Piercing Bolt" is an upgrade).
-    let target: PatrolEnemy | undefined;
-    for (let i = 0; i < path.cells.length && !target; i++) {
-      const [r, c] = path.cells[i]!;
+    // Enemies (C103): a forward Bolt hits an enemy in front of any part of the body (one lane per
+    // body row, each stopped by walls, never past what stops the Bolt); an up-Bolt only its line.
+    // The nearest enemy takes the Bolt and stops it; with Piercing Bolt (C67) it passes through
+    // every enemy on its lanes, hitting each, and goes on to whatever it would have hit.
+    const isSolid = (r: number, c: number) => this.logic.isSolid(r, c);
+    const lanes = dir === 'up' ? [{ row: start.cell[0], cells: path.cells }] : boltEnemyLanes(body, facing, isSolid, path.cells.length);
+    const found = enemiesOnLanes(lanes, (r, c) => {
       const cell = { left: c * TILE, right: (c + 1) * TILE, top: r * TILE, bottom: (r + 1) * TILE };
-      target = this.enemies.find((w) => w.alive && overlap(cell, w.bounds()));
-      if (target) {
-        path.cells = path.cells.slice(0, i + 1);
-        path.hit = undefined;
-      }
-    }
+      return this.enemies.filter((w) => w.alive && overlap(cell, w.bounds()));
+    });
+    const first = this.fx.piercingBolt ? undefined : found[0];
+    const target = first?.enemy;
+    const pierced = this.fx.piercingBolt ? found.map((f) => f.enemy) : [];
+    if (first) path.hit = undefined;
     Sfx.bolt();
     const [dr, dc] = start.step;
+    // A Bolt at an enemy flies level along that enemy's lane (a walker: the player's lower row).
+    const row = dir === 'forward' && first ? first.cell[0] : start.cell[0];
     const from =
       dir === 'up'
         ? { x: (body.left + body.right) / 2, y: body.top }
-        : { x: facing === 1 ? body.right : body.left, y: start.cell[0] * TILE + TILE / 2 };
-    const last = path.cells.at(-1) ?? start.cell;
+        : { x: facing === 1 ? body.right : body.left, y: row * TILE + TILE / 2 };
+    const last = first?.cell ?? path.cells.at(-1) ?? start.cell;
     // End at the target's centre, or at the face of whatever stopped it.
     const to = {
       x: last[1] * TILE + TILE / 2 + (path.hit || target ? 0 : (dc * TILE) / 2),
       y: last[0] * TILE + TILE / 2 + (path.hit || target ? 0 : (dr * TILE) / 2),
     };
     const dist = Math.hypot(to.x - from.x, to.y - from.y);
+    // Piercing Bolt: each enemy on the line is hit as the dart passes it.
+    for (const w of pierced) {
+      const at = Math.hypot(w.rect.x - from.x, dir === 'up' ? w.rect.y - from.y : 0);
+      this.time.delayedCall((at / BOLT.speed) * 1000, () => {
+        if (w.alive) this.onEnemyHit(w, w.hit('bolt', from.x, { knockbackScale: this.fx.knockbackScale }));
+      });
+    }
     const dart = this.add
       .rectangle(from.x, from.y, dir === 'up' ? 4 : 14, dir === 'up' ? 14 : 4, PALETTE.lightCore)
       .setStrokeStyle(2, PALETTE.light)
@@ -325,7 +430,7 @@ export class ChamberScene extends Phaser.Scene {
       onComplete: () => {
         dart.destroy();
         if (target) {
-          if (target.alive) this.onEnemyHit(target, target.hit('bolt', from.x));
+          if (target.alive) this.onEnemyHit(target, target.hit('bolt', from.x, { knockbackScale: this.fx.knockbackScale }));
         } else if (path.hit && this.logic) this.onHits(this.logic.resolveHits([path.hit], this.lastOccupied));
         else this.view.puff(to.x, to.y, PALETTE.light);
       },
@@ -337,7 +442,8 @@ export class ChamberScene extends Phaser.Scene {
     if (outcome === 'blocked') {
       Sfx.clang();
       this.cameras.main.shake(70, 0.003);
-      this.player.knockback('x', enemy.rect.x);
+      // Shield Breaker: the stagger replaces the push back, so you can follow up.
+      if (!enemy.staggered) this.player.knockback('x', enemy.rect.x);
       return;
     }
     if (outcome === 'killed') Sfx.kill();
@@ -353,9 +459,9 @@ export class ChamberScene extends Phaser.Scene {
   }
 
   /**
-   * Defeat (C54, C62): a short slow-motion flash, a fade, and the chamber restarts with the player
-   * at its entrance. Hearts are off in level select (C54), so nothing else is lost here; during an
-   * expedition (Day 5) this is where a heart is taken.
+   * Defeat (C54, C55, C62): a short slow-motion flash, a fade, and the chamber restarts with the
+   * player at its entrance. In an expedition it also costs a heart; at zero the run is over
+   * (abilities and solved chambers are kept, C7). Hearts are off in level select (C54).
    */
   private defeat(): void {
     this.defeated = true;
@@ -363,7 +469,17 @@ export class ChamberScene extends Phaser.Scene {
     this.player.body.setVelocity(0, 0);
     this.physics.world.timeScale = 3; // slow motion
     this.cameras.main.flash(180, 255, 80, 80, false);
+    let runOver = false;
+    const run = this.play.run;
+    if (run) {
+      const lost = loseHeart(run.hearts);
+      this.play.run = { ...run, hearts: lost.hearts };
+      runOver = lost.runOver;
+      this.refreshHud();
+      if (this.hud) this.tweens.add({ targets: this.hud, scale: 1.25, duration: 120, yoyo: true });
+    }
     this.time.delayedCall(350, () => {
+      if (runOver) return this.endRun();
       this.cameras.main.fadeOut(250, 0, 0, 0);
       this.cameras.main.once('camerafadeoutcomplete', () => {
         this.physics.world.timeScale = 1;
@@ -372,14 +488,24 @@ export class ChamberScene extends Phaser.Scene {
     });
   }
 
+  /** Out of hearts (C54): the run ends. The run controller takes over; opened alone, back to the menu. */
+  private endRun(): void {
+    this.physics.world.timeScale = 1;
+    this.physics.world.pause();
+    this.game.events.emit(ROOM_EVENTS.runOver, this.play.run);
+    if (this.game.events.listenerCount(ROOM_EVENTS.runOver) > 0) return;
+    this.showMessage('Out of hearts: the run is over.\nAbilities and solved chambers are kept.\nEnter: menu');
+    this.input.keyboard?.once('keydown-ENTER', () => this.scene.start('Menu'));
+  }
+
   // --- expedition rooms (C101, C102) ------------------------------------------------------------
 
   /** Pedestals (R3), the Seal altar, and exits held shut by the room rules (R2, R3). */
-  private setUpRoom(room: RoomDef, choices: readonly RewardChoice[] | undefined): void {
+  private setUpRoom(room: RoomDef): void {
     if (room.lockUntilCleared) this.logic.holdClosed('exit', true);
     if (room.pedestals) {
       this.logic.holdClosed('exit', true);
-      const offers = choices ?? PLACEHOLDER_CHOICES;
+      const offers = this.offers;
       room.pedestals.forEach(([row, col], i) => {
         const x = col * TILE + TILE / 2;
         const y = (row + 1) * TILE;
@@ -409,9 +535,15 @@ export class ChamberScene extends Phaser.Scene {
     if (!room?.def.pedestals || this.picked) return;
     const i = this.pedestalUnder(player);
     if (i < 0) return;
-    const choice = (room.choices ?? PLACEHOLDER_CHOICES)[i];
+    const choice = this.offers[i];
     if (!choice) return;
     this.picked = true;
+    // Take it into the run (Mend heals at once, C66). Later rooms read the run's upgrades.
+    if (this.play.run && UPGRADE_IDS.has(choice.id)) {
+      this.play.run = takeUpgrade(this.play.run, choice.id as UpgradeId);
+      this.refreshHud();
+      if (choice.id === 'mend') this.cameras.main.flash(160, 255, 120, 140, false);
+    }
     Sfx.swap();
     this.pedestals.forEach((p, j) => {
       if (j === i) this.tweens.add({ targets: [p.block, p.label], y: '-=12', duration: 200 });
@@ -419,7 +551,16 @@ export class ChamberScene extends Phaser.Scene {
     });
     this.logic.holdClosed('exit', false);
     this.info.setText(`${choice.name}\n${choice.description}`).setVisible(true);
-    this.game.events.emit(ROOM_EVENTS.reward, choice);
+    this.game.events.emit(ROOM_EVENTS.reward, choice, this.play.run);
+  }
+
+  /** Hearts and run upgrades, under the title (expeditions only). */
+  private refreshHud(): void {
+    const run = this.play.run;
+    if (!this.hud || !run) return;
+    const hearts = '♥'.repeat(run.hearts.current) + '♡'.repeat(Math.max(0, run.hearts.max - run.hearts.current));
+    const names = run.upgrades.filter((u) => u !== 'mend').map((u) => upgradeById(u).name);
+    this.hud.setText(`${hearts}${names.length ? `   ${names.join(' · ')}` : ''}`);
   }
 
   /** Shows what a pedestal offers; opens the Arena when it is cleared (R2); the altar ends the run. */
@@ -428,7 +569,7 @@ export class ChamberScene extends Phaser.Scene {
     if (!room) return;
     if (room.def.pedestals && !this.picked) {
       const i = this.pedestalUnder(player);
-      const choice = (room.choices ?? PLACEHOLDER_CHOICES)[i];
+      const choice = this.offers[i];
       this.info.setText(choice ? `${choice.name}\n${choice.description}\n(attack to take it)` : '').setVisible(Boolean(choice));
     }
     if (room.def.lockUntilCleared && !this.cleared && this.enemies.every((w) => w.gone)) {
@@ -532,6 +673,31 @@ export class ChamberScene extends Phaser.Scene {
     this.player.render();
     for (const w of this.enemies) w.render();
     this.view.draw(this.pressed, this.beams);
+    this.drawInsight();
+  }
+
+  /** Insight: a dashed ghost of the beams after a flip, and outlines on a plate's targets. */
+  private drawInsight(): void {
+    const g = this.insightG?.clear();
+    if (!g) return;
+    const { mirror, ghost, targets } = this.insight;
+    if (mirror && ghost) {
+      const [mr, mc] = mirror.cells[0]!;
+      g.lineStyle(2, PALETTE.lightCore, 0.8).strokeCircle((mc + 0.5) * TILE, (mr + 0.5) * TILE, TILE * 0.62);
+      g.lineStyle(2, PALETTE.lightCore, 0.55);
+      for (const seg of ghost.segments) {
+        const l = segmentLine(seg, TILE);
+        const len = Math.hypot(l.x2 - l.x1, l.y2 - l.y1);
+        for (let d = 0; d < len; d += 12) {
+          const t0 = d / len;
+          const t1 = Math.min(1, (d + 6) / len);
+          g.lineBetween(l.x1 + (l.x2 - l.x1) * t0, l.y1 + (l.y2 - l.y1) * t0, l.x1 + (l.x2 - l.x1) * t1, l.y1 + (l.y2 - l.y1) * t1);
+        }
+      }
+    }
+    const pulse = 0.55 + 0.35 * Math.sin(this.time.now / 140);
+    g.lineStyle(2, PALETTE.lightCore, pulse);
+    for (const d of targets) for (const [r, c] of d.cells) g.strokeRect(c * TILE + 1, r * TILE + 1, TILE - 2, TILE - 2);
   }
 
   private showMessage(text: string): void {
@@ -552,9 +718,4 @@ export class ChamberScene extends Phaser.Scene {
 
 const overlap = (a: Bounds, b: Bounds) => a.right > b.left && a.left < b.right && a.bottom > b.top && a.top < b.bottom;
 
-/** Shown when a reward room is opened on its own (URL), before the upgrade pool exists. */
-const PLACEHOLDER_CHOICES: readonly RewardChoice[] = [
-  { id: 'a', name: 'Upgrade A', description: 'placeholder (the upgrade pool fills these)' },
-  { id: 'b', name: 'Upgrade B', description: 'placeholder' },
-  { id: 'c', name: 'Upgrade C', description: 'placeholder' },
-];
+const UPGRADE_IDS: ReadonlySet<string> = new Set(UPGRADES.map((u) => u.id));

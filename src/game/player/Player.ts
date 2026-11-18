@@ -3,13 +3,15 @@ import { MELEE, swingBox, type Box, type SwingDir } from '../../core/combat/mele
 import type { Ability } from '../../core/chamber/types';
 import { PLAYER_BODY, TILE } from '../../core/player/metrics';
 import { BOLT, type BoltDir } from '../../core/player/bolt';
-import { throwTarget } from '../../core/player/throw';
+import { throwArc, throwTarget } from '../../core/player/throw';
 import {
   DEFAULT_MOVEMENT,
   initialMovementState,
   stepMovement,
+  type MovementParams,
   type MovementState,
 } from '../../core/player/movement';
+import { NO_UPGRADES, type UpgradeEffects } from '../../core/run/upgrades';
 import { Sfx } from '../audio/Sfx';
 import type { Controls } from '../input/Controls';
 
@@ -43,6 +45,9 @@ export class Player {
   private pendingSwing: { box: Box; facing: 1 | -1; dir: SwingDir } | undefined;
   private boltCooldown = 0;
   private pendingBolt: { body: Box; facing: 1 | -1; dir: BoltDir } | undefined;
+  private readonly movement: MovementParams;
+  /** Throw Sight (C67): marks the landing tile while carrying. */
+  private readonly throwSight: Phaser.GameObjects.Graphics | undefined;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -51,7 +56,11 @@ export class Player {
     private readonly controls: Controls,
     /** Abilities usable here: the chamber's declared kit (C24), or all of them in the test room. */
     private readonly abilities: ReadonlySet<Ability> = new Set(),
+    /** Run upgrades (C67); none in level select. Only the Dash cooldown may change (C65). */
+    fx: UpgradeEffects = NO_UPGRADES,
   ) {
+    this.movement = { ...DEFAULT_MOVEMENT, dashCooldown: DEFAULT_MOVEMENT.dashCooldown * fx.dashCooldownScale };
+    this.throwSight = fx.throwSight && abilities.has('throw') ? scene.add.graphics().setDepth(8) : undefined;
     this.hitbox = scene.add.rectangle(x, y, PLAYER_BODY.width, PLAYER_BODY.height).setVisible(false);
     scene.physics.add.existing(this.hitbox);
     this.body = this.hitbox.body as Phaser.Physics.Arcade.Body;
@@ -103,7 +112,7 @@ export class Player {
         facing: this.facing,
       },
       grounded,
-      DEFAULT_MOVEMENT,
+      this.movement,
       dt,
     );
     this.body.setVelocity(this.state.vx, this.state.vy);
@@ -130,6 +139,28 @@ export class Player {
     if (this.carried) {
       this.carried.rect.setPosition(this.hitbox.x, this.hitbox.y - PLAYER_BODY.height / 2 - TILE / 2 + 2);
     }
+    this.drawThrowSight();
+  }
+
+  /** On every step of a Dash (Phantom Dash hits enemies it passes through). */
+  get dashing(): boolean {
+    return this.state.dashing;
+  }
+
+  /** Throw Sight: the landing tile and a dotted arc; faint in the air, where Throw is refused. */
+  private drawThrowSight(): void {
+    const g = this.throwSight?.clear();
+    if (!g || !this.carried) return;
+    const feet = this.hitbox.y + PLAYER_BODY.height / 2;
+    const target = throwTarget(this.hitbox.x, feet, this.facing);
+    const start = { x: this.carried.rect.x, y: this.carried.rect.y };
+    const alpha = this.grounded ? 0.9 : 0.3;
+    g.fillStyle(PALETTE.lightCore, alpha * 0.6);
+    for (let i = 1; i < 10; i++) {
+      const p = throwArc(start, target, i / 10);
+      g.fillCircle(p.x, p.y, 2);
+    }
+    g.lineStyle(2, PALETTE.lightCore, alpha).strokeRect(target.x - TILE / 2 + 2, target.y - TILE / 2 + 2, TILE - 4, TILE - 4);
   }
 
   /**
@@ -176,6 +207,12 @@ export class Player {
   /** Dashing (and a moment after): beams and enemy contact cannot touch the player (C60). */
   get invulnerable(): boolean {
     return this.state.dashing || this.dashGrace > 0;
+  }
+
+  /** A moment of invulnerability (Guard absorbing a hit, C67), shown as a blink. */
+  protect(seconds: number): void {
+    this.dashGrace = Math.max(this.dashGrace, seconds);
+    this.scene.tweens.add({ targets: this.sprite, alpha: 0.3, duration: 80, yoyo: true, repeat: Math.floor(seconds / 0.16) });
   }
 
   /** A fading copy of the player at its current spot (Dash trail). */

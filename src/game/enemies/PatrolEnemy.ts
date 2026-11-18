@@ -16,6 +16,14 @@ export interface PatrolKind {
   shield: boolean;
 }
 
+/** Upgrade modifiers for one hit (C67). */
+export interface HitMods {
+  damage?: number;
+  knockbackScale?: number;
+  /** Seconds a blocked hit staggers a Shieldbearer. */
+  stagger?: number;
+}
+
 export const WALKER_KIND: PatrolKind = { kind: 'walker', ...WALKER, shield: false };
 export const SHIELDBEARER_KIND: PatrolKind = { kind: 'shieldbearer', ...SHIELDBEARER, shield: true };
 
@@ -36,6 +44,7 @@ export class PatrolEnemy {
   private knockTimer = 0;
   private knockVx = 0;
   private telegraph = 0;
+  private stagger = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -81,12 +90,26 @@ export class PatrolEnemy {
     return { left: this.body.left, top: this.body.top, right: this.body.right, bottom: this.body.bottom };
   }
 
-  /** A hit from `fromX` (C62). Returns what happened so the scene can play feedback. */
-  hit(source: HitSource, fromX: number): HitOutcome {
-    const r = hitEnemy(this.kind.kind, this.hp, this.dir, this.rect.x, fromX, source);
+  /**
+   * A hit from `fromX` (C62). Returns what happened so the scene can play feedback. Run upgrades
+   * (C67) pass more damage (Heavy Swing), a longer knockback (Shockwave) or a stagger on a shield
+   * hit (Shield Breaker).
+   */
+  hit(source: HitSource, fromX: number, mods: HitMods = {}): HitOutcome {
+    // A staggered Shieldbearer has its shield down: hits land from either side.
+    const guarding = this.stagger > 0 ? (Math.sign(this.rect.x - fromX) || 1) as 1 | -1 : this.dir;
+    const r = hitEnemy(this.kind.kind, this.hp, guarding, this.rect.x, fromX, source, mods.damage);
     this.hp = r.hp;
     if (r.outcome === 'blocked') {
       this.flash(0xffd166, this.shield); // the shield lights up: "clang"
+      if (mods.stagger) {
+        this.stagger = mods.stagger;
+        this.telegraph = 0;
+        this.alert.setVisible(false);
+        this.body.setVelocityX(0);
+        this.rect.setAngle(-8 * this.dir);
+        this.shield?.setAlpha(0.3);
+      }
       return r.outcome;
     }
     if (r.outcome === 'killed') {
@@ -96,8 +119,13 @@ export class PatrolEnemy {
     // Damaged: flash and get knocked back about a tile, away from the hit.
     this.flash(PALETTE.lightCore, this.rect);
     this.knockVx = Math.sign(this.rect.x - fromX || 1) * ENEMY_RULES.knockbackSpeed;
-    this.knockTimer = ENEMY_RULES.knockbackTime;
+    this.knockTimer = ENEMY_RULES.knockbackTime * (mods.knockbackScale ?? 1);
     return r.outcome;
+  }
+
+  /** Staggered by Shield Breaker: stands still, can't turn, and the next hit from behind lands. */
+  get staggered(): boolean {
+    return this.stagger > 0;
   }
 
   /** One fixed physics step. */
@@ -109,6 +137,15 @@ export class PatrolEnemy {
       return;
     }
     const b = this.body;
+    if (this.stagger > 0) {
+      this.stagger -= dt;
+      b.setVelocityX(0);
+      if (this.stagger <= 0) {
+        this.rect.setAngle(0);
+        this.shield?.setAlpha(1);
+      }
+      return;
+    }
     if (this.knockTimer > 0) {
       this.knockTimer -= dt;
       b.setVelocityX(this.knockVx);
@@ -150,6 +187,9 @@ export class PatrolEnemy {
   private die(): void {
     this.respawnIn = ENEMY_RULES.respawnDelay;
     this.telegraph = 0;
+    this.stagger = 0;
+    this.rect.setAngle(0);
+    this.shield?.setAlpha(1);
     this.body.enable = false;
     for (const o of [this.rect, this.eye, this.shield, this.alert]) o?.setVisible(false);
     // A burst where it fell.

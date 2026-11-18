@@ -4,6 +4,7 @@
  */
 import Phaser from 'phaser';
 import type { Ability, ChamberId } from './core/chamber/types';
+import { UPGRADES, type UpgradeId } from './core/run/upgrades';
 import { PALETTE } from './game/render/palette';
 import { ChamberScene } from './game/scenes/ChamberScene';
 import { MenuScene } from './game/scenes/MenuScene';
@@ -28,6 +29,12 @@ const ABILITIES: readonly Ability[] = ['throw', 'bolt', 'dash'];
 const kitOverride = import.meta.env.DEV && params.has('kit')
   ? (params.get('kit') ?? '').split(',').filter((a): a is Ability => (ABILITIES as readonly string[]).includes(a))
   : undefined;
+// Dev only: ?upgrades=heavy-swing,guard gives an opened-alone expedition room those run upgrades.
+const upgradeOverride = import.meta.env.DEV && params.has('upgrades')
+  ? (params.get('upgrades') ?? '').split(',').filter((u): u is UpgradeId => UPGRADES.some((x) => x.id === u))
+  : undefined;
+// ?seed=123 fixes the run seed (upgrade offers; the expedition generator later).
+const seed = params.has('seed') ? Number(params.get('seed')) >>> 0 : undefined;
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -45,6 +52,8 @@ const game = new Phaser.Game({
     preBoot: (g) => {
       if (route.chamber || route.room) g.registry.set('route', route);
       if (kitOverride) g.registry.set('kitOverride', kitOverride);
+      if (upgradeOverride) g.registry.set('upgradeOverride', upgradeOverride);
+      if (seed !== undefined) g.registry.set('seed', seed);
     },
   },
   scene: [MenuScene, ChamberScene, TestRoomScene],

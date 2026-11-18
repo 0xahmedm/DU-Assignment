@@ -6,7 +6,7 @@ A browser-playable 2D puzzle action-platformer prototype: **9 puzzle chambers** 
 
 ## Play
 - **Online:** https://0xahmedm.github.io/DU-Assignment/ (try `?chamber=W-E` to open a chamber directly).
-- **What's playable:** the level select (3 × 3) opens all nine chambers; the expedition rooms open on their own with `?room=<id>`. The full expedition loop (runs, upgrades, save) is being built.
+- **What's playable:** the level select (3 × 3) opens all nine chambers; the expedition rooms open on their own with `?room=<id>`. The reward room deals real upgrades (all ten work), hearts run out in expeditions, and the menu shows saved progress (seals, abilities, solved chambers) with a reset; the expedition loop that ties them together is being built.
 - **Offline:** unzip the release and double-click `index.html` (a single self-contained file; no server needed).
 
 ## Controls
@@ -22,6 +22,7 @@ A browser-playable 2D puzzle action-platformer prototype: **9 puzzle chambers** 
 | Dash (ability) | Shift or O |
 | Reset chamber | hold R |
 | Menu | Esc |
+| Reset progress (menu) | Delete, twice |
 
 ## Run locally
 Requires Node 20.19+ (developed on Node 24).
@@ -41,12 +42,14 @@ npm run build:single # dist-single/ (one self-contained index.html for the zip)
 - `?chamber=<id>`: open a chamber directly (e.g. `?chamber=L-M`); `?room=movement`: the movement test room.
 - `?room=<id>&tier=T1|T2|T3`: open an expedition room on its own (`start`, `reward`, `exit`, `gap-run`, `corridor`, `shaft`, `red-floor`, `arena`).
 - `?kit=bolt,throw,dash` (dev builds only): replace the chamber's declared kit, to try abilities anywhere.
+- `?seed=<n>`: fix the run seed (the reward room's offers).
+- `?upgrades=heavy-swing,guard` (dev builds only): give a room or chamber opened by URL those run upgrades (ids in `src/core/run/upgrades.ts`).
 - `?seed=<n>`: coming with expeditions.
 
 ## Architecture
 Clean architecture with an enforced dependency rule (ESLint + `tests/architecture.test.ts`):
 - `src/core`: pure, engine-free, unit-tested puzzle and movement logic (no Phaser, no browser globals).
-- `src/data`: chambers, rooms and upgrades as data (text grids exactly as designed).
+- `src/data`: chambers and rooms as data (text grids exactly as designed); the upgrade pool lives in `src/core/run/upgrades.ts`.
 - `src/game`: the Phaser 3 layer (rendering, physics, input, feel).
 - `src/main.ts`: the composition root.
 

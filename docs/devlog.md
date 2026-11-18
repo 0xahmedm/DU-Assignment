@@ -116,6 +116,8 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 ---
 
 ## Day 5: Expedition loop (in progress)
+- **Hearts and progress:** defeats in an expedition now cost hearts and end the run at zero. Permanent progress (unlocks, abilities, seals) lives in a tested core module with a forgiving save; the menu shows it and can reset it.
+- **Upgrade pool:** the reward pedestals now deal 3 of the 10 upgrades (seeded, gated by owned abilities); all ten work in the game and Mend heals. Hearts and upgrades show in the HUD. Testing found that a standing Bolt flew over walkers; the user decided it should hit them (C103: enemies are hit in front of any part of the body, puzzles unchanged) and that Piercing Bolt hits first landed only when the dart reached the wall (fixed: each enemy is hit as the dart passes).
 - **Docs check:** every living doc was brought up to date, and a test now fails if code and docs drift (unknown decision ids, broken links or screenshots, a missing Next-task pointer, undocumented chambers or rooms, gaps in the AI bug log). It immediately found a stale Day 1 screenshot name in the plan.
 - **Rooms in the game:** the chamber scene now plays expedition rooms (tier enemies that never respawn, the Arena lock, reward pedestals, the Seal altar), reachable on their own with `?room=<id>&tier=`. Every room × tier loads correctly; the Arena lock, the reward pick and the altar were checked in the game.
 - **Expedition rooms approved** (C101, C102): Start, Reward, Seal exit and five connectors (Gap run, Corridor, Shaft, Red-floor arena, Arena) with three encounter tiers each. Drafted as grids, checked with the validator and the reachability checker before review, now data with regression tests.

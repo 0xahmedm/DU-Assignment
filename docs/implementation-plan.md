@@ -238,13 +238,13 @@ G:\Du\DU Assignment
 │  ├─ main.ts                              composition root (URL options, Phaser game, scenes)
 │  ├─ core/                                NO phaser / DOM / window / localStorage
 │  │  ├─ chamber/                          types, legend, parser, validator, logic, collision, dispensers, enumerate
-│  │  ├─ light/                            beams
+│  │  ├─ light/                            beams, insight
 │  │  ├─ player/                           metrics, movement, jumpSim, throw, bolt, reach
 │  │  ├─ combat/                           melee, enemies
 │  │  ├─ enemies/                          walker, shieldbearer
-│  │  └─ run/                              hearts, rooms (next: upgrades, progression, generator, rng)
+│  │  └─ run/                              hearts, rooms, upgrades (+ seeded rng), progression (+ save) (next: generator)
 │  ├─ data/                                chambers/*.ts · rooms/expedition.ts · rooms/movementTest.ts
-│  └─ game/                                scenes/ · player/ · enemies/ · render/ · input/ · audio/
+│  └─ game/                                scenes/ · player/ · enemies/ · render/ · input/ · audio/ · progress.ts (graph + localStorage)
 └─ tests/                                  core/*.test.ts · architecture.test.ts
 ```
 The planned `ports.ts`, `grid/`, `signals/`, `devices/` and `phase/` folders were folded into `chamber/` (one `ChamberLogic` owns signals, doors, phase and mirrors), which kept the core smaller and easier to explain.

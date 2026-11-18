@@ -38,11 +38,13 @@ export function hitEnemy(
   enemyX: number,
   fromX: number,
   source: HitSource,
+  /** Damage per hit: 1, or 2 for melee with Heavy Swing (C67). */
+  damage = 1,
 ): { outcome: HitOutcome; hp: number } {
   if (source === 'beam') return { outcome: 'killed', hp: 0 };
   const fromFront = Math.sign(fromX - enemyX) === facing;
   if (kind === 'shieldbearer' && fromFront) return { outcome: 'blocked', hp };
-  const left = hp - 1;
+  const left = hp - damage;
   return { outcome: left <= 0 ? 'killed' : 'damaged', hp: Math.max(0, left) };
 }
 

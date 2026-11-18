@@ -9,7 +9,10 @@ import { TILE } from './metrics';
  * - It hits the first crystal, mirror or dispenser on its line, exactly like a melee hit (locked
  *   mirrors refuse, C42), and stops there.
  * - It stops at anything solid, including the active phase colour (P-H: the blue block shadows
- *   the Bolt as well as the beam). Enemies are added with combat on Day 4.
+ *   the Bolt as well as the beam).
+ * - Enemies (C103): a forward Bolt hits an enemy in front of any part of the player's body, not
+ *   only on the upper-body row, so a walker (one row tall, on the player's floor) can be Bolted.
+ *   Each body row is a lane, stopped by walls; puzzle targets still use the upper-body row only.
  */
 export const BOLT = {
   /** Flight speed, px/s: fast, but slow enough to see where it goes. */
@@ -64,4 +67,50 @@ export function traceBolt(start: Cell, step: readonly [number, number], world: B
     c += step[1];
   }
   return { cells, hit: undefined, blocked: false };
+}
+
+/** One row a forward Bolt can hit enemies in: the free cells ahead, nearest first. */
+export interface BoltLane {
+  row: number;
+  cells: Cell[];
+}
+
+/**
+ * Enemy lanes of a forward Bolt (C103): one per grid row the body covers, each starting at the
+ * body's front edge and running ahead until something solid. A lane never goes further than the
+ * Bolt itself (`limit` = cells the upper-body Bolt flies through), so nothing is hit past the
+ * mirror, crystal or wall that stops it.
+ */
+export function boltEnemyLanes(body: Box, facing: 1 | -1, isSolid: (r: number, c: number) => boolean, limit: number): BoltLane[] {
+  const front = cellOf(facing === 1 ? body.right - 1 : body.left);
+  const lanes: BoltLane[] = [];
+  for (let row = cellOf(body.top); row <= cellOf(body.bottom - 1); row++) {
+    const cells: Cell[] = [];
+    for (let i = 0, c = front; i < limit && !isSolid(row, c); i++, c += facing) cells.push([row, c]);
+    lanes.push({ row, cells });
+  }
+  return lanes;
+}
+
+/**
+ * Enemies on a forward Bolt's lanes, nearest first (by distance ahead; on a tie the upper row
+ * first). `at` lists the enemies overlapping a cell. Each enemy appears once, at its nearest cell.
+ * The Bolt takes the first; Piercing Bolt (C67) takes them all.
+ */
+export function enemiesOnLanes<E>(lanes: readonly BoltLane[], at: (r: number, c: number) => readonly E[]): { enemy: E; cell: Cell; index: number }[] {
+  const found: { enemy: E; cell: Cell; index: number }[] = [];
+  const seen = new Set<E>();
+  const longest = Math.max(0, ...lanes.map((l) => l.cells.length));
+  for (let i = 0; i < longest; i++) {
+    for (const lane of lanes) {
+      const cell = lane.cells[i];
+      if (!cell) continue;
+      for (const e of at(cell[0], cell[1])) {
+        if (seen.has(e)) continue;
+        seen.add(e);
+        found.push({ enemy: e, cell, index: i });
+      }
+    }
+  }
+  return found;
 }
