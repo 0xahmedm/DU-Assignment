@@ -138,3 +138,16 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 | 30 | The forward Bolt (built on Day 3 to C50's "upper-body row") flew one row above a walker on flat ground, so it could never hit one; Day 4 had checked Bolt hits only on the taller Shieldbearer | Verifying Piercing Bolt in the Arena | User decision C103: enemies are hit in front of any part of the body (one lane per body row), puzzle targets unchanged; core tests |
 | 31 | Piercing Bolt's first version hit the enemies it passed only when the dart reached the far wall | Timing the hits in the game | Each enemy is hit as the dart passes it |
 | 32 | While testing, the AI read the result before the Bolt's 1.2 s flight had ended and briefly concluded Piercing Bolt was broken | Instrumenting `fireBolt`: the Bolt had fired; the hits landed after the check | Waited for the flight; the timing fix in #31 came out of the same look |
+
+---
+
+## Day 6: Playtest prep and polish (playtests deferred by the user)
+- **Polish pass:** every puzzle state change now has a sound, sparks or dust and a flash (plates, receivers, doors, trapdoors, the exit, plate-wired mirrors, crate landings), and movement answers too (jump, landing scaled by the fall, carry, throw, a "refused" sound). M mutes. L-H's chain reaction can now be heard step by step.
+- **Readability before the playtests:** signal wires are dashed and their dashes travel toward the target while powered, so they never look like beams; worlds smaller than the screen are centred.
+- **Remix best-run timer** (C71): a clock in Remix runs and a best time kept on this browser.
+- **Playtest kit:** session script, notes template and a summary with triage (`docs/playtests/`); the playtests themselves are deferred.
+
+### AI bug log (Day 6)
+| # | What the AI got wrong | How it was found | Fix |
+|---|---|---|---|
+| 33 | Putting a crate down right after picking it up (the AI's Day 2 carry code) was refused: the space check still found the crate's own, just-disabled body | Testing the new put-down sound: a "refused" sound where the floor was clear | The check ignores the carried crate and any disabled body; a real wall still refuses |

@@ -136,7 +136,7 @@ export class MenuScene extends Phaser.Scene {
       this.scene.restart();
     };
     reset.on('pointerdown', tryReset);
-    this.add.text(512, 548, 'arrows: choose   Enter: play   digits: seed   C: copy stats   Delete: reset progress   Esc (in play): menu', style(12, PALETTE.dim)).setOrigin(0.5);
+    this.add.text(512, 548, 'arrows: choose   Enter: play   digits: seed   C: copy stats   Delete: reset progress   M: sound', style(12, PALETTE.dim)).setOrigin(0.5);
 
     const kb = this.input.keyboard!;
     kb.on('keydown-UP', () => this.select(this.selRow - 1, this.selCol));

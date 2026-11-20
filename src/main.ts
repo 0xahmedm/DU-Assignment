@@ -5,7 +5,8 @@
 import Phaser from 'phaser';
 import type { Ability, ChamberId } from './core/chamber/types';
 import { UPGRADES, type UpgradeId } from './core/run/upgrades';
-import { PALETTE } from './game/render/palette';
+import { Sfx } from './game/audio/Sfx';
+import { cssHex, PALETTE } from './game/render/palette';
 import { ChamberScene } from './game/scenes/ChamberScene';
 import { MenuScene } from './game/scenes/MenuScene';
 import { TestRoomScene } from './game/scenes/TestRoomScene';
@@ -61,5 +62,19 @@ const game = new Phaser.Game({
   scene: [MenuScene, ChamberScene, TestRoomScene],
 });
 
+// M toggles all sound anywhere (remembered on this browser), with a short note in the corner.
+window.addEventListener('keydown', (e) => {
+  if (e.key !== 'm' && e.key !== 'M') return;
+  const muted = Sfx.toggleMute();
+  const scene = game.scene.getScenes(true)[0];
+  if (!scene) return;
+  const note = scene.add
+    .text(scene.scale.width - 12, scene.scale.height - 10, muted ? 'sound off (M)' : 'sound on (M)', { fontFamily: 'monospace', fontSize: '13px', color: cssHex(PALETTE.text) })
+    .setOrigin(1, 1)
+    .setScrollFactor(0)
+    .setDepth(300);
+  scene.tweens.add({ targets: note, alpha: 0, delay: 900, duration: 400, onComplete: () => note.destroy() });
+});
+
 // Dev-only hook for automated in-browser checks (never included in production builds).
-if (import.meta.env.DEV) (window as unknown as { __game: Phaser.Game }).__game = game;
+if (import.meta.env.DEV) Object.assign(window, { __game: game, __sfx: Sfx });

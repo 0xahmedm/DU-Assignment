@@ -22,6 +22,7 @@ A browser-playable 2D puzzle action-platformer prototype: **9 puzzle chambers** 
 | Dash (ability) | Shift or O |
 | Reset chamber | hold R |
 | Menu | Esc |
+| Sound on / off | M |
 | Reset progress (menu) | Delete, twice |
 | Type a seed to replay (menu) | digits, Backspace |
 | Copy playtest stats (menu) | C |

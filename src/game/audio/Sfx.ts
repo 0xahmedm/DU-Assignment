@@ -6,7 +6,16 @@
 type Wave = OscillatorType;
 
 let ctx: AudioContext | undefined;
+const MUTE_KEY = 'seal-chambers.muted';
+let muted = (() => {
+  try {
+    return window.localStorage.getItem(MUTE_KEY) === '1';
+  } catch {
+    return false;
+  }
+})();
 const audio = (): AudioContext | undefined => {
+  if (muted) return undefined;
   try {
     ctx ??= new AudioContext();
     if (ctx.state === 'suspended') void ctx.resume();
@@ -72,4 +81,63 @@ export const Sfx = {
   bolt: () => tone('square', 900, 1600, 80, 0.05),
   dash: () => noise(120, 0.07, 1800),
   mirror: () => tone('triangle', 700, 1050, 90, 0.07),
+
+  // Movement and crates (C58: every action answers). Frequent sounds stay quiet.
+  jump: () => tone('square', 280, 470, 70, 0.025),
+  /** `impact` 0..1: how hard the landing was. */
+  land: (impact: number) => {
+    tone('sine', 150, 60, 80, 0.04 + 0.05 * impact);
+    noise(50, 0.02 + 0.04 * impact, 500);
+  },
+  pickUp: () => tone('square', 190, 320, 60, 0.035),
+  putDown: () => {
+    tone('sine', 170, 80, 70, 0.06);
+    noise(40, 0.04, 500);
+  },
+  throw: () => noise(110, 0.045, 1400),
+  crateLand: () => {
+    tone('sine', 120, 45, 100, 0.08);
+    noise(70, 0.06, 300);
+  },
+  /** An action the game refuses (no room to put the crate down, Throw in the air, Dash while carrying). */
+  refuse: () => tone('square', 150, 115, 90, 0.035),
+
+  // Puzzle state changes (C52: every state change gets a sound).
+  plateDown: () => tone('triangle', 340, 250, 60, 0.05),
+  plateUp: () => tone('triangle', 250, 340, 60, 0.03),
+  doorOpen: () => {
+    tone('sawtooth', 110, 230, 200, 0.03);
+    noise(160, 0.025, 250);
+  },
+  doorClose: () => {
+    tone('sawtooth', 230, 100, 180, 0.03);
+    noise(120, 0.03, 250);
+  },
+  receiverOn: () => tone('sine', 880, 1320, 150, 0.05),
+  receiverOff: () => tone('sine', 700, 440, 110, 0.03),
+  /** The exit opens: a rising three-note chord. */
+  exitOpen: () => {
+    tone('sine', 523, 523, 260, 0.06);
+    tone('sine', 659, 659, 240, 0.05, 70);
+    tone('sine', 784, 784, 300, 0.05, 140);
+  },
+  /** An upgrade is taken. */
+  pick: () => {
+    tone('triangle', 660, 990, 120, 0.06);
+    tone('triangle', 880, 1320, 160, 0.05, 90);
+  },
+
+  get muted(): boolean {
+    return muted;
+  },
+  /** M toggles all sound; remembered on this browser. */
+  toggleMute(): boolean {
+    muted = !muted;
+    try {
+      window.localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
+    } catch {
+      // not remembered; still muted for this session
+    }
+    return muted;
+  },
 };

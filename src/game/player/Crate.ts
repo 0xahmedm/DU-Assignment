@@ -4,6 +4,8 @@ import { DEFAULT_MOVEMENT } from '../../core/player/movement';
 import { THROW, throwArc, throwVelocity, type Point } from '../../core/player/throw';
 import { PALETTE } from '../render/palette';
 
+const CRATE_LAND_SPEED = 120; // px/s: slower settles (a put-down) make no thud
+
 /** A carryable crate (C30): solid, falls with gravity, never pushed by the player. */
 export class Crate {
   readonly rect: Phaser.GameObjects.Rectangle;
@@ -11,6 +13,8 @@ export class Crate {
   carried = false;
   /** Set while the crate flies along a Throw arc (no physics body during the flight). */
   private flight: { start: Point; target: Point; t: number } | undefined;
+  private wasGrounded = true;
+  private fallSpeed = 0;
 
   /** @param dispenser the dispenser that recalls this crate (C50), if it has one. */
   constructor(
@@ -78,6 +82,23 @@ export class Crate {
     this.body.enable = true;
     this.body.reset(x, y);
     this.body.setVelocity(vx, vy);
+  }
+
+  /**
+   * Call once per physics step, after the crate moved: returns how fast it was falling when it
+   * just landed (for a thud and dust), or undefined. Carried and flying crates never land.
+   */
+  stepLanding(): number | undefined {
+    if (this.carried || this.flight || !this.body.enable) {
+      this.wasGrounded = true;
+      this.fallSpeed = 0;
+      return undefined;
+    }
+    const grounded = this.body.blocked.down || this.body.touching.down;
+    const landed = grounded && !this.wasGrounded && this.fallSpeed > CRATE_LAND_SPEED ? this.fallSpeed : undefined;
+    this.wasGrounded = grounded;
+    this.fallSpeed = grounded ? 0 : Math.max(0, this.body.velocity.y);
+    return landed;
   }
 
   putDownAt(x: number, y: number): void {

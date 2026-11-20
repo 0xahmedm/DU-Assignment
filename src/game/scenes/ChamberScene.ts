@@ -38,6 +38,7 @@ import { Crate } from '../player/Crate';
 import { Player } from '../player/Player';
 import { ChamberView } from '../render/ChamberView';
 import { centredBounds } from '../render/camera';
+import { dust, sparks } from '../render/fx';
 import { cssHex, PALETTE } from '../render/palette';
 
 const RESET_HOLD_MS = 1000; // hold R this long to reset (C51)
@@ -56,6 +57,7 @@ export interface PlayData {
 }
 
 const GUARD_GRACE = 1; // s of invulnerability after Guard absorbs a hit
+const QUIET_START_STEPS = 20; // ~1/3 s: crates settling and starting signals make no sound
 
 /** Game events a run controller listens to (the expedition loop, Day 5). */
 export const ROOM_EVENTS = { done: 'room-done', reward: 'reward-picked', runComplete: 'run-complete', runOver: 'run-over' } as const;
@@ -110,6 +112,8 @@ export class ChamberScene extends Phaser.Scene {
   private insightG: Phaser.GameObjects.Graphics | undefined;
   /** The Remix clock's last shown second (-1 = no clock). */
   private shownSecond = -1;
+  /** Steps at room start without state-change feedback (a door that starts powered isn't news). */
+  private quietSteps = QUIET_START_STEPS;
 
   constructor() {
     super('Chamber');
@@ -122,6 +126,7 @@ export class ChamberScene extends Phaser.Scene {
     this.hud = undefined;
     this.insightG = undefined;
     this.shownSecond = -1;
+    this.quietSteps = QUIET_START_STEPS;
     this.chamberId = data.id ?? this.chamberId;
     this.pedestals = [];
     this.picked = false;
@@ -220,7 +225,7 @@ export class ChamberScene extends Phaser.Scene {
     }
 
     this.add
-      .text(12, 10, `${room ? `${def.name} (${room.tier})` : `${def.id}  ${def.name}`}   |   hold R: reset   Esc: menu`, {
+      .text(12, 10, `${room ? `${def.name} (${room.tier})` : `${def.id}  ${def.name}`}   |   hold R: reset   Esc: menu   M: sound`, {
         fontFamily: 'monospace',
         fontSize: '13px',
         color: cssHex(PALETTE.text),
@@ -279,6 +284,14 @@ export class ChamberScene extends Phaser.Scene {
     this.player.step(dt, this.crates);
     const world = { isSolid: (r: number, c: number) => this.logic.isSolid(r, c) };
     for (const c of this.crates) c.stepFlight(dt, world.isSolid);
+    this.quietSteps = Math.max(0, this.quietSteps - 1);
+    for (const c of this.crates) {
+      // A crate landing from a throw, a drop or a recall thuds and kicks up dust (C52).
+      if (c.stepLanding() !== undefined && !this.quietSteps) {
+        Sfx.crateLand();
+        dust(this, c.rect.x, c.rect.y + TILE / 2, 8, 16, TILE / 2 - 2);
+      }
+    }
     const playerBox = this.boundsOf(this.player.body);
     for (const w of this.enemies) w.step(dt, world, playerBox);
     const alive = this.enemies.filter((w) => w.alive);
@@ -303,6 +316,11 @@ export class ChamberScene extends Phaser.Scene {
         bodies.some((b) => Math.abs(b.bottom - (r + 1) * TILE) <= 3 && b.right > c * TILE + 2 && b.left < (c + 1) * TILE - 2),
       );
       if (hit) pressed.add(d.id);
+    }
+    if (!this.quietSteps) {
+      // Plates click down and up (C52).
+      for (const id of pressed) if (!this.pressed.has(id)) this.feedback(id, 'plateDown');
+      for (const id of this.pressed) if (!pressed.has(id)) this.feedback(id, 'plateUp');
     }
     this.pressed = pressed;
 
@@ -341,7 +359,13 @@ export class ChamberScene extends Phaser.Scene {
       mirrorAt: (r, c) => this.logic.mirrorAt(r, c),
       blocks: (r, c) => blockers.has(key(r, c)),
     };
+    const litBefore = this.beams.lit;
     this.beams = traceBeams(this.model, beamWorld);
+    if (!this.quietSteps) {
+      // Receivers chime when light reaches them, and fade when it leaves (C52).
+      for (const id of this.beams.lit) if (!litBefore.has(id)) this.feedback(id, 'receiverOn');
+      for (const id of litBefore) if (!this.beams.lit.has(id)) this.feedback(id, 'receiverOff');
+    }
     this.logic.setLitReceivers(this.beams.lit);
     if (this.fx.insight) {
       const px = (playerBox.left + playerBox.right) / 2;
@@ -394,7 +418,14 @@ export class ChamberScene extends Phaser.Scene {
     const touch = beamContact(this.beams.segments, bodies[0]!, TILE);
     // Dashing makes the player immune to beams (C60): a Dash passes straight through a fence.
     if (touch && !this.player.invulnerable && this.player.knockback(touch.axis, touch.at)) this.cameras.main.shake(60, 0.002);
-    this.logic.takeEvents(); // feedback hooks (sound/particles) arrive with the FX pass
+    // Doors, trapdoors, the exit and plate-wired mirrors changing state (C52). Mirrors flipped by
+    // a hit already answered in onHits, so only wired ones are handled here.
+    const events = this.logic.takeEvents();
+    if (!this.quietSteps) {
+      for (const id of events.opened) this.feedback(id, id === 'exit' ? 'exitOpen' : 'doorOpen');
+      for (const id of events.closed) this.feedback(id, 'doorClose');
+      for (const id of events.mirrorsFlipped) if (this.logic.isMirrorLocked(id)) this.feedback(id, 'mirror');
+    }
     this.syncSolids();
     this.checkExit(bodies[0]!);
     this.updateReset(dt);
@@ -574,7 +605,9 @@ export class ChamberScene extends Phaser.Scene {
       this.refreshHud();
       if (choice.id === 'mend') this.cameras.main.flash(160, 255, 120, 140, false);
     }
-    Sfx.swap();
+    Sfx.pick();
+    const chosen = this.pedestals[i];
+    if (chosen) sparks(this, chosen.col * TILE + TILE / 2, (chosen.row + 1) * TILE - 12, PALETTE.lightCore, 10);
     this.pedestals.forEach((p, j) => {
       if (j === i) this.tweens.add({ targets: [p.block, p.label], y: '-=12', duration: 200 });
       else this.tweens.add({ targets: [p.block, p.label], alpha: 0, duration: 300 });
@@ -633,6 +666,23 @@ export class ChamberScene extends Phaser.Scene {
         }
         this.showMessage('Run complete!\nEsc: menu');
       }
+    }
+  }
+
+  /**
+   * One device changed state (C52: sound + particles + flash on every state change): its sound,
+   * a flash on the device and sparks (or dust for a plate) at its cells.
+   */
+  private feedback(id: string, kind: 'plateDown' | 'plateUp' | 'receiverOn' | 'receiverOff' | 'doorOpen' | 'doorClose' | 'exitOpen' | 'mirror'): void {
+    const d = this.model.devices.find((x) => x.id === id);
+    if (!d) return;
+    Sfx[kind]();
+    this.view.flash(id);
+    const color = kind.startsWith('plate') ? PALETTE.weight : kind.startsWith('receiver') || kind === 'mirror' ? PALETTE.light : PALETTE.lightCore;
+    for (const [r, c] of d.cells) {
+      const x = c * TILE + TILE / 2;
+      if (kind === 'plateDown') dust(this, x, (r + 1) * TILE, 3, 8, TILE / 2 - 4);
+      else if (kind !== 'plateUp' && kind !== 'receiverOff') sparks(this, x, r * TILE + TILE / 2, color, kind === 'exitOpen' ? 8 : 3);
     }
   }
 

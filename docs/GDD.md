@@ -58,7 +58,7 @@ The mechanics combine because each changes the others' rules:
 ## Platforming & combat
 - **Movement:** responsive, with fast acceleration, variable jump, apex hang, coyote time and jump buffering; no wall jump. The metrics are proven by tests on the same movement code the game runs.
 - **Abilities** (one from each Medium): **Throw** lands a crate exactly 5 tiles ahead; **Bolt** flies straight (forward or up) and hits the first target (any enemy in front of you, puzzle targets at chest height); **Dash** covers exactly 4 tiles with brief invulnerability.
-- **Melee** hits forward and up (reach beyond contact range), with a 60 ms hit-stop, knockback, screen shake, flashes and sounds generated in code.
+- **Melee** hits forward and up (reach beyond contact range), with a 60 ms hit-stop, knockback, screen shake, flashes and sounds generated in code. Every puzzle state change (plate, receiver, door, exit, wired mirror) and every action (jump, landing, carry, throw) has its own sound and particles, so a chain reaction can be followed by ear.
 - **Hearts:** 3 per expedition; any enemy contact costs a heart and resets the room (beams only push you back); losing the last ends the run. Off in level select.
 - **Enemies:**
   - The **Walker** (2 hits) patrols and turns at walls and at any gap, even an open trapdoor; it only falls when the floor vanishes under it.

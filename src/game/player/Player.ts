@@ -16,6 +16,8 @@ import { Sfx } from '../audio/Sfx';
 import type { Controls } from '../input/Controls';
 
 const DASH_GRACE = 0.06; // s of invulnerability after a Dash ends (C60)
+const LAND_FEEDBACK_SPEED = 260; // px/s: landings slower than this (small hops) make no sound or dust
+import { dust } from '../render/fx';
 import { PALETTE } from '../render/palette';
 import type { Crate } from './Crate';
 
@@ -46,6 +48,8 @@ export class Player {
   private boltCooldown = 0;
   private pendingBolt: { body: Box; facing: 1 | -1; dir: BoltDir } | undefined;
   private readonly movement: MovementParams;
+  /** Downward speed at the last airborne step (how hard the next landing is). */
+  private fallSpeed = 0;
   /** Throw Sight (C67): marks the landing tile while carrying. */
   private readonly throwSight: Phaser.GameObjects.Graphics | undefined;
 
@@ -98,6 +102,7 @@ export class Player {
     let dashPressed = this.controls.consume('dash') && this.abilities.has('dash') && !locked;
     if (dashPressed && this.carried) {
       this.scene.cameras.main.shake(60, 0.002); // refused: hands full
+      Sfx.refuse();
       dashPressed = false;
     }
     const wasDashing = this.state.dashing;
@@ -127,8 +132,22 @@ export class Player {
     this.dashGrace = Math.max(0, this.dashGrace - dt);
 
     if (move !== 0 && !locked) this.facing = move;
-    if (!before && this.state.jumpedSinceGrounded) this.squash(0.85, 1.18);
-    if (grounded && !this.wasGrounded) this.squash(1.2, 0.8);
+    const feet = this.hitbox.y + PLAYER_BODY.height / 2;
+    if (!before && this.state.jumpedSinceGrounded) {
+      this.squash(0.85, 1.18);
+      Sfx.jump();
+      dust(this.scene, this.hitbox.x, feet, 4, 10, 8);
+    }
+    if (grounded && !this.wasGrounded) {
+      this.squash(1.2, 0.8);
+      // Landing feedback grows with the fall: a hop is quiet, a long drop thuds and kicks up dust.
+      if (this.fallSpeed > LAND_FEEDBACK_SPEED) {
+        const impact = Math.min(1, (this.fallSpeed - LAND_FEEDBACK_SPEED) / 500);
+        Sfx.land(impact);
+        dust(this.scene, this.hitbox.x, feet, 4 + Math.round(impact * 6), 10 + impact * 12, 8);
+      }
+    }
+    this.fallSpeed = grounded ? 0 : Math.max(0, this.body.velocity.y);
     this.wasGrounded = grounded;
   }
 
@@ -246,12 +265,14 @@ export class Player {
     if (!crate || !this.abilities.has('throw')) return;
     if (!grounded) {
       this.scene.cameras.main.shake(60, 0.002);
+      Sfx.refuse();
       return;
     }
     const feet = this.hitbox.y + PLAYER_BODY.height / 2;
     crate.launch({ x: crate.rect.x, y: crate.rect.y }, throwTarget(this.hitbox.x, feet, this.facing));
     this.carried = undefined;
     this.squash(1.15, 0.9);
+    Sfx.throw();
   }
 
   /** Melee (C35): up-swing while holding up, otherwise forward. Allowed while carrying. */
@@ -286,6 +307,8 @@ export class Player {
     if (target) {
       target.pickUp();
       this.carried = target;
+      Sfx.pickUp();
+      this.squash(0.92, 1.08);
     }
   }
 
@@ -295,13 +318,20 @@ export class Player {
     const feet = this.hitbox.y + PLAYER_BODY.height / 2;
     const x = this.hitbox.x + this.facing * (PLAYER_BODY.width / 2 + TILE / 2 + 1);
     const y = feet - TILE / 2;
-    const blocked = this.scene.physics.overlapRect(x - TILE / 2 + 2, y - TILE / 2 + 2, TILE - 4, TILE - 4, true, true);
+    // The carried crate's own (disabled) body can still be found here for a moment after picking
+    // it up, which refused a quick put-down in place: only enabled bodies other than it count.
+    const blocked = this.scene.physics
+      .overlapRect(x - TILE / 2 + 2, y - TILE / 2 + 2, TILE - 4, TILE - 4, true, true)
+      .filter((b) => b !== crate.body && b.enable);
     if (blocked.length > 0) {
       this.scene.cameras.main.shake(80, 0.003); // no room: refuse, with feedback
+      Sfx.refuse();
       return;
     }
     crate.putDownAt(x, y);
     this.carried = undefined;
+    Sfx.putDown();
+    dust(this.scene, x, feet, 4, 10, TILE / 2 - 2);
   }
 
   private squash(sx: number, sy: number): void {

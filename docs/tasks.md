@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 6 · (user) Playtests 1–3, run with [`docs/playtests/session-script.md`](playtests/session-script.md); notes in `docs/playtests/playtest-N.md`. Still waiting: (user) the Day 4 brief-change email
+**Next task →** Day 7 · `ASSETS.md` final + README run/test instructions, then the GDD toward its final 2–4 pages (its playtest and Day 4 change parts wait). Playtests deferred by the user (kit ready in [`docs/playtests/`](playtests/session-script.md)). Still waiting: (user) the Day 4 brief-change email
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -106,6 +106,7 @@ How to use this file:
 
 ## Day 6: Playtesting
 - [x] Notes template + session script (three Easys, a Medium, a Hard, one run): [`session-script.md`](playtests/session-script.md) (setup, words to say, order + time caps, rotation covering all nine chambers, stuck/hint rules, what to watch per chamber, questions), [`notes-template.md`](playtests/notes-template.md), [`playtest-summary.md`](playtests/playtest-summary.md) (triage + before/after). Menu: the first digit typed now replaces the remembered seed (it used to append, and a 6-digit seed blocked typing)
+- (user, 2026-11-20) Playtests deferred for now; the kit is ready, and triage, the before/after and the GDD's playtest section wait for them
 - [ ] (user) Playtest 1 → `docs/playtests/`
 - [ ] (user) Playtest 2 → `docs/playtests/`
 - [ ] (user) Playtest 3 → `docs/playtests/`
@@ -113,7 +114,8 @@ How to use this file:
 - [ ] Day 6 routine
 
 ## Day 7: Polish and delivery
-- [ ] Polish and balance pass (feel, SFX, juice)
+- [x] Polish pass (feel, SFX, juice): every state change answers (C52): plates click, receivers chime, doors / trapdoors / the exit sound and spark, plate-wired mirrors turn audibly, crates thud with dust; movement (C58): jump and landing sounds, landing dust scaled by the fall; pick-up / put-down / throw sounds and a "refused" sound where the game says no; reward pick chord; **M** mutes (remembered). A quiet ~1/3 s at room start. Found and fixed: a quick pick-up + put-down in place was refused (AI bug #33). Verified in W-E, L-H and W-H by logging every sound by name
+- [ ] Balance pass (needs the playtest numbers)
 - [ ] `GDD.md` final, 2–4 pages (cut idea, playtest changes, Day 4 change, schedule rationale)
 - [ ] `ASSETS.md` final; README run/test instructions
 - [ ] (user) 5-minute voiceover video
