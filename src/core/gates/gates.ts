@@ -62,7 +62,12 @@ export interface GatePass {
   from: readonly Cell[];
   to: readonly Cell[];
   dir: 1 | -1;
-  /** The body's new top-left corner. */
+  /**
+   * The twin's exit side was blocked (G5): the body stays where it is and the gate acts as an
+   * empty frame. The game uses this to say "no" (C52).
+   */
+  blocked: boolean;
+  /** The body's new top-left corner (unchanged when blocked). */
   left: number;
   top: number;
 }
@@ -75,7 +80,8 @@ export function exitClear(gate: readonly Cell[], dir: 1 | -1, isSolid: (r: numbe
 /**
  * One step of a body through the gates. `prevCentreX` is the body's centre on the previous step.
  * Returns where the body comes out if its centre crossed the centre line of a gate that is on,
- * while its vertical centre was within the gate's rows and the twin's exit side is clear.
+ * while its vertical centre was within the gate's rows. If the twin's exit side is blocked, the
+ * result says so (`blocked`) and keeps the body where it is.
  */
 export function passThrough(
   pairs: readonly Device[],
@@ -98,10 +104,10 @@ export function passThrough(
       const crossed = dir === 1 ? prevCentreX < line && cx >= line : prevCentreX > line && cx <= line;
       if (!crossed || cy < top * tile || cy >= (top + from.length) * tile) continue;
       const to = pair.gates![1 - g]!;
-      if (!exitClear(to, dir, isSolid)) continue;
+      if (!exitClear(to, dir, isSolid)) return { pair: pair.id, from, to, dir, blocked: true, left: body.left, top: body.top };
       const [toTop, toCol] = to[0]!;
       const left = dir === 1 ? (toCol + 1) * tile + 0.5 : toCol * tile - body.width - 0.5;
-      return { pair: pair.id, from, to, dir, left, top: body.top + (toTop - top) * tile };
+      return { pair: pair.id, from, to, dir, blocked: false, left, top: body.top + (toTop - top) * tile };
     }
   }
   return undefined;

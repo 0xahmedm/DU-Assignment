@@ -160,7 +160,12 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
   - Then came the game layer and data entry; each chamber was then solved end to end in the real game.
   - The three chambers: **First Gate** (fetch a crate through a gate), **Gatekeeper** (open a gate for the walker; it drops onto the plate that holds your gate open), **Handover** (Gates × Light: one beam powers your gate or the exit, so a crate takes over).
 - **Progression:** Eclipse now also needs the Gates Hard; the chamber select is 4 × 3; five winning runs cover all twelve chambers. The GDD still fits about 3¼ A4 pages.
-- Screenshot: [`day7-G-H-beam-through-gate-crate-holds-gate-2.png`](screenshots/day7-G-H-beam-through-gate-crate-holds-gate-2.png).
+- **Gates polish, to the bar of the Day 7 polish pass (C52, C58):**
+  - A pass leaves an afterimage shrinking into the gate it entered and another popping out of the twin, plus a ring in the pair's colour. The player stretches in the direction of travel, so a jump across the room reads as one movement.
+  - A gate carrying light washes cyan, brightest on the beam's row, with cyan posts, at both gates of the pair.
+  - Walking into a gate whose far side is blocked now says no (refuse sound, a small shake, a red outline on the blocked spot). It used to be silent.
+  - The new sounds were rendered offline and measured over their loudest 100 ms. The pass (−37 dB) sits between the receiver and door sounds (−38) and the phase swap (−35); gate on (−41) and off (−45) match the existing on/off pairs.
+- Screenshot: [`day7-G-H-beam-through-gate-crate-holds-gate-2.png`](screenshots/day7-G-H-beam-through-gate-crate-holds-gate-2.png): the beam lights gate 1 while a pass through gate 2 pops.
 
 ### AI bug log (Day 7)
 | # | What the AI got wrong | How it was found | Fix |

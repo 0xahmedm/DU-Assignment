@@ -334,6 +334,11 @@ export class Player {
     dust(this.scene, x, feet, 4, 10, TILE / 2 - 2);
   }
 
+  /** Coming out of a gate (C106): a quick stretch in the direction of travel. */
+  popOut(): void {
+    this.squash(1.35, 0.78);
+  }
+
   private squash(sx: number, sy: number): void {
     this.scene.tweens.killTweensOf(this.sprite);
     this.sprite.setScale(sx, sy);

@@ -47,6 +47,8 @@ export interface BeamTrace {
   lit: Set<string>;
   /** "r,c" of every cell a beam passes through (for knockback and, on Day 4, enemy damage). */
   cells: Set<string>;
+  /** "r,c" of gate cells a beam enters or leaves sideways (C106), so the frames can glow. */
+  gateCells: Set<string>;
 }
 
 const STEP: Record<Dir, readonly [number, number]> = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] };
@@ -68,6 +70,7 @@ export function traceBeams(model: ChamberModel, world: BeamWorld): BeamTrace {
   const segments: BeamSegment[] = [];
   const lit = new Set<string>();
   const cells = new Set<string>();
+  const gateCells = new Set<string>();
 
   for (const emitter of model.devices) {
     if (emitter.kind !== 'emitter' || !emitter.dir) continue;
@@ -114,10 +117,12 @@ export function traceBeams(model: ChamberModel, world: BeamWorld): BeamTrace {
         start ??= [r, c];
         last = [r, c];
         cells.add(key);
+        gateCells.add(key);
         close();
         [r, c] = gates.twinOf(r, c)!;
         start = last = [r, c];
         cells.add(`${r},${c}`);
+        gateCells.add(`${r},${c}`);
         fromEdge = false;
         toEdge = false;
         continue;
@@ -136,7 +141,7 @@ export function traceBeams(model: ChamberModel, world: BeamWorld): BeamTrace {
     }
     close();
   }
-  return { segments, lit, cells };
+  return { segments, lit, cells, gateCells };
 }
 
 /** A segment as a line in world pixels (cell size `tile`), for drawing and for contact tests. */

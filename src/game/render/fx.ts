@@ -39,3 +39,39 @@ export function sparks(scene: Phaser.Scene, x: number, y: number, color: number,
     });
   }
 }
+
+/**
+ * A fading copy of a body's box: shrinks where something left (`from`), or pops out from a
+ * little larger where it arrived (`to`). Used for gate passes (C106), so a jump across the room
+ * reads as one movement instead of a glitch. A separate shape, so physics bodies are never scaled.
+ */
+export function afterimage(scene: Phaser.Scene, x: number, y: number, w: number, h: number, color: number, kind: 'from' | 'to'): void {
+  const ghost = scene.add.rectangle(x, y, w, h, color, kind === 'from' ? 0.45 : 0.6).setDepth(11);
+  if (kind === 'to') ghost.setScale(1.45, 0.75);
+  scene.tweens.add({
+    targets: ghost,
+    scaleX: kind === 'from' ? 0.4 : 1,
+    scaleY: kind === 'from' ? 1.2 : 1,
+    alpha: 0,
+    duration: kind === 'from' ? 160 : 220,
+    ease: 'Quad.Out',
+    onComplete: () => ghost.destroy(),
+  });
+}
+
+/** An expanding ring (a gate pass arriving). */
+export function ring(scene: Phaser.Scene, x: number, y: number, color: number, radius = 22): void {
+  const g = scene.add.graphics().setDepth(11);
+  const state = { t: 0 };
+  scene.tweens.add({
+    targets: state,
+    t: 1,
+    duration: 260,
+    ease: 'Quad.Out',
+    onUpdate: () => {
+      g.clear();
+      g.lineStyle(3 * (1 - state.t) + 1, color, 0.8 * (1 - state.t)).strokeCircle(x, y, 6 + radius * state.t);
+    },
+    onComplete: () => g.destroy(),
+  });
+}

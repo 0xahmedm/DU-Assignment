@@ -27,6 +27,8 @@ export class ChamberView {
   private readonly dynamic: Phaser.GameObjects.Graphics;
   /** Device id -> time (ms) its hit flash started. */
   private readonly flashes = new Map<string, number>();
+  /** Cells flashed in a colour (a refused gate pass marks what blocks it). */
+  private cellFlashes: { cells: readonly (readonly [number, number])[]; color: number; t0: number }[] = [];
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -72,6 +74,11 @@ export class ChamberView {
     this.flashes.set(deviceId, this.scene.time.now);
   }
 
+  /** Briefly tint some cells (what blocks a gate's exit, C106). */
+  flashCells(cells: readonly (readonly [number, number])[], color: number): void {
+    this.cellFlashes.push({ cells, color, t0: this.scene.time.now });
+  }
+
   /** A small burst (a recalled crate vanishing, a Bolt hitting a wall). */
   puff(x: number, y: number, color: number = PALETTE.weight): void {
     for (let i = 0; i < 8; i++) {
@@ -99,6 +106,13 @@ export class ChamberView {
       }
       g.fillStyle(PALETTE.lightCore, 0.7 * (1 - t));
       for (const [r, c] of d.cells) g.fillRect(c * TILE, r * TILE, TILE, TILE);
+    }
+    const CELL_MS = 320;
+    this.cellFlashes = this.cellFlashes.filter((f) => this.scene.time.now - f.t0 < CELL_MS);
+    for (const f of this.cellFlashes) {
+      const t = (this.scene.time.now - f.t0) / CELL_MS;
+      g.lineStyle(3, f.color, 0.9 * (1 - t));
+      for (const [r, c] of f.cells) g.strokeRect(c * TILE + 3, r * TILE + 3, TILE - 6, TILE - 6);
     }
   }
 
@@ -236,8 +250,20 @@ export class ChamberView {
               g.lineStyle(2, color, 0.55).lineBetween(x + 7, sy, x + TILE - 7, sy);
             }
           }
+          // Light passing through (C106): the whole frame washes cyan, brightest on the beam's row,
+          // and its posts turn cyan, at both gates of the pair.
+          const lightRows = gate.filter(([r]) => beams?.gateCells.has(`${r},${c}`)).map(([r]) => r);
+          if (lightRows.length > 0) {
+            const pulse = 0.75 + 0.25 * Math.sin(this.scene.time.now / 90);
+            g.fillStyle(PALETTE.light, 0.22 * pulse).fillRect(x + 5, y + 4, TILE - 10, h - 4);
+            for (const r of lightRows) g.fillStyle(PALETTE.light, 0.55 * pulse).fillRect(x + 1, r * TILE + 6, TILE - 2, TILE - 12);
+          }
           g.lineStyle(3, color, on ? 1 : 0.35);
           g.lineBetween(x + 4, y + h, x + 4, y + 2).lineBetween(x + 4, y + 2, x + TILE - 4, y + 2).lineBetween(x + TILE - 4, y + 2, x + TILE - 4, y + h);
+          if (lightRows.length > 0) {
+            g.lineStyle(1.5, PALETTE.lightCore, 0.9);
+            g.lineBetween(x + 4, y + h - 2, x + 4, y + 4).lineBetween(x + TILE - 4, y + 4, x + TILE - 4, y + h - 2);
+          }
         }
         break;
       }

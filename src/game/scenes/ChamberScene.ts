@@ -39,7 +39,7 @@ import { Crate } from '../player/Crate';
 import { Player } from '../player/Player';
 import { ChamberView } from '../render/ChamberView';
 import { centredBounds } from '../render/camera';
-import { dust, sparks } from '../render/fx';
+import { afterimage, dust, ring, sparks } from '../render/fx';
 import { cssHex, gateColor, PALETTE } from '../render/palette';
 
 const RESET_HOLD_MS = 1000; // hold R this long to reset (C51)
@@ -88,7 +88,7 @@ export class ChamberScene extends Phaser.Scene {
   private enemies: PatrolEnemy[] = [];
   private cellBodies: { r: number; c: number; body: Phaser.Physics.Arcade.StaticBody }[] = [];
   private pressed: ReadonlySet<string> = new Set();
-  private beams: BeamTrace = { segments: [], lit: new Set(), cells: new Set() };
+  private beams: BeamTrace = { segments: [], lit: new Set(), cells: new Set(), gateCells: new Set() };
   private gates!: GateMap;
   /** Each body's centre x on the previous physics step, to see it cross a gate's centre line (C106). */
   private prevCentre = new Map<Phaser.Physics.Arcade.Body, number>();
@@ -139,7 +139,7 @@ export class ChamberScene extends Phaser.Scene {
     this.enemies = [];
     this.cellBodies = [];
     this.pressed = new Set();
-    this.beams = { segments: [], lit: new Set(), cells: new Set() };
+    this.beams = { segments: [], lit: new Set(), cells: new Set(), gateCells: new Set() };
     this.resetHeldMs = 0;
     this.solved = false;
     this.defeated = false;
@@ -718,35 +718,52 @@ export class ChamberScene extends Phaser.Scene {
     }
     const isSolid = (r: number, c: number) => this.logic.isSolid(r, c) || crateCells.has(key(r, c));
     const isOn = (id: string) => this.logic.isGateOn(id);
-    const bodies: Phaser.Physics.Arcade.Body[] = [this.player.body];
+    // Each body with the colour of its afterimage.
+    const bodies: { body: Phaser.Physics.Arcade.Body; color: number }[] = [{ body: this.player.body, color: PALETTE.player }];
     for (const c of this.crates) {
-      if (!c.carried && !c.flying && c.body.enable) bodies.push(c.body);
+      if (!c.carried && !c.flying && c.body.enable) bodies.push({ body: c.body, color: PALETTE.weight });
       else this.prevCentre.delete(c.body); // carried or flying: its old spot means nothing on landing
     }
     for (const w of this.enemies) {
-      if (w.alive) bodies.push(w.body);
+      if (w.alive) bodies.push({ body: w.body, color: PALETTE.enemy });
       else this.prevCentre.delete(w.body);
     }
-    for (const body of bodies) {
+    for (const { body, color } of bodies) {
       const cx = body.x + body.width / 2;
       const last = this.prevCentre.get(body);
       // A jump of more than half a tile in one step is a placement (put down, respawn, reset),
       // never a walk across a gate's centre line.
       const prev = last === undefined || Math.abs(cx - last) > TILE / 2 ? cx : last;
       const pass = passThrough(this.gates.pairs, { left: body.x, top: body.y, width: body.width, height: body.height }, prev, TILE, isOn, isSolid);
-      if (!pass) {
+      if (!pass || pass.blocked) {
         this.prevCentre.set(body, cx);
+        // The player walked into a gate whose far side is blocked (G5): say no, as the game does
+        // everywhere else (C52), and mark what blocks it. Other bodies just pass the empty frame.
+        if (pass?.blocked && body === this.player.body) {
+          Sfx.refuse();
+          this.cameras.main.shake(60, 0.002);
+          this.view.flashCells(pass.to.map(([r, c]) => [r, c + pass.dir] as const), 0xff6b6b);
+        }
         continue;
       }
       const { x: vx, y: vy } = body.velocity;
+      const from = { x: body.x + body.width / 2, y: body.y + body.height / 2 };
       body.reset(pass.left + body.width / 2, pass.top + body.height / 2);
       body.velocity.set(vx, vy);
       this.prevCentre.set(body, pass.left + body.width / 2);
+      // Juice (C52, C58): an afterimage shrinking into the gate it entered, one popping out of the
+      // twin, a ring in the pair's colour, sparks at both gates, a flash, the pass sound and, for
+      // the player, a stretch in the direction of travel.
+      const pairColor = gateColor(pass.pair);
+      afterimage(this, from.x, from.y, body.width, body.height, color, 'from');
+      afterimage(this, pass.left + body.width / 2, pass.top + body.height / 2, body.width, body.height, color, 'to');
+      ring(this, pass.left + body.width / 2, pass.top + body.height / 2, pairColor);
+      if (body === this.player.body) this.player.popOut();
       Sfx.gate();
       this.view.flash(pass.pair);
       for (const gate of [pass.from, pass.to]) {
         const [r, c] = gate[0]!;
-        sparks(this, (c + 0.5) * TILE, (r + 1) * TILE, gateColor(pass.pair), 5);
+        sparks(this, (c + 0.5) * TILE, (r + 1) * TILE, pairColor, 5);
       }
     }
   }

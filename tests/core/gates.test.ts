@@ -107,6 +107,7 @@ describe('beams through gates', () => {
   it('a sideways beam leaves the twin the same way and lights what is beyond', () => {
     const t = trace(LIGHT);
     expect(t.lit.has('receiver@1,13')).toBe(true);
+    expect([...t.gateCells].sort()).toEqual(['1,10', '1,3']);
     expect(t.segments.map((s) => [s.from, s.to])).toEqual([
       [[1, 1], [1, 3]],
       [[1, 10], [1, 13]],
@@ -123,6 +124,7 @@ describe('beams through gates', () => {
   it('vertical beams pass gates as air', () => {
     const t = trace(['#######', '#.v...#', 'D.1.1.E', 'S.1.1.E', '#.o####', '#######']);
     expect(t.lit.has('receiver@4,2')).toBe(true);
+    expect(t.gateCells.size).toBe(0);
   });
 
   it('a blocker beside the twin stops the beam there', () => {
@@ -144,7 +146,7 @@ describe('bodies through gates', () => {
   it('crossing the centre line moving right comes out beside the twin, on its right, at the same height', () => {
     const line = 3 * T + 16;
     const pass = passThrough(pairs, body(line + 2), line - 2, T, () => true, solid)!;
-    expect(pass).toMatchObject({ pair: '1', dir: 1, from: [[2, 3], [3, 3]], to: [[2, 10], [3, 10]] });
+    expect(pass).toMatchObject({ pair: '1', dir: 1, blocked: false, from: [[2, 3], [3, 3]], to: [[2, 10], [3, 10]] });
     expect(pass.left).toBeCloseTo(11 * T + 0.5);
     expect(pass.top).toBe(4 * T - 44);
   });
@@ -163,11 +165,13 @@ describe('bodies through gates', () => {
     expect(passThrough(pairs, { ...body(line + 2), top: 0 }, line - 2, T, () => true, solid)).toBeUndefined();
   });
 
-  it('a gate whose twin is blocked on the exit side carries nobody', () => {
+  it('a gate whose twin is blocked on the exit side carries nobody, and says so', () => {
     const blocked = parse(['###############', '#.....#.......#', 'D..1..#...1#..E', 'DS.1.a#...1...E', '###############']);
     const l = new ChamberLogic(blocked);
     const line = 3 * T + 16;
-    expect(passThrough(new GateMap(blocked).pairs, body(line + 2), line - 2, T, () => true, (r, c) => l.isSolid(r, c))).toBeUndefined();
+    const b = body(line + 2);
+    const pass = passThrough(new GateMap(blocked).pairs, b, line - 2, T, () => true, (r, c) => l.isSolid(r, c))!;
+    expect(pass).toMatchObject({ blocked: true, dir: 1, left: b.left, top: b.top });
   });
 });
 

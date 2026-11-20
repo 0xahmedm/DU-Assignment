@@ -1093,4 +1093,9 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
   - Passing through plays its own sound with sparks at both gates in the pair's colour; wired pairs turning on or off play their own two-note sounds.
   - Pair colours: green, pink, pale yellow, light blue, always with the digit.
   - The 4 × 3 chamber select keeps every row on one screen by tightening the row spacing.
+- 2026-11-20 (Day 7, Gates polish): C52/C58 applied to gates. Implementation defaults, open to the user's objection:
+  - A pass shows an afterimage at both ends, a ring in the pair's colour and, for the player, a stretch. These are separate shapes, so no physics body is ever scaled.
+  - A gate carrying light glows cyan.
+  - A pass refused because the far side is blocked (G5) answers only the player: refuse sound, small shake, red outline on the blocked spot. Crates and enemies just pass the empty frame.
+  - A crate parked beside a gate blocks only that exit side. Every gate in the three chambers can be entered from both sides, so this never traps the player.
 - 2026-11-17 (Day 5): Docs refreshed and an automated docs check added (`tests/docs.test.ts`, C86). Historical sections that still said "awaiting user" now point to the confirmed decisions; a reading note at the top explains how proposals, decisions and revisions relate.

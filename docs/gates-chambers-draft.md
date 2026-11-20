@@ -139,7 +139,10 @@ DS..p.......2..######..2...C...E
 - The exit opens only with Ma at `\` (the enumerator lists both plate states). Being inside with the exit open requires the crate on `p`.
 
 ## Built (2026-11-20)
-- **Game layer:** gates drawn with a pair colour and digit, a rising shimmer while on and a dim outline while off. Bodies and beams pass through them, and a pass plays a sound with sparks at both gates.
+- **Game layer:** gates drawn with a pair colour and digit, a rising shimmer while on and a dim outline while off. Bodies and beams pass through them.
+  - A pass plays a sound, with sparks at both gates, afterimages at both ends, a ring and a stretch on the player.
+  - Gates carrying light glow cyan.
+  - A refused pass answers with the refuse sound and marks what blocks it.
 - **Data and regression tests:** routes and the up-swing to Ma are pinned in `tests/core/reach.test.ts`, and the intended states are in the enumerator test.
 - **Progression:** seal 4, and Eclipse needs G-H. Chamber select is now 4 × 3; about five winning runs cover all twelve chambers.
 - **Solved end to end in the real game** with scripted input:
