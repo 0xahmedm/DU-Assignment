@@ -9,7 +9,7 @@ The goal is to watch, not to teach: every hint you give hides a problem we need 
 ## 1. Before the tester arrives (5 min)
 
 - [ ] **Build:** open https://0xahmedm.github.io/DU-Assignment/ (or the single-file build). Write the date and the latest commit (from GitHub) in the notes.
-- [ ] **Fresh start:** in the menu, press **Delete** twice (erases progress), then click **[clear]** twice next to "Playtest stats" (erases the previous tester's numbers). The menu should read `Seals ○○○ · Abilities: none · Solved 0/9` and `Playtest stats: 0 attempts`.
+- [ ] **Fresh start:** in the menu, open **Options & tools**, press **Delete** twice (erases progress), then choose **Clear stats** twice (erases the previous tester's numbers). It should read `Playtest stats: 0 attempts`, and the title screen should show four empty seals and `0 / 12 chambers solved`.
 - [ ] **Recording:** start a screen + voice recording (Xbox Game Bar: **Win + Alt + R**; or OBS). Ask for consent first, and note it.
 - [ ] **Controls card:** put the card below where the tester can see it. The game shows its menu keys and "hold R: reset / Esc: menu", but not the movement keys.
 - [ ] **Rotation:** look up this tester's Medium and Hard in the table in section 3.
@@ -49,10 +49,10 @@ The goal is to watch, not to teach: every hint you give hides a problem we need 
 | 2 | **L-E** First Light | Chamber select | 3 min |
 | 3 | **P-E** First Phase | Chamber select | 3 min |
 | 4 | **The tester's Medium** (table below) | Chamber select | 5 min |
-| 5 | 30 s in the **Movement test room** to try the ability the Hard uses | Menu → Movement test room | 0.5 min |
+| 5 | 30 s in the **Movement test room** to try the ability the Hard uses | Menu → Options & tools → Movement test room | 0.5 min |
 | 6 | **The tester's Hard** | Chamber select | 7 min |
-| 7 | **One expedition run**, seed **42** | Menu → Replay seed: type `42`, Enter | 8 min |
-| 8 | Questions (section 6) and copy the stats | Esc → menu, press **C** | 3 min |
+| 7 | **One expedition run**, seed **42** | Menu → Expedition → type `42`, choose Replay seed, Enter | 8 min |
+| 8 | Questions (section 6) and copy the stats | Esc → menu → Options & tools, press **C** | 3 min |
 
 **Rotation**, so the three sessions cover all nine chambers between them:
 
@@ -116,7 +116,7 @@ Ask, and write the answers down word for word where you can:
 4. How hard was it overall, from 1 (too easy) to 5 (too hard)? Each Easy, the Medium, the Hard?
 5. Would you play another expedition? Why or why not?
 
-Then press **Esc** to the menu and **C** to copy the playtest stats, and paste them into the notes under "Telemetry". Stop the recording and save it next to the notes (or link it).
+Then press **Esc** to the menu, open **Options & tools** and press **C** to copy the playtest stats, and paste them into the notes under "Telemetry". Stop the recording and save it next to the notes (or link it).
 
 ---
 

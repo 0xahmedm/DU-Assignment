@@ -58,7 +58,7 @@ export class TestRoomScene extends Phaser.Scene {
       });
     }
     this.add
-      .text(12, 10, 'Movement test room | move: arrows or A/D | jump: Space or Z (hold = higher) | carry: C | throw: V', {
+      .text(12, 10, 'Movement test room | move: arrows or A/D | jump: Space or Z (hold = higher) | carry: C | throw: V | Esc: menu', {
         fontFamily: 'monospace',
         fontSize: '13px',
         color: cssHex(PALETTE.text),
@@ -67,6 +67,8 @@ export class TestRoomScene extends Phaser.Scene {
       .setDepth(100);
 
     this.cameras.main.startFollow(this.player.hitbox, true, 0.15, 0.15);
+    // Back to the menu's Options & tools screen (it had no way out before the menu rework, C108).
+    this.input.keyboard?.on('keydown-ESC', () => this.scene.start('Menu', { page: 'tools' }));
     // Run the movement model once per fixed physics step (60 Hz), in lockstep with the tests.
     const isSolid = (r: number, c: number) => (room.grid[r]?.[c] ?? '#') === '#';
     this.physics.world.on('worldstep', (dt: number) => {

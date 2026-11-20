@@ -8,6 +8,7 @@ A browser-playable 2D puzzle action-platformer prototype. It has **12 puzzle cha
 - **Online:** https://0xahmedm.github.io/DU-Assignment/ (add `?chamber=W-E` to open a chamber directly).
 - **Offline:** unzip the release and double-click `index.html`. It is one self-contained file and needs no server or internet connection.
 - **What's playable:**
+  - The menu opens on a title screen (the four seals, chambers solved) with three entries: **Expedition**, **Chamber select** and **Options & tools** (sound, the movement test room, playtest stats, reset progress).
   - **New expedition** deals up to three chambers based on your progress, with combat rooms and reward rooms between them. Runs are seeded: the seed is shown in the HUD and can be replayed from the menu.
   - Solved chambers, abilities and seals are saved in this browser.
   - Once all four seals are restored, expeditions become timed Remix runs.
@@ -28,9 +29,10 @@ A browser-playable 2D puzzle action-platformer prototype. It has **12 puzzle cha
 | Reset chamber | hold R |
 | Menu | Esc |
 | Sound on / off | M |
-| Reset progress (menu) | Delete, twice |
-| Type a seed to replay (menu) | digits, Backspace |
-| Copy playtest stats (menu) | C |
+| Menu: choose / open / back | arrows or mouse / Enter or click / Esc |
+| Type a seed to replay (menu → Expedition) | digits, Backspace |
+| Copy playtest stats (menu → Options & tools) | C |
+| Reset progress (menu → Options & tools) | Delete, twice |
 
 All bindings are in one file, `src/game/input/keymap.ts`.
 

@@ -128,6 +128,10 @@ export const Sfx = {
     tone('sine', 659, 659, 240, 0.05, 70);
     tone('sine', 784, 784, 300, 0.05, 140);
   },
+  // Menu (C108): a soft tick when the selection moves, a short rise to open, a fall to go back.
+  menuMove: () => tone('square', 520, 560, 30, 0.018),
+  menuSelect: () => tone('triangle', 440, 660, 90, 0.045),
+  menuBack: () => tone('triangle', 520, 360, 80, 0.035),
   /** An upgrade is taken. */
   pick: () => {
     tone('triangle', 660, 990, 120, 0.06);

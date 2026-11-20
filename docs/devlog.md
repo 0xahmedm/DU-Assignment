@@ -166,6 +166,14 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
   - Walking into a gate whose far side is blocked now says no (refuse sound, a small shake, a red outline on the blocked spot). It used to be silent.
   - The new sounds were rendered offline and measured over their loudest 100 ms. The pass (−37 dB) sits between the receiver and door sounds (−38) and the phase swap (−35); gate on (−41) and off (−45) match the existing on/off pairs.
 - Screenshot: [`day7-G-H-beam-through-gate-crate-holds-gate-2.png`](screenshots/day7-G-H-beam-through-gate-crate-holds-gate-2.png): the beam lights gate 1 while a pass through gate 2 pops.
+- **Menu rework (C108):** the single crowded column became a title screen with three sub-screens.
+  - **Title:** the name over a pulsing beam, the four seals in their mechanics' colours, chambers solved.
+  - **Expedition:** New or Remix, Replay seed, and a progress panel with seals, abilities and chambers.
+  - **Chamber select:** 4 × 3 tiles striped by mechanic, ✓ when solved, seal numbers on the Hards, and a details panel with kit, grants and the intended feeling.
+  - **Options & tools:** sound, the movement test room, playtest stats, reset progress.
+  - Every screen has menu sounds and a short fade, and Esc goes back. A chamber, run or test room returns to the screen it came from, on the same tile.
+  - Found on the way: the movement test room had no way back to the menu (Esc now works).
+  - Checked with keyboard and mouse, with and without saved progress. Screenshots: [`day7-menu-title.png`](screenshots/day7-menu-title.png), [`day7-menu-chamber-select.png`](screenshots/day7-menu-chamber-select.png).
 
 ### AI bug log (Day 7)
 | # | What the AI got wrong | How it was found | Fix |
