@@ -102,7 +102,7 @@ Each chamber's intended feeling (from the chamber data) and its key moment. Note
 - Do they notice the seed and room count in the HUD? Do they understand that solved chambers and abilities are kept?
 - Red-floor arena, if it comes up: a walker on the neutral tile beside the right bumper survives the swap (known; does it matter?).
 
-**Everywhere:** do they find hold-R reset when stuck? Do they get lost in the empty band below the smaller centre chambers? Anything that feels unfair, slow or unreadable.
+**Everywhere:** do they find hold-R reset when stuck? Small rooms are now centred on screen: does anything still look off-centre or cut off? Anything that feels unfair, slow or unreadable.
 
 ---
 

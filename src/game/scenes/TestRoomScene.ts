@@ -4,6 +4,7 @@ import { MOVEMENT_TEST_ROOM } from '../../data/rooms/movementTest';
 import { Controls } from '../input/Controls';
 import { Crate } from '../player/Crate';
 import { Player } from '../player/Player';
+import { centredBounds } from '../render/camera';
 import { cssHex, PALETTE } from '../render/palette';
 import { buildSolids, findCell } from '../render/solids';
 
@@ -22,7 +23,8 @@ export class TestRoomScene extends Phaser.Scene {
     const width = room.grid[0]!.length * TILE;
     const height = room.grid.length * TILE;
     this.physics.world.setBounds(0, 0, width, height);
-    this.cameras.main.setBounds(0, 0, width, height).setBackgroundColor(PALETTE.background);
+    const cam = centredBounds(width, height, this.scale.width, this.scale.height); // small worlds are centred
+    this.cameras.main.setBounds(cam.x, cam.y, cam.width, cam.height).setBackgroundColor(PALETTE.background);
 
     const solids = buildSolids(this, room.grid);
     const controls = new Controls(this);

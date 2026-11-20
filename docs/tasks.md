@@ -49,7 +49,7 @@ How to use this file:
 - [x] (user) Approved: Day 2 commit and `day2` tag pushed; Day 1 raw export replaced with an email-redacted copy (history left as is, user's choice)
 - [ ] Playtest watch (L-M): M1 is hit only from the small step's right half or with a jump-attack; reach 1.3 tiles is just enough
 - [x] Polish: receiver→door wires are thin cyan lines that can be mistaken for beams; give light wires their own look (e.g. dashed). Done before the playtests: every wire is dashed (beams stay solid and glowing), and a powered wire's dashes travel from source to target (C52's pulse); `game/render/dashes.ts` with tests; checked in L-M
-- [ ] Polish: centre chambers smaller than the screen (empty band below W-E / beside W-M); moved to Day 7 polish if not done earlier
+- [x] Polish: centre chambers smaller than the screen (empty band below W-E / beside W-M). Done before the playtests: camera bounds widened to the view and centred on any world smaller than the screen, per axis (`game/render/camera.ts`, tests); applies to six chambers and every expedition room (the test room uses it too); larger worlds still scroll with the player. Checked in W-E, W-M, P-M and the Shaft
 
 ## Day 3: Weight, Phase, Light (extended)
 - [x] W-E data entered; **solved end to end in the real game** with scripted input (Day 2, ahead of plan); hold-R reset implemented

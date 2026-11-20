@@ -37,6 +37,7 @@ import { PatrolEnemy, SHIELDBEARER_KIND, WALKER_KIND } from '../enemies/PatrolEn
 import { Crate } from '../player/Crate';
 import { Player } from '../player/Player';
 import { ChamberView } from '../render/ChamberView';
+import { centredBounds } from '../render/camera';
 import { cssHex, PALETTE } from '../render/palette';
 
 const RESET_HOLD_MS = 1000; // hold R this long to reset (C51)
@@ -160,7 +161,9 @@ export class ChamberScene extends Phaser.Scene {
     const width = this.model.width * TILE;
     const height = this.model.height * TILE;
     this.physics.world.setBounds(0, 0, width, height);
-    this.cameras.main.setBounds(0, 0, width, height).setBackgroundColor(PALETTE.background);
+    // Worlds smaller than the screen are centred (most rooms, the Easys' height, W-M / L-M's width).
+    const cam = centredBounds(width, height, this.scale.width, this.scale.height);
+    this.cameras.main.setBounds(cam.x, cam.y, cam.width, cam.height).setBackgroundColor(PALETTE.background);
 
     // Collision: one static body per cell that is, or can become, solid (terrain, solid devices,
     // doors, trapdoors, the exit, phase blocks). syncSolids() switches bodies on/off from the logic
