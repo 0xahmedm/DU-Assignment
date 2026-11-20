@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 7 · `ASSETS.md` final + README run/test instructions, then the GDD toward its final 2–4 pages (its playtest and Day 4 change parts wait). Playtests deferred by the user (kit ready in [`docs/playtests/`](playtests/session-script.md)). Still waiting: (user) the Day 4 brief-change email
+**Next task →** Day 7 · Follow-up call prep notes (`docs/follow-up-prep.md`: three rehearsed live changes, AI bug stories, likely challenges), then the final single-file zip + Pages check. Playtests deferred by the user (kit ready in [`docs/playtests/`](playtests/session-script.md)). Still waiting: (user) the Day 4 brief-change email
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -116,8 +116,8 @@ How to use this file:
 ## Day 7: Polish and delivery
 - [x] Polish pass (feel, SFX, juice): every state change answers (C52): plates click, receivers chime, doors / trapdoors / the exit sound and spark, plate-wired mirrors turn audibly, crates thud with dust; movement (C58): jump and landing sounds, landing dust scaled by the fall; pick-up / put-down / throw sounds and a "refused" sound where the game says no; reward pick chord; **M** mutes (remembered). A quiet ~1/3 s at room start. Found and fixed: a quick pick-up + put-down in place was refused (AI bug #33). Verified in W-E, L-H and W-H by logging every sound by name
 - [ ] Balance pass (needs the playtest numbers)
-- [ ] `GDD.md` final, 2–4 pages (cut idea, playtest changes, Day 4 change, schedule rationale)
-- [ ] `ASSETS.md` final; README run/test instructions
+- [ ] `GDD.md` final, 2–4 pages (cut idea, playtest changes, Day 4 change, schedule rationale). Final shape done: trimmed and rewritten, schedule rationale with the actual days, cut idea (the procedural Metroidvania world, C5/C12); 3¼ A4 pages at 11 pt (checked by printing to PDF), leaving ¾ page for the two **pending** sections: Day 4 brief change, playtest changes
+- [x] `ASSETS.md` final (every asset and tool with source and licence, versions from `node_modules`, AI assistance, no media files); README run/test instructions (requirements, dev, tests and what they cover, a single test file, `check` = the CI gate, build / preview / single-file, deploy, URL options)
 - [ ] (user) 5-minute voiceover video
 - [ ] All AI exports collected; one screenshot per day present
 - [ ] Final Pages deploy + single-file zip (run `npm run build:single` first; the file doesn't rebuild itself)

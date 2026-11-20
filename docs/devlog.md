@@ -141,11 +141,12 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 
 ---
 
-## Day 6: Playtest prep and polish (playtests deferred by the user)
+## Day 6: Playtest prep, polish and final docs (playtests deferred by the user)
 - **Polish pass:** every puzzle state change now has a sound, sparks or dust and a flash (plates, receivers, doors, trapdoors, the exit, plate-wired mirrors, crate landings), and movement answers too (jump, landing scaled by the fall, carry, throw, a "refused" sound). M mutes. L-H's chain reaction can now be heard step by step.
 - **Readability before the playtests:** signal wires are dashed and their dashes travel toward the target while powered, so they never look like beams; worlds smaller than the screen are centred.
 - **Remix best-run timer** (C71): a clock in Remix runs and a best time kept on this browser.
 - **Playtest kit:** session script, notes template and a summary with triage (`docs/playtests/`); the playtests themselves are deferred.
+- **Final docs:** `ASSETS.md` lists every asset and tool with its licence (nothing but Phaser is third-party, and no image, sound or font files ship). The README has full run / test / build instructions. The GDD is in its final shape: about 3¼ A4 pages, with the last ¾ page left for the Day 4 brief change and the playtest results.
 
 ### AI bug log (Day 6)
 | # | What the AI got wrong | How it was found | Fix |
