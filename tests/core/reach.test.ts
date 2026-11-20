@@ -5,6 +5,9 @@ import type { ChamberDef, PhaseColor } from '../../src/core/chamber/types';
 import { reachFrom, type ReachWorld } from '../../src/core/player/reach';
 import { cellsHitBySwing, swingBox } from '../../src/core/combat/melee';
 import { W_E } from '../../src/data/chambers/W-E';
+import { G_E } from '../../src/data/chambers/G-E';
+import { G_H } from '../../src/data/chambers/G-H';
+import { G_M } from '../../src/data/chambers/G-M';
 import { L_E } from '../../src/data/chambers/L-E';
 import { L_H } from '../../src/data/chambers/L-H';
 import { L_M } from '../../src/data/chambers/L-M';
@@ -209,5 +212,36 @@ describe('reachability: P-H (C56, C99)', () => {
       });
       expect(hits.n).toBe(0);
     }
+  });
+});
+
+describe('Gates chambers (C107): routes through the gates', () => {
+  const gatesOf = (def: ChamberDef, ids: string[]) =>
+    parseChamber(def).model!.devices.filter((d) => d.kind === 'gate' && ids.includes(d.id)).map((d) => d.gates!);
+
+  it('G-E: the far side (crate, exit) is reachable only through gate 1, also carrying the crate back', () => {
+    const world = chamberWorld(G_E, 'red');
+    expect(reachFrom(world, { row: 6, col: 1 }).canReach(6, 23)).toBe(false);
+    expect(reachFrom(world, { row: 6, col: 1 }, { gates: gatesOf(G_E, ['1']) }).canReach(6, 23)).toBe(true);
+    expect(reachFrom(world, { row: 6, col: 23 }, { gates: gatesOf(G_E, ['1']), carrying: true }).canReach(6, 5)).toBe(true);
+  });
+
+  it('G-M: the sealed room needs gate 1 (gate 2 is no way in), and the player never reaches the pen or the slots', () => {
+    const world = chamberWorld(G_M, 'red');
+    expect(reachFrom(world, { row: 11, col: 1 }, { gates: gatesOf(G_M, ['2']) }).canReach(11, 23)).toBe(false);
+    expect(reachFrom(world, { row: 11, col: 1 }, { gates: gatesOf(G_M, ['1']), carrying: true }).canReach(11, 23)).toBe(true);
+    const all = reachFrom(world, { row: 11, col: 1 }, { gates: gatesOf(G_M, ['1', '2']) });
+    expect(all.reached.every((s) => s.row === 11)).toBe(true);
+  });
+
+  it('G-H: the sealed room needs gate 2 (gate 1 carries light only), carrying works both ways, and an up-swing reaches Ma', () => {
+    const world = chamberWorld(G_H, 'red');
+    expect(reachFrom(world, { row: 12, col: 1 }, { gates: gatesOf(G_H, ['1']) }).canReach(12, 27)).toBe(false);
+    expect(reachFrom(world, { row: 12, col: 1 }, { gates: gatesOf(G_H, ['2']) }).canReach(12, 27)).toBe(true);
+    expect(reachFrom(world, { row: 12, col: 27 }, { gates: gatesOf(G_H, ['2']), carrying: true }).canReach(12, 4)).toBe(true);
+    const target = { isSolid: world.isSolid, isHittable: (r: number, c: number) => r === 9 && c === 8 };
+    const left = 8 * 32 + 5;
+    const body = { left, right: left + 22, top: 12 * 32 - 44, bottom: 12 * 32 };
+    expect(cellsHitBySwing(swingBox(body, 1, 'up'), 1, 'up', target)).toEqual([[9, 8]]);
   });
 });

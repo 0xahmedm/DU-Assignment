@@ -76,7 +76,8 @@ src/core/     engine-free TS, unit-tested (as built):
               chamber/  types, legend, parser (stitching), validator, logic (signals, doors,
                         phase + ghost rule, locked mirrors, exit hold), collision faces,
                         dispensers, enumerate (logic-state enumerator)
-              light/    beams (tracer, geometry, contact)
+              light/    beams (tracer, geometry, contact; sideways beams through gates)
+              gates/    gate pairs, body pass-through (C106)
               player/   metrics (C29), movement (incl. Dash), jumpSim, throw, bolt,
                         reach (reachability checker incl. Dash and melee-reach hook)
               combat/   melee (swing area, cells hit), enemies (hit rules, notice, contact)
@@ -84,7 +85,7 @@ src/core/     engine-free TS, unit-tested (as built):
               run/      hearts, rooms (RoomDef, tiers, roomToChamber)
 src/game/     Phaser layer: scenes (menu, chamber + rooms, test room), player, enemies,
               render (chamber view, solids, palette), input, audio (generated SFX)
-src/data/     chambers/W-E.ts … P-H.ts, rooms/expedition.ts (start, reward, exit, 5 connectors
+src/data/     chambers/W-E.ts … P-H.ts, G-E.ts … G-H.ts, rooms/expedition.ts (start, reward, exit, 5 connectors
               with tiers), rooms/movementTest.ts
 tests/        Vitest: one file per core system + chambers, rooms, reachability, enumerator
               (file snapshot docs/enumerator-report.md), architecture guard
@@ -239,6 +240,7 @@ G:\Du\DU Assignment
 │  ├─ core/                                NO phaser / DOM / window / localStorage
 │  │  ├─ chamber/                          types, legend, parser, validator, logic, collision, dispensers, enumerate
 │  │  ├─ light/                            beams, insight
+│  │  ├─ gates/                            gates (pairs, pass-through)
 │  │  ├─ player/                           metrics, movement, jumpSim, throw, bolt, reach
 │  │  ├─ combat/                           melee, enemies
 │  │  ├─ enemies/                          walker, shieldbearer

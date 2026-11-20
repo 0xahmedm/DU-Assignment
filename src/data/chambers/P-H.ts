@@ -10,6 +10,7 @@ import type { ChamberDef } from '../../core/chamber/types';
  *   shadows the up-Bolt as well as the beam.
  * - C100: plate p moved from col 18 to col 27. Beside the low tier, a crate on p blocked the way
  *   back to the chasm (the player cannot hop it under the tier), so the Dash home was unreachable.
+ * C105: the Gates Hard joined the prerequisites and Eclipse restores the fourth (last) seal.
  * Data-entry note: the draft had no start symbol; `S` is on the entry shelf (row 2, col 1).
  */
 export const P_H: ChamberDef = {
@@ -17,9 +18,9 @@ export const P_H: ChamberDef = {
   name: 'Eclipse',
   mechanic: 'phase',
   difficulty: 'hard',
-  prerequisites: ['P-M', 'W-H', 'L-H'],
+  prerequisites: ['P-M', 'W-H', 'L-H', 'G-H'],
   kit: ['dash', 'bolt'],
-  seal: 3,
+  seal: 4,
   initialPhase: 'red',
   sections: [
     {

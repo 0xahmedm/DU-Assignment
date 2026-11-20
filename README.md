@@ -1,6 +1,6 @@
 # Seal Chambers (working title)
 
-A browser-playable 2D puzzle action-platformer prototype. It has **9 puzzle chambers** built on three interacting mechanics (**Weight**, **Light**, **Phase**), plus combat, run upgrades and seeded expeditions. Built for the Mid-Level Game Developer & Game Designer practical assignment.
+A browser-playable 2D puzzle action-platformer prototype. It has **12 puzzle chambers** built on four interacting mechanics (**Weight**, **Light**, **Phase**, **Gates**), plus combat, run upgrades and seeded expeditions. Built for the Mid-Level Game Developer & Game Designer practical assignment.
 
 > Design docs live in [`docs/`](docs/): [GDD](docs/GDD.md) · [decision log](docs/design-decision-log.md) · [implementation plan](docs/implementation-plan.md) · [tasks](docs/tasks.md) · [devlog + AI bug log](docs/devlog.md) · [assets](docs/ASSETS.md) · [playtest kit](docs/playtests/session-script.md) · [AI logs](docs/ai-logs/)
 
@@ -10,8 +10,8 @@ A browser-playable 2D puzzle action-platformer prototype. It has **9 puzzle cham
 - **What's playable:**
   - **New expedition** deals up to three chambers based on your progress, with combat rooms and reward rooms between them. Runs are seeded: the seed is shown in the HUD and can be replayed from the menu.
   - Solved chambers, abilities and seals are saved in this browser.
-  - Once all three seals are restored, expeditions become timed Remix runs.
-  - **Chamber select** (3 × 3) opens any of the nine chambers with its declared kit.
+  - Once all four seals are restored, expeditions become timed Remix runs.
+  - **Chamber select** (4 × 3) opens any of the twelve chambers with its declared kit.
 - **Sound** starts after your first key press (a browser rule). **M** turns it on or off.
 
 ## Controls
@@ -53,7 +53,7 @@ npm run check        # typecheck + lint + tests: the same gate CI runs before ev
 What the tests cover (`tests/`):
 - **Puzzle rules** (`src/core`):
   - The chamber parser and validator. Broken fixtures must fail.
-  - Signals, plates, doors and trapdoors, phase swaps, the beam tracer and dispensers.
+  - Signals, plates, doors and trapdoors, phase swaps, the beam tracer, gates (pairs, wired gates, beams and bodies passing through) and dispensers.
 - **Solvability:**
   - Each chamber stores its intended solution. The logic enumerator tries every mirror, phase and plate combination and checks that the intended end state opens the exit.
   - The reachability checker runs each chamber's key routes through the real movement model.
@@ -79,7 +79,7 @@ npm run build:single # dist-single/index.html: one self-contained file for the z
 - Every push to `main` runs [`.github/workflows/pages.yml`](.github/workflows/pages.yml), which does `npm ci`, `npm run check`, `npm run build` and then deploys to GitHub Pages.
 
 ### URL options
-- `?chamber=<id>`: open a chamber directly (`W-E`, `W-M`, `W-H`, `L-E`, `L-M`, `L-H`, `P-E`, `P-M`, `P-H`).
+- `?chamber=<id>`: open a chamber directly (`W-E`, `W-M`, `W-H`, `L-E`, `L-M`, `L-H`, `P-E`, `P-M`, `P-H`, `G-E`, `G-M`, `G-H`).
 - `?room=movement`: the movement test room, with tile markers for the metrics.
 - `?room=<id>&tier=T1|T2|T3`: open an expedition room on its own. The ids are `start`, `reward`, `exit`, `gap-run`, `corridor`, `shaft`, `red-floor` and `arena`.
 - `?expedition`: start an expedition at once.

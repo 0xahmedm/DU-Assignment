@@ -12,17 +12,20 @@ import { loadBest } from '../../core/run/records';
 import { formatTime } from '../../core/run/telemetry';
 import { cssHex, PALETTE } from '../render/palette';
 
-const MECHANICS = ['Weight', 'Light', 'Phase'];
+const MECHANICS = ['Weight', 'Light', 'Phase', 'Gates'];
 const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
 const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1);
 
 /** Menu rows: 0 New expedition, 1 Replay seed, 2–4 the chamber grid, 5 the movement test room. */
-const ROW = { newRun: 0, replay: 1, grid: 2, test: 5 } as const;
-const ROWS = 6;
+const ROW = { newRun: 0, replay: 1, grid: 2, test: 2 + CHAMBER_GRID.length } as const;
+const ROWS = ROW.test + 1;
+const SEALS = [1, 2, 3, 4] as const; // C105
+const GRID_Y = 266;
+const GRID_STEP = 46;
 const MAX_SEED_DIGITS = 6;
 
 /**
- * Main menu (C53, C72): New expedition / Replay seed / Chamber select (3 × 3, every chamber with
+ * Main menu (C53, C72): New expedition / Replay seed / Chamber select (4 × 3, every chamber with
  * its declared kit) and the movement test room; saved progress at the top with a reset (C76).
  * Arrow keys + Enter, or the mouse. Opening the menu ends any running expedition.
  */
@@ -63,7 +66,7 @@ export class MenuScene extends Phaser.Scene {
     const seals = sealsOf(PROGRESS_GRAPH, progress);
     const abilities = abilitiesOf(PROGRESS_GRAPH, progress);
     const complete = isComplete(PROGRESS_GRAPH, progress);
-    const summary = `Seals ${[1, 2, 3].map((s) => (seals.includes(s as 1 | 2 | 3) ? '●' : '○')).join('')}   Abilities: ${abilities.length ? abilities.map(cap).join(', ') : 'none'}   Solved ${progress.solved.length}/9`;
+    const summary = `Seals ${SEALS.map((s) => (seals.includes(s) ? '●' : '○')).join('')}   Abilities: ${abilities.length ? abilities.map(cap).join(', ') : 'none'}   Solved ${progress.solved.length}/${CHAMBER_GRID.flat().length}`;
     this.add.text(512, 82, summary, style(13, PALETTE.dim)).setOrigin(0.5);
 
     // Expeditions (C72).
@@ -78,19 +81,19 @@ export class MenuScene extends Phaser.Scene {
     this.refreshReplay();
 
     // Chamber select (C53).
-    this.add.text(512, 216, 'Chamber select', style(12, PALETTE.dim)).setOrigin(0.5);
-    DIFFICULTIES.forEach((d, c) => this.add.text(380 + c * 170, 240, d, style(13, PALETTE.dim)).setOrigin(0.5));
+    this.add.text(512, 208, 'Chamber select', style(12, PALETTE.dim)).setOrigin(0.5);
+    DIFFICULTIES.forEach((d, c) => this.add.text(380 + c * 170, GRID_Y - 30, d, style(13, PALETTE.dim)).setOrigin(0.5));
     const grid = CHAMBER_GRID.map((row, r) => {
-      this.add.text(190, 280 + r * 56, MECHANICS[r]!, style(15, PALETTE.dim)).setOrigin(0, 0.5);
+      this.add.text(190, GRID_Y + r * GRID_STEP, MECHANICS[r]!, style(15, PALETTE.dim)).setOrigin(0, 0.5);
       return row.map((id, c) => {
         const mark = isSolved(progress, id) ? ' ✓' : '';
-        const t = this.item(380 + c * 170, 280 + r * 56, `${id}${mark}\n${CHAMBERS[id]?.name ?? '(not built yet)'}`, 13, () => this.scene.start('Chamber', { id }));
+        const t = this.item(380 + c * 170, GRID_Y + r * GRID_STEP, `${id}${mark}\n${CHAMBERS[id]?.name ?? '(not built yet)'}`, 13, () => this.scene.start('Chamber', { id }));
         t.setAlign('center');
         t.on('pointerover', () => this.select(ROW.grid + r, c));
         return t;
       });
     });
-    const test = this.item(512, 452, 'Movement test room', 13, () => this.scene.start('TestRoom'));
+    const test = this.item(512, GRID_Y + CHAMBER_GRID.length * GRID_STEP - 8, 'Movement test room', 13, () => this.scene.start('TestRoom'));
     this.rows = [[newRun], [this.replay], ...grid, [test]];
     newRun.on('pointerover', () => this.select(ROW.newRun, 0));
     this.replay.on('pointerover', () => this.select(ROW.replay, 0));
@@ -98,9 +101,9 @@ export class MenuScene extends Phaser.Scene {
 
     // Playtest stats (C81): copy the report to the clipboard, or clear it (twice).
     const n = Telemetry.count();
-    const stats = this.add.text(512, 486, `Playtest stats: ${n} attempt${n === 1 ? '' : 's'}`, style(12, PALETTE.dim)).setOrigin(1, 0.5);
-    const copy = this.add.text(522, 486, '[copy]', style(12, PALETTE.text)).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
-    const clear = this.add.text(582, 486, '[clear]', style(12, PALETTE.dim)).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
+    const stats = this.add.text(512, 490, `Playtest stats: ${n} attempt${n === 1 ? '' : 's'}`, style(12, PALETTE.dim)).setOrigin(1, 0.5);
+    const copy = this.add.text(522, 490, '[copy]', style(12, PALETTE.text)).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
+    const clear = this.add.text(582, 490, '[clear]', style(12, PALETTE.dim)).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
     const copyStats = async () => {
       const report = Telemetry.report();
       const ok = await copyText(report);
@@ -120,7 +123,7 @@ export class MenuScene extends Phaser.Scene {
     });
 
     // Reset progress (C76), with a second press to confirm.
-    const reset = this.add.text(512, 512, 'Reset progress', style(12, PALETTE.dim)).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const reset = this.add.text(512, 516, 'Reset progress', style(12, PALETTE.dim)).setOrigin(0.5).setInteractive({ useHandCursor: true });
     let armed = false;
     const tryReset = () => {
       if (!armed) {

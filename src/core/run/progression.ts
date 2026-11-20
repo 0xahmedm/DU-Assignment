@@ -8,7 +8,7 @@ import type { Ability, ChamberId, Difficulty, Seal } from '../chamber/types';
  * - a chamber is unlocked when all its prerequisites are solved (C20);
  * - the frontier is every unlocked, unsolved chamber, easiest first (the generator deals from it, C11);
  * - each solved Medium grants its ability (C23); each solved Hard restores its seal (C21);
- * - the final chamber (the one restoring the third seal) completes the game (C17, C21).
+ * - the final chamber (the one restoring the last seal, the fourth since C105) completes the game (C17, C21).
  * Storing less means a save can never contradict itself (e.g. an ability without its Medium).
  */
 

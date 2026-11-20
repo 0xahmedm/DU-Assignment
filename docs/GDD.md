@@ -3,29 +3,31 @@
 > Final draft (Day 7). Two sections wait on events still to come: the Day 4 brief change and the playtests. Decision ids (C…) point to the reasoning in [`design-decision-log.md`](design-decision-log.md). All names are placeholders.
 
 ## Core loop
-**On short, freshly assembled expeditions, fight, choose upgrades and solve handcrafted puzzle chambers to restore three seals, keeping every solved chamber and unlocked ability so each new run rearranges the world around harder puzzles that combine what you've mastered.**
+**On short, freshly assembled expeditions, fight, choose upgrades and solve handcrafted puzzle chambers to restore four seals, keeping every solved chamber and unlocked ability so each new run rearranges the world around harder puzzles that combine what you've mastered.**
 
 - **A run** takes about 10–15 minutes over up to 11 rooms: Start → [combat room → puzzle chamber → pick 1 of 3 upgrades] × up to 3 → Seal exit. The seed is shown and can be replayed.
 - **Kept between runs:** solved chambers, abilities, seals. **Lost when a run ends:** hearts and upgrades.
-- **Completion:** the game is complete when all three seals are restored. After that, expeditions become timed **Remix** runs (any three chambers, hardest encounters, best time kept).
-- **Chamber select** opens any of the nine chambers directly.
+- **Completion:** the game is complete when all four seals are restored. After that, expeditions become timed **Remix** runs (any three chambers, hardest encounters, best time kept).
+- **Chamber select** opens any of the twelve chambers directly.
 
 ## Puzzle mechanics
-Three mechanics share one **signal system**. Inputs (plates, receivers, crystals) power outputs (doors, trapdoors, phase state, mirrors) through always-visible dashed wires. While a wire is powered, its dashes travel toward the target, so a wire never looks like a beam.
+Four mechanics share one **signal system**. Inputs (plates, receivers, crystals) power outputs (doors, trapdoors, phase state, mirrors, gates) through always-visible dashed wires. While a wire is powered, its dashes travel toward the target, so a wire never looks like a beam.
 
 | Mechanic | Rule | What makes it interesting |
 |---|---|---|
 | **Weight** | A plate is active while something heavy (player, crate, enemy) rests on it | You can't stand on a plate and walk through its door; carrying a crate lowers your jump |
 | **Light** | Emitters fire straight beams; 2-position mirrors (flipped by attacking) redirect them; lit receivers power wires; beams block the player | Where the light goes is also where you can't walk |
 | **Phase** | Red and blue blocks; only one colour is solid at a time; hitting a crystal swaps them | Where you stand when you swap matters, and the swap moves everything in the room |
+| **Gates** (added Day 7, C104) | Two linked frames: whatever walks or shines into one (you, a crate, an enemy, a beam) comes out of the other, the same way; wired pairs work only while powered | Gates join sealed spaces, and the side you walk in from decides the side you come out of |
 
-They combine because each one changes the others' rules: crates, enemies and solid phase blocks stop beams, a phase swap drops crates and enemies onto plates, and plates can turn mirrors.
+They combine because each one changes the others' rules: crates, enemies and solid phase blocks stop beams, a phase swap drops crates and enemies onto plates, plates turn mirrors and gates, and beams, crates and enemies all travel through gates.
 
 | | Easy (teach) | Medium (deepen) | Hard (combine) |
 |---|---|---|---|
 | **Weight** | *First Weight:* a crate keeps a door open; carrying lowers your jump | *Borrowed Weight:* open a trapdoor as the walker crosses it, and it drops onto the plate for the crate's door (grants **Throw**) | *Drop Delivery* (Weight × Phase): throw the crate in red, drop it onto its plate in blue |
 | **Light** | *First Light:* flip mirrors to power doors; beams block paths | *Order of Light:* set the far mirror before the beam fills your path (grants **Bolt**) | *Chain Reaction* (Light × Weight): one Bolt opens a trapdoor, the caged walker drops onto a plate, a plate-locked mirror turns and the beam reaches the exit |
 | **Phase** | *First Phase:* swap colours from safe ground to cross | *Footing:* swap only from neutral footholds; your own swaps drop the bridge's guard into the chasm, so swap back to restore the bridge (grants **Dash**) | *Eclipse* (the final chamber, all three): the light needs blue and the bridge needs red, so Dash home through the dilemma |
+| **Gates** | *First Gate:* fetch a crate from behind a wall through a gate, both ways | *Gatekeeper:* open a gate for the walker; it drops onto the plate that keeps your own gate open | *Handover* (Gates × Light): one beam can power your gate or the exit, never both, so a crate takes over the gate's job |
 
 ## How solvability is ensured
 - **Fixed movement metrics:** every layout is drawn against jump 3, gap 4, carrying 2 / 3, Throw 5 and Dash 4. No upgrade changes them, and tests measure them on the game's own movement code.
@@ -44,26 +46,15 @@ They combine because each one changes the others' rules: crates, enemies and sol
 
 ## Platforming & combat
 - **Movement** has fast acceleration, a variable jump with apex hang, coyote time and jump buffering, and no wall jump (it would break the metrics).
-- **Abilities** (one from each Medium):
-  - **Throw** lands a crate exactly 5 tiles ahead.
-  - **Bolt** flies straight (forward or up) and hits the first target: any enemy in front of you, or a puzzle target at chest height.
-  - **Dash** covers exactly 4 tiles with brief invulnerability.
+- **Abilities** (from the Weight, Light and Phase Mediums): **Throw** lands a crate exactly 5 tiles ahead; **Bolt** flies straight and hits the first target (any enemy in front of you, or a puzzle target at chest height); **Dash** covers exactly 4 tiles with brief invulnerability.
 - **Melee** hits forward and up, with a 60 ms hit-stop, knockback, shake and flash. Every puzzle state change and every action has its own generated sound and particles, so a chain reaction can be followed by ear.
 - **Hearts:** you get 3 per expedition. Enemy contact costs one and restarts the room (beams only push you back), and losing the last ends the run. Level select has no hearts.
-- **Enemies:**
-  - The **Walker** (2 hits) turns at walls and gaps, even an open trapdoor, and falls only when the floor vanishes under it.
-  - The **Shieldbearer** (3 hits) blocks melee and Bolt from the front. Strike its back, and it turns after a telegraphed pause.
-  - Beams kill any enemy.
+- **Enemies:** the **Walker** (2 hits) turns at walls and gaps, even an open trapdoor, and falls only when the floor vanishes under it. The **Shieldbearer** (3 hits) blocks melee and Bolt from the front; strike its back, and it turns after a telegraphed pause. Beams kill any enemy.
 - **Combat rooms** reuse the puzzle systems: Gap run, Corridor, Shaft, Red-floor arena (swap to drop the enemies) and Arena (locked until cleared).
 
 ## Upgrades & replayability
-- **After each chamber, pick 1 of 3 run upgrades:**
-  - Combat: Heavy Swing, Long Reach, Shockwave, Shield Breaker, Piercing Bolt.
-  - Survival: Mend, Guard, Phantom Dash.
-  - Puzzle help: Insight (shows where a mirror flip would send the beam), Throw Sight.
-- Ability upgrades appear only once you own the ability.
-- Hearts return only through Mend, so survival competes with power.
-- Upgrades never touch the puzzle metrics. For example, Long Reach lengthens the swing against enemies only.
+- **After each chamber, pick 1 of 3 run upgrades:** combat (Heavy Swing, Long Reach, Shockwave, Shield Breaker, Piercing Bolt), survival (Mend, Guard, Phantom Dash) or puzzle help (Insight shows where a mirror flip would send the beam; Throw Sight). Ability upgrades appear only once you own the ability.
+- Hearts return only through Mend, so survival competes with power. Upgrades never touch the puzzle metrics: Long Reach, for example, lengthens the swing against enemies only.
 - **Replay comes from** seeded runs, different chambers dealt each run, encounters that scale, upgrade combinations and timed Remix runs.
 
 ## Schedule & why it was reordered
@@ -75,7 +66,7 @@ They combine because each one changes the others' rules: crates, enemies and sol
   - Day 4: Chain Reaction, Dash, the finale, combat, the enumerator.
   - Day 5: rooms, upgrades, save, the generator, the expedition loop, telemetry.
   - Day 6: the playtest kit, clarity fixes (dashed wires, centred small chambers), the Remix timer.
-  - Day 7: the feedback and sound polish pass, and these documents.
+  - Day 7: the feedback and sound polish pass, these documents and, with the time left, a fourth mechanic: Gates and its three chambers, built on the same pipeline (drafted as grids, checked by every tool, approved, then solved in the game).
 - **The payoff:** all nine chambers were playable by Day 4, so the expedition loop on Day 5 only had to arrange finished pieces. Playing each chamber as it was built exposed the Day 1 headroom errors early, and that is why the reachability checker exists.
 
 ## Day 4 brief change

@@ -114,6 +114,13 @@ export const Sfx = {
     noise(120, 0.03, 250);
   },
   receiverOn: () => tone('sine', 880, 1320, 150, 0.05),
+  /** Something passes through a gate (C106): a quick airy sweep. */
+  gate: () => {
+    tone('sine', 300, 1200, 130, 0.05);
+    noise(90, 0.025, 2200);
+  },
+  gateOn: () => tone('triangle', 400, 800, 140, 0.045),
+  gateOff: () => tone('triangle', 700, 350, 120, 0.03),
   receiverOff: () => tone('sine', 700, 440, 110, 0.03),
   /** The exit opens: a rising three-note chord. */
   exitOpen: () => {

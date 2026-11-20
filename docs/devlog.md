@@ -152,3 +152,17 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 | # | What the AI got wrong | How it was found | Fix |
 |---|---|---|---|
 | 33 | Putting a crate down right after picking it up (the AI's Day 2 carry code) was refused: the space check still found the crate's own, just-disabled body | Testing the new put-down sound: a "refused" sound where the floor was clear | The check ignores the carried crate and any disabled body; a real wall still refuses |
+
+## Day 7: Gates, the fourth mechanic (12 chambers)
+- **The change (our own, with the extra time; not the Day 4 brief change):** a fourth mechanic with its own Easy, Medium and Hard (C104). Gates were chosen over Wind and Conveyors because they cost the least to build and validate and combine the most: beams, crates and walkers all pass through. Four seals; Eclipse stays the final chamber; the Gates Medium grants no ability (C105).
+- **Same pipeline as Day 1:**
+  - The rules (G1–G6, C106) and three layouts were drafted as text grids and checked by the parser, validator, enumerator and reachability checker (all taught about gates first), then approved by the user (C107).
+  - Then came the game layer and data entry; each chamber was then solved end to end in the real game.
+  - The three chambers: **First Gate** (fetch a crate through a gate), **Gatekeeper** (open a gate for the walker; it drops onto the plate that holds your gate open), **Handover** (Gates × Light: one beam powers your gate or the exit, so a crate takes over).
+- **Progression:** Eclipse now also needs the Gates Hard; the chamber select is 4 × 3; five winning runs cover all twelve chambers. The GDD still fits about 3¼ A4 pages.
+- Screenshot: [`day7-G-H-beam-through-gate-crate-holds-gate-2.png`](screenshots/day7-G-H-beam-through-gate-crate-holds-gate-2.png).
+
+### AI bug log (Day 7)
+| # | What the AI got wrong | How it was found | Fix |
+|---|---|---|---|
+| 34 | The new gate code remembered each body's position from the last step it was checked. A crate carried away kept its old position, so putting it down far from where it was picked up looked like walking across a gate, and it jumped to the twin | Solving First Gate in the game: the crate put down beside plate `a` appeared in the far room | Carried and flying crates are forgotten; a move of more than half a tile in one step is never a crossing |

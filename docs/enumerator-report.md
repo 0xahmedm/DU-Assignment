@@ -68,3 +68,25 @@ For every chamber it tries every combination of phase colour, free-mirror states
 - Intended: crate on p, walker on qqq, mirror Bolted, Blue
 - The exit opens in 1 of 16:
   - ✓ phase=blue · mirrors=[mirror\] · plates=[p,q] · lit=[receiver]
+
+## G-E "First Gate"
+- Inputs: phase red · free mirrors [] · plates [a] → 2 configurations
+- Intended: crate fetched through gate 1 onto a
+- The exit opens in 1 of 2:
+  - ✓ phase=red · mirrors=[] · plates=[a] · lit=[]
+
+## G-M "Gatekeeper"
+- Inputs: phase red · free mirrors [] · plates [a, c, x] → 8 configurations
+- Intended: walker delivered by gate 2 onto a (gate 1 on), crate on x; c released
+- The exit opens in 4 of 8:
+  - phase=red · mirrors=[] · plates=[x] · lit=[]
+  - ✓ phase=red · mirrors=[] · plates=[a,x] · lit=[]
+  - phase=red · mirrors=[] · plates=[c,x] · lit=[]
+  - phase=red · mirrors=[] · plates=[a,c,x] · lit=[]
+
+## G-H "Handover"
+- Inputs: phase red · free mirrors [Ma] · plates [p] → 4 configurations
+- Intended: crate on p holds gate 2, Ma sends the beam through gate 1 to r2
+- The exit opens in 2 of 4:
+  - phase=red · mirrors=[Ma\] · plates=[] · lit=[r2]
+  - ✓ phase=red · mirrors=[Ma\] · plates=[p] · lit=[r2]

@@ -55,23 +55,31 @@ describe('progression graph (C20, C21, C23) on the real chamber data', () => {
       order.push(next);
       p = solve(G, p, next).progress;
     }
-    expect(order).toHaveLength(9);
+    expect(order).toHaveLength(12);
     expect(order.at(-1)).toBe('P-H');
     expect(isComplete(G, p)).toBe(true);
   });
 
-  it('a fresh save starts with the three Easys, W-E first (C20, C22)', () => {
-    expect(frontier(G, newProgress())).toEqual(['W-E', 'L-E', 'P-E']);
+  it('a fresh save starts with the four Easys, W-E first (C20, C22, C105)', () => {
+    expect(frontier(G, newProgress())).toEqual(['W-E', 'L-E', 'P-E', 'G-E']);
   });
 
   it('the frontier deals easiest first', () => {
-    expect(frontier(G, solveAll(['W-E']))).toEqual(['L-E', 'P-E', 'W-M']);
+    expect(frontier(G, solveAll(['W-E']))).toEqual(['L-E', 'P-E', 'G-E', 'W-M']);
   });
 
-  it('each Medium grants one ability, three different ones (C23)', () => {
-    const grants = DEFS.filter((c) => c.difficulty === 'medium').map((c) => c.grants);
-    expect(grants.sort()).toEqual(['bolt', 'dash', 'throw']);
+  it('each Medium grants one ability, three different ones; the Gates Medium grants none (C23, C105)', () => {
+    const mediums = DEFS.filter((c) => c.difficulty === 'medium');
+    expect(mediums.filter((c) => c.mechanic !== 'gate').map((c) => c.grants).sort()).toEqual(['bolt', 'dash', 'throw']);
+    expect(mediums.find((c) => c.mechanic === 'gate')?.grants).toBeUndefined();
     expect(DEFS.filter((c) => c.difficulty !== 'medium' && c.grants)).toEqual([]);
+  });
+
+  it('Gates progression (C105): G-M needs G-E, G-H needs G-M + L-E, and Eclipse needs G-H', () => {
+    expect(CHAMBERS['G-E']!.prerequisites).toEqual([]);
+    expect(CHAMBERS['G-M']!.prerequisites).toEqual(['G-E']);
+    expect(CHAMBERS['G-H']!.prerequisites).toEqual(['G-M', 'L-E']);
+    expect(CHAMBERS['P-H']!.prerequisites).toContain('G-H');
   });
 
   it('Easys and Mediums need only the base kit; a Hard only uses abilities its prerequisites guarantee (C23)', () => {
@@ -92,15 +100,17 @@ describe('progression graph (C20, C21, C23) on the real chamber data', () => {
     }
   });
 
-  it('seals: W-H = 1, L-H = 2, P-H = 3; the final chamber opens only once the first two are restored (C21)', () => {
-    expect(DEFS.filter((c) => c.seal).map((c) => [c.id, c.seal])).toEqual([['W-H', 1], ['L-H', 2], ['P-H', 3]]);
-    // Everything except P-H solved, in any order that respects the graph:
-    const allButFinal = solveAll(['W-E', 'L-E', 'P-E', 'W-M', 'L-M', 'P-M', 'W-H', 'L-H']);
-    expect(sealsOf(G, allButFinal)).toEqual([1, 2]);
+  it('seals: W-H = 1, L-H = 2, G-H = 3, P-H = 4; the final chamber opens only once the first three are restored (C21, C105)', () => {
+    expect(DEFS.filter((c) => c.seal).map((c) => [c.id, c.seal])).toEqual([['W-H', 1], ['L-H', 2], ['P-H', 4], ['G-H', 3]]);
+    // Everything except P-H solved, in an order that respects the graph:
+    const order: ChamberId[] = ['W-E', 'L-E', 'P-E', 'G-E', 'W-M', 'L-M', 'P-M', 'G-M', 'W-H', 'L-H', 'G-H'];
+    const allButFinal = solveAll(order);
+    expect(sealsOf(G, allButFinal)).toEqual([1, 2, 3]);
     expect(isUnlocked(G, allButFinal, 'P-H')).toBe(true);
-    // Without either Hard, it stays locked.
-    expect(isUnlocked(G, solveAll(['W-E', 'L-E', 'P-E', 'W-M', 'L-M', 'P-M', 'W-H']), 'P-H')).toBe(false);
-    expect(isUnlocked(G, solveAll(['W-E', 'L-E', 'P-E', 'W-M', 'L-M', 'P-M', 'L-H']), 'P-H')).toBe(false);
+    // Without any one of the three other Hards, it stays locked.
+    for (const hard of ['W-H', 'L-H', 'G-H'] as const) {
+      expect(isUnlocked(G, solveAll(order.filter((id) => id !== hard)), 'P-H'), hard).toBe(false);
+    }
   });
 });
 
@@ -114,15 +124,15 @@ describe('solving a chamber', () => {
   });
 
   it('a Hard restores its seal; the final chamber completes the game', () => {
-    const before = solveAll(['W-E', 'L-E', 'P-E', 'W-M', 'L-M', 'P-M', 'W-H']);
+    const before = solveAll(['W-E', 'L-E', 'P-E', 'G-E', 'W-M', 'L-M', 'P-M', 'G-M', 'W-H', 'G-H']);
     const lh = solve(G, before, 'L-H');
     expect(lh.seal).toBe(2);
     expect(lh.unlocked).toEqual(['P-H']);
     expect(lh.completed).toBe(false);
     const ph = solve(G, lh.progress, 'P-H');
-    expect(ph.seal).toBe(3);
+    expect(ph.seal).toBe(4);
     expect(ph.completed).toBe(true);
-    expect(sealsOf(G, ph.progress)).toEqual([1, 2, 3]);
+    expect(sealsOf(G, ph.progress)).toEqual([1, 2, 3, 4]);
   });
 
   it('solving again gives nothing new', () => {

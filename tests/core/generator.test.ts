@@ -47,12 +47,18 @@ describe('run generator (C8, C12, C15)', () => {
 });
 
 describe('dealing chambers (C11, C20, C22)', () => {
-  it('the first run starts with W-E and deals the three Easys', () => {
+  it('the first run starts with W-E and deals two of the other three Easys', () => {
+    const seen = new Set<string>();
     for (const s of SEEDS) {
       const dealt = dealChambers(G, newProgress(), s);
       expect(dealt[0]).toBe('W-E');
-      expect([...dealt].sort()).toEqual(['L-E', 'P-E', 'W-E']);
+      expect(dealt).toHaveLength(3);
+      for (const id of dealt.slice(1)) {
+        expect(['L-E', 'P-E', 'G-E']).toContain(id);
+        seen.add(id);
+      }
     }
+    expect([...seen].sort()).toEqual(['G-E', 'L-E', 'P-E']);
   });
 
   it('deals only from the frontier, easiest first', () => {
@@ -73,24 +79,24 @@ describe('dealing chambers (C11, C20, C22)', () => {
   });
 
   it('the final chamber is dealt alone', () => {
-    const p = solveAll(['W-E', 'L-E', 'P-E', 'W-M', 'L-M', 'P-M', 'W-H', 'L-H']);
+    const p = solveAll(['W-E', 'L-E', 'P-E', 'G-E', 'W-M', 'L-M', 'P-M', 'G-M', 'W-H', 'L-H', 'G-H']);
     expect(dealChambers(G, p, 5)).toEqual(['P-H']);
     expect(generateRun(G, p, 5, CONNECTOR_IDS).steps.map((s) => s.kind)).toEqual(['start', 'connector', 'chamber', 'reward', 'exit']);
   });
 
-  it('about four runs cover all nine chambers when every run is won (C8)', () => {
+  it('about five runs cover all twelve chambers when every run is won (C8, C104)', () => {
     let p = newProgress();
     let runs = 0;
     while (frontier(G, p).length > 0 && runs < 10) {
       for (const id of dealChambers(G, p, runs + 1)) p = solve(G, p, id).progress;
       runs++;
     }
-    expect(p.solved).toHaveLength(9);
-    expect(runs).toBe(4);
+    expect(p.solved).toHaveLength(12);
+    expect(runs).toBe(5);
   });
 
   it('with everything solved there is nothing to deal, except in Remix', () => {
-    const all = solveAll(['W-E', 'L-E', 'P-E', 'W-M', 'L-M', 'P-M', 'W-H', 'L-H', 'P-H']);
+    const all = solveAll(['W-E', 'L-E', 'P-E', 'G-E', 'W-M', 'L-M', 'P-M', 'G-M', 'W-H', 'L-H', 'G-H', 'P-H']);
     expect(() => generateRun(G, all, 1, CONNECTOR_IDS)).toThrow(/Remix/);
     const remix = generateRun(G, all, 1, CONNECTOR_IDS, true);
     expect(remix.chambers).toHaveLength(3);

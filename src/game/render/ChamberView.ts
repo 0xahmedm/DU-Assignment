@@ -5,7 +5,7 @@ import type { ChamberModel, Device, Dir } from '../../core/chamber/types';
 import { segmentLine, type BeamTrace } from '../../core/light/beams';
 import { TILE } from '../../core/player/metrics';
 import { dashSegments } from './dashes';
-import { PALETTE } from './palette';
+import { cssHex, gateColor, PALETTE } from './palette';
 
 /** Signal wires: dash and gap lengths (px) and how fast a powered wire's dashes travel (px/s). */
 const WIRE = { dash: 6, gap: 5, speed: 36 } as const;
@@ -44,6 +44,16 @@ export class ChamberView {
       });
     });
     this.dynamic = scene.add.graphics().setDepth(5);
+    // Each gate carries its pair's digit above the frame (C106: colour is never the only cue).
+    for (const d of model.devices.filter((x) => x.kind === 'gate')) {
+      for (const gate of d.gates ?? []) {
+        const [r, c] = gate[0]!;
+        scene.add
+          .text((c + 0.5) * TILE, r * TILE + 2, d.id, { fontFamily: 'monospace', fontSize: '11px', color: cssHex(gateColor(d.id)) })
+          .setOrigin(0.5, 0)
+          .setDepth(6);
+      }
+    }
   }
 
   /** Redraw everything that can change. */
@@ -97,21 +107,25 @@ export class ChamberView {
     for (const l of this.model.links) {
       const to = byId.get(l.to);
       if (!to) continue;
-      const b = center(to);
-      for (const f of l.from) {
-        const from = byId.get(f);
-        if (!from) continue;
-        const a = center(from);
-        const ay = from.kind === 'plate' ? a.y + TILE / 2 - 3 : a.y; // plates: wire leaves from the floor
-        const on = this.logic.isSourceOn(f);
-        const color = from.kind === 'plate' ? PALETTE.weight : PALETTE.light;
-        // Dashed, so a wire never reads as a beam (beams are solid and glow); when powered the
-        // dashes travel from source to target (C52: wires pulse when powered).
-        const offset = on ? (this.scene.time.now / 1000) * WIRE.speed : 0;
-        g.lineStyle(2, color, on ? 0.95 : 0.3);
-        const path = [{ x: a.x, y: ay }, { x: a.x, y: b.y }, { x: b.x, y: b.y }]; // L-shaped run
-        for (const [p, q] of dashSegments(path, WIRE.dash, WIRE.gap, offset)) g.lineBetween(p.x, p.y, q.x, q.y);
-      }
+      // A gate pair is wired to both of its gates.
+      for (const b of to.gates ? to.gates.map((cells) => center({ ...to, cells })) : [center(to)]) this.drawWire(g, l.from, byId, b);
+    }
+  }
+
+  private drawWire(g: Phaser.GameObjects.Graphics, sources: readonly string[], byId: ReadonlyMap<string, Device>, b: { x: number; y: number }): void {
+    for (const f of sources) {
+      const from = byId.get(f);
+      if (!from) continue;
+      const a = center(from);
+      const ay = from.kind === 'plate' ? a.y + TILE / 2 - 3 : a.y; // plates: wire leaves from the floor
+      const on = this.logic.isSourceOn(f);
+      const color = from.kind === 'plate' ? PALETTE.weight : PALETTE.light;
+      // Dashed, so a wire never reads as a beam (beams are solid and glow); when powered the
+      // dashes travel from source to target (C52: wires pulse when powered).
+      const offset = on ? (this.scene.time.now / 1000) * WIRE.speed : 0;
+      g.lineStyle(2, color, on ? 0.95 : 0.3);
+      const path = [{ x: a.x, y: ay }, { x: a.x, y: b.y }, { x: b.x, y: b.y }]; // L-shaped run
+      for (const [p, q] of dashSegments(path, WIRE.dash, WIRE.gap, offset)) g.lineBetween(p.x, p.y, q.x, q.y);
     }
   }
 
@@ -202,6 +216,29 @@ export class ChamberView {
         g.lineStyle(4, PALETTE.lightCore, 1);
         if (state === '/') g.lineBetween(x + 5, y + TILE - 5, x + TILE - 5, y + 5);
         else g.lineBetween(x + 5, y + 5, x + TILE - 5, y + TILE - 5);
+        break;
+      }
+      case 'gate': {
+        // A frame per gate in the pair's colour: lit with a rising shimmer while on, a dim outline
+        // while off (C106).
+        const color = gateColor(d.id);
+        const on = this.logic.isGateOn(d.id);
+        for (const gate of d.gates ?? []) {
+          const [top, c] = gate[0]!;
+          const x = c * TILE;
+          const y = top * TILE;
+          const h = gate.length * TILE;
+          if (on) {
+            g.fillStyle(color, 0.16).fillRect(x + 5, y + 4, TILE - 10, h - 4);
+            const t = (this.scene.time.now / 900) % 1;
+            for (const k of [0, 0.5]) {
+              const sy = y + h - ((t + k) % 1) * (h - 6);
+              g.lineStyle(2, color, 0.55).lineBetween(x + 7, sy, x + TILE - 7, sy);
+            }
+          }
+          g.lineStyle(3, color, on ? 1 : 0.35);
+          g.lineBetween(x + 4, y + h, x + 4, y + 2).lineBetween(x + 4, y + 2, x + TILE - 4, y + 2).lineBetween(x + TILE - 4, y + 2, x + TILE - 4, y + h);
+        }
         break;
       }
       case 'receiver': {

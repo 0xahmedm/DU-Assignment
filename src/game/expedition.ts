@@ -113,7 +113,7 @@ export class Expedition {
       this.run = { ...this.run, abilities: [...this.run.abilities, result.ability] };
     }
     if (!result.first) return `${name}`;
-    if (result.completed) return `${name}!\nAll three seals are restored.`;
+    if (result.completed) return `${name}!\nAll four seals are restored.`;
     if (result.seal) return `${name}!\nSeal ${result.seal} restored.`;
     if (result.ability) return `${name}!\nNew ability: ${cap(result.ability)}`;
     return `${name}!`;
@@ -124,7 +124,7 @@ export class Expedition {
     if (run) this.run = run;
     const progress = loadProgress(PROGRESS_GRAPH, browserStore());
     const seals = sealsOf(PROGRESS_GRAPH, progress);
-    const sealLine = `Seals ${[1, 2, 3].map((s) => (seals.includes(s as 1 | 2 | 3) ? '●' : '○')).join('')}`;
+    const sealLine = `Seals ${([1, 2, 3, 4] as const).map((s) => (seals.includes(s) ? '●' : '○')).join('')}`;
     const solved = this.solvedThisRun.length ? `Solved: ${this.solvedThisRun.join(', ')}` : 'No new chambers';
     const end = isComplete(PROGRESS_GRAPH, progress) && !this.plan.remix ? '\nRemix expeditions unlocked.' : '';
     // Run time; Remix runs also chase a best time (C71).

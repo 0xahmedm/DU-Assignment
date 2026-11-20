@@ -5,9 +5,9 @@ Every asset in the game, with its source and licence (deliverable, C82). Per C74
 ## In the game
 | Asset | Type | Source | Licence |
 |---|---|---|---|
-| All graphics: tiles, player, enemies, crates, plates, doors, mirrors, emitters, beams, phase blocks (hatched red, dotted blue), wires, UI | Drawn in code | Original. Phaser Graphics shapes in the C52 palette, in `src/game/render/` (`ChamberView.ts`, `palette.ts`, `dashes.ts`) and the player/enemy classes | Project's own |
+| All graphics: tiles, player, enemies, crates, plates, doors, mirrors, emitters, beams, phase blocks (hatched red, dotted blue), gates (one colour + digit per pair), wires, UI | Drawn in code | Original. Phaser Graphics shapes in the C52 palette, in `src/game/render/` (`ChamberView.ts`, `palette.ts`, `dashes.ts`) and the player/enemy classes | Project's own |
 | Particles: dust and sparks | Drawn in code | Original. Small tweened rectangles in `src/game/render/fx.ts` | Project's own |
-| Sound effects (24): swing, hit, clang, kill, defeat, swap, bolt, dash, mirror, jump, land, pick up, put down, throw, crate land, refuse, plate down/up, door open/close, receiver on/off, exit open, reward pick | Synthesised in code | Original. sfxr-style oscillator and noise bursts built at runtime with the Web Audio API in `src/game/audio/Sfx.ts`; no external generator or sample used | Project's own |
+| Sound effects (27): swing, hit, clang, kill, defeat, swap, bolt, dash, mirror, jump, land, pick up, put down, throw, crate land, refuse, plate down/up, door open/close, receiver on/off, gate pass, gate on/off, exit open, reward pick | Synthesised in code | Original. sfxr-style oscillator and noise bursts built at runtime with the Web Audio API in `src/game/audio/Sfx.ts`; no external generator or sample used | Project's own |
 | Music | None | — | — |
 | Font | System font | The browser's default `monospace` font. C74 allowed one OFL font, but none was needed, so no font is bundled or distributed | n/a |
 | Chamber and room layouts | Data | Original. Text grids in `src/data/` (designed in the Day 1 pre-production sessions) | Project's own |

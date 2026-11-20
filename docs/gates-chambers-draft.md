@@ -1,12 +1,12 @@
-# Gates: the fourth mechanic (draft for approval)
+# Gates: the fourth mechanic
 
-**Status: draft, 2026-11-20.** Claude drafts, the user decides (C13). Decided so far:
+**Approved 2026-11-20 (C106 rules, C107 layouts).** Built, entered as data (`src/data/chambers/G-*.ts`) and solved end to end in the real game. Claude drafts, the user decides (C13). Decided first:
 - **C104:** a fourth mechanic, Gates, with its own Easy, Medium and Hard: 12 chambers in total. This is our own addition, not the Day 4 brief change.
 - **C105:** the Gates Hard restores a fourth seal and becomes one more prerequisite of Eclipse, which stays the final chamber (its tested layout is untouched). The Gates Medium grants no ability.
 
-For approval below: the gate rules (to become C106) and the three layouts. All three drafts already pass the parser, the validator, the logic enumerator and the reachability checker. Gates are built into the engine-free core with unit tests; the game layer comes after approval.
+Below: the gate rules (C106) and the three layouts (C107), as approved. All three passed the parser, the validator, the logic enumerator and the reachability checker before approval.
 
-## Gate rules (proposed C106)
+## Gate rules (C106)
 - **G1 Shape:** a gate is a frame one cell wide and two cells tall, drawn as the same digit in two stacked cells. The same digit drawn twice is a linked pair (`1` with `1`, `2` with `2`). Gates are never solid.
 - **G2 Bodies:** when the centre of a body crosses a gate's centre line moving sideways, it comes out **beside the twin, on the side it was heading to**, at the same height and with the same speed. A body is the player (a carried crate goes along), a crate, a walker or a Shieldbearer.
   - So the side you walk in from decides the side you come out of.
@@ -138,8 +138,11 @@ DS..p.......2..######..2...C...E
 - The up-attack from the floor reaches Ma.
 - The exit opens only with Ma at `\` (the enumerator lists both plate states). Being inside with the exit open requires the crate on `p`.
 
-## After approval
-1. **Game layer:** draw gates, move bodies and beams through them, add the sounds.
-2. **Data:** enter the three chambers, then solve each one end to end in the real game.
-3. **Progression:** four seals, the Eclipse prerequisite, the 4 × 3 chamber select, and the generator and its tests.
-4. **Docs:** decision log, GDD (trimmed back to 4 pages), README, devlog.
+## Built (2026-11-20)
+- **Game layer:** gates drawn with a pair colour and digit, a rising shimmer while on and a dim outline while off. Bodies and beams pass through them, and a pass plays a sound with sparks at both gates.
+- **Data and regression tests:** routes and the up-swing to Ma are pinned in `tests/core/reach.test.ts`, and the intended states are in the enumerator test.
+- **Progression:** seal 4, and Eclipse needs G-H. Chamber select is now 4 × 3; about five winning runs cover all twelve chambers.
+- **Solved end to end in the real game** with scripted input:
+  - G-E: the crate is fetched through gate 1 and back.
+  - G-M: the walker is delivered onto `a` about 1 s after `c` is pressed, and stays there.
+  - G-H: the beam goes through gate 1 to `r2` while the crate on `p` holds gate 2 on.

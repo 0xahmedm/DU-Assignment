@@ -5,6 +5,7 @@ import { exposedFaces } from '../../core/chamber/collision';
 import { dropCell, feedingDispenser } from '../../core/chamber/dispensers';
 import { ChamberLogic, type HitResult } from '../../core/chamber/logic';
 import { beamContact, segmentLine, traceBeams, type BeamTrace, type BeamWorld } from '../../core/light/beams';
+import { GateMap, passThrough } from '../../core/gates/gates';
 import { nearestFreeMirror, nearestSource, targetsOf, withMirrorFlipped } from '../../core/light/insight';
 import { BOLT, boltEnemyLanes, boltStart, enemiesOnLanes, traceBolt } from '../../core/player/bolt';
 import { parseChamber } from '../../core/chamber/parser';
@@ -39,7 +40,7 @@ import { Player } from '../player/Player';
 import { ChamberView } from '../render/ChamberView';
 import { centredBounds } from '../render/camera';
 import { dust, sparks } from '../render/fx';
-import { cssHex, PALETTE } from '../render/palette';
+import { cssHex, gateColor, PALETTE } from '../render/palette';
 
 const RESET_HOLD_MS = 1000; // hold R this long to reset (C51)
 
@@ -88,6 +89,9 @@ export class ChamberScene extends Phaser.Scene {
   private cellBodies: { r: number; c: number; body: Phaser.Physics.Arcade.StaticBody }[] = [];
   private pressed: ReadonlySet<string> = new Set();
   private beams: BeamTrace = { segments: [], lit: new Set(), cells: new Set() };
+  private gates!: GateMap;
+  /** Each body's centre x on the previous physics step, to see it cross a gate's centre line (C106). */
+  private prevCentre = new Map<Phaser.Physics.Arcade.Body, number>();
   /** Cells overlapped by bodies at the last step (ghost rule for hits that land later, e.g. a Bolt). */
   private lastOccupied: ReadonlySet<string> = new Set();
   private resetHeldMs = 0;
@@ -184,6 +188,8 @@ export class ChamberScene extends Phaser.Scene {
     });
 
     this.view = new ChamberView(this, this.model, this.logic);
+    this.gates = new GateMap(this.model);
+    this.prevCentre = new Map();
     this.controls = new Controls(this);
     const [sr, sc] = this.model.start;
     const kitOverride = this.registry.get('kitOverride') as readonly Ability[] | undefined; // dev only (main.ts)
@@ -281,6 +287,7 @@ export class ChamberScene extends Phaser.Scene {
     if (this.solved || this.defeated) return;
     Telemetry.tick(dt * 1000);
     if (this.play.expedition && this.play.run) this.play.run.timeMs += dt * 1000; // run time (C71)
+    this.stepGates();
     this.player.step(dt, this.crates);
     const world = { isSolid: (r: number, c: number) => this.logic.isSolid(r, c) };
     for (const c of this.crates) c.stepFlight(dt, world.isSolid);
@@ -358,6 +365,7 @@ export class ChamberScene extends Phaser.Scene {
       isSolid: (r, c) => this.logic.isSolid(r, c),
       mirrorAt: (r, c) => this.logic.mirrorAt(r, c),
       blocks: (r, c) => blockers.has(key(r, c)),
+      gateOn: (id) => this.logic.isGateOn(id),
     };
     const litBefore = this.beams.lit;
     this.beams = traceBeams(this.model, beamWorld);
@@ -422,8 +430,9 @@ export class ChamberScene extends Phaser.Scene {
     // a hit already answered in onHits, so only wired ones are handled here.
     const events = this.logic.takeEvents();
     if (!this.quietSteps) {
-      for (const id of events.opened) this.feedback(id, id === 'exit' ? 'exitOpen' : 'doorOpen');
-      for (const id of events.closed) this.feedback(id, 'doorClose');
+      const isGate = (id: string) => this.model.devices.some((d) => d.id === id && d.kind === 'gate');
+      for (const id of events.opened) this.feedback(id, id === 'exit' ? 'exitOpen' : isGate(id) ? 'gateOn' : 'doorOpen');
+      for (const id of events.closed) this.feedback(id, isGate(id) ? 'gateOff' : 'doorClose');
       for (const id of events.mirrorsFlipped) if (this.logic.isMirrorLocked(id)) this.feedback(id, 'mirror');
     }
     this.syncSolids();
@@ -673,16 +682,72 @@ export class ChamberScene extends Phaser.Scene {
    * One device changed state (C52: sound + particles + flash on every state change): its sound,
    * a flash on the device and sparks (or dust for a plate) at its cells.
    */
-  private feedback(id: string, kind: 'plateDown' | 'plateUp' | 'receiverOn' | 'receiverOff' | 'doorOpen' | 'doorClose' | 'exitOpen' | 'mirror'): void {
+  private feedback(id: string, kind: 'plateDown' | 'plateUp' | 'receiverOn' | 'receiverOff' | 'doorOpen' | 'doorClose' | 'exitOpen' | 'mirror' | 'gateOn' | 'gateOff'): void {
     const d = this.model.devices.find((x) => x.id === id);
     if (!d) return;
     Sfx[kind]();
     this.view.flash(id);
-    const color = kind.startsWith('plate') ? PALETTE.weight : kind.startsWith('receiver') || kind === 'mirror' ? PALETTE.light : PALETTE.lightCore;
+    const color = kind.startsWith('plate')
+      ? PALETTE.weight
+      : kind.startsWith('receiver') || kind === 'mirror'
+        ? PALETTE.light
+        : kind.startsWith('gate')
+          ? gateColor(id)
+          : PALETTE.lightCore;
     for (const [r, c] of d.cells) {
       const x = c * TILE + TILE / 2;
       if (kind === 'plateDown') dust(this, x, (r + 1) * TILE, 3, 8, TILE / 2 - 4);
-      else if (kind !== 'plateUp' && kind !== 'receiverOff') sparks(this, x, r * TILE + TILE / 2, color, kind === 'exitOpen' ? 8 : 3);
+      else if (kind !== 'plateUp' && kind !== 'receiverOff' && kind !== 'gateOff') sparks(this, x, r * TILE + TILE / 2, color, kind === 'exitOpen' ? 8 : 3);
+    }
+  }
+
+  /**
+   * Gates (C106): every body whose centre crossed the centre line of a gate that is on comes out
+   * beside the twin, same height, same speed. A carried crate goes with the player (it follows the
+   * player when drawn); a crate in a Throw arc is left alone (no Gates chamber has Throw, G6).
+   */
+  private stepGates(): void {
+    if (this.gates.pairs.length === 0) return;
+    const crateCells = new Set<string>();
+    for (const c of this.crates) {
+      if (c.carried || c.flying) continue;
+      const b = this.boundsOf(c.body);
+      for (let r = Math.floor(b.top / TILE); r <= Math.floor((b.bottom - 1) / TILE); r++) {
+        for (let col = Math.floor(b.left / TILE); col <= Math.floor((b.right - 1) / TILE); col++) crateCells.add(key(r, col));
+      }
+    }
+    const isSolid = (r: number, c: number) => this.logic.isSolid(r, c) || crateCells.has(key(r, c));
+    const isOn = (id: string) => this.logic.isGateOn(id);
+    const bodies: Phaser.Physics.Arcade.Body[] = [this.player.body];
+    for (const c of this.crates) {
+      if (!c.carried && !c.flying && c.body.enable) bodies.push(c.body);
+      else this.prevCentre.delete(c.body); // carried or flying: its old spot means nothing on landing
+    }
+    for (const w of this.enemies) {
+      if (w.alive) bodies.push(w.body);
+      else this.prevCentre.delete(w.body);
+    }
+    for (const body of bodies) {
+      const cx = body.x + body.width / 2;
+      const last = this.prevCentre.get(body);
+      // A jump of more than half a tile in one step is a placement (put down, respawn, reset),
+      // never a walk across a gate's centre line.
+      const prev = last === undefined || Math.abs(cx - last) > TILE / 2 ? cx : last;
+      const pass = passThrough(this.gates.pairs, { left: body.x, top: body.y, width: body.width, height: body.height }, prev, TILE, isOn, isSolid);
+      if (!pass) {
+        this.prevCentre.set(body, cx);
+        continue;
+      }
+      const { x: vx, y: vy } = body.velocity;
+      body.reset(pass.left + body.width / 2, pass.top + body.height / 2);
+      body.velocity.set(vx, vy);
+      this.prevCentre.set(body, pass.left + body.width / 2);
+      Sfx.gate();
+      this.view.flash(pass.pair);
+      for (const gate of [pass.from, pass.to]) {
+        const [r, c] = gate[0]!;
+        sparks(this, (c + 0.5) * TILE, (r + 1) * TILE, gateColor(pass.pair), 5);
+      }
     }
   }
 
