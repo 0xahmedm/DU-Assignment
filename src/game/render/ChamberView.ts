@@ -4,7 +4,11 @@ import { symbolInfo } from '../../core/chamber/legend';
 import type { ChamberModel, Device, Dir } from '../../core/chamber/types';
 import { segmentLine, type BeamTrace } from '../../core/light/beams';
 import { TILE } from '../../core/player/metrics';
+import { dashSegments } from './dashes';
 import { PALETTE } from './palette';
+
+/** Signal wires: dash and gap lengths (px) and how fast a powered wire's dashes travel (px/s). */
+const WIRE = { dash: 6, gap: 5, speed: 36 } as const;
 
 const center = (d: Device) => {
   const xs = d.cells.map(([, c]) => c);
@@ -101,8 +105,12 @@ export class ChamberView {
         const ay = from.kind === 'plate' ? a.y + TILE / 2 - 3 : a.y; // plates: wire leaves from the floor
         const on = this.logic.isSourceOn(f);
         const color = from.kind === 'plate' ? PALETTE.weight : PALETTE.light;
-        g.lineStyle(2, color, on ? 0.95 : 0.25);
-        g.beginPath().moveTo(a.x, ay).lineTo(a.x, b.y).lineTo(b.x, b.y).strokePath(); // L-shaped run
+        // Dashed, so a wire never reads as a beam (beams are solid and glow); when powered the
+        // dashes travel from source to target (C52: wires pulse when powered).
+        const offset = on ? (this.scene.time.now / 1000) * WIRE.speed : 0;
+        g.lineStyle(2, color, on ? 0.95 : 0.3);
+        const path = [{ x: a.x, y: ay }, { x: a.x, y: b.y }, { x: b.x, y: b.y }]; // L-shaped run
+        for (const [p, q] of dashSegments(path, WIRE.dash, WIRE.gap, offset)) g.lineBetween(p.x, p.y, q.x, q.y);
       }
     }
   }

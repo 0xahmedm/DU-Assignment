@@ -48,7 +48,7 @@ How to use this file:
 - [x] Day 2 routine: AI export (`docs/ai-logs/day2-*`, email redacted) · devlog · commit + tag `day2`
 - [x] (user) Approved: Day 2 commit and `day2` tag pushed; Day 1 raw export replaced with an email-redacted copy (history left as is, user's choice)
 - [ ] Playtest watch (L-M): M1 is hit only from the small step's right half or with a jump-attack; reach 1.3 tiles is just enough
-- [ ] Polish: receiver→door wires are thin cyan lines that can be mistaken for beams; give light wires their own look (e.g. dashed)
+- [x] Polish: receiver→door wires are thin cyan lines that can be mistaken for beams; give light wires their own look (e.g. dashed). Done before the playtests: every wire is dashed (beams stay solid and glowing), and a powered wire's dashes travel from source to target (C52's pulse); `game/render/dashes.ts` with tests; checked in L-M
 - [ ] Polish: centre chambers smaller than the screen (empty band below W-E / beside W-M); moved to Day 7 polish if not done earlier
 
 ## Day 3: Weight, Phase, Light (extended)
@@ -99,7 +99,7 @@ How to use this file:
 - [x] Expedition controller (`game/expedition.ts`): plays the steps, carries hearts and upgrades, saves each solve at once, grants a new ability for the rest of the run, banner after a solve, summary at the Seal altar; Esc / run over / run complete return to the menu
 - [x] Menu: New expedition / Replay seed (last seed remembered, digits edit it) / Chamber select (3 × 3); seed and room n/11 in the HUD; `?expedition&seed=` route. Verified in the game: a full seed-42 run (11 rooms, 3 solves saved, end summary), a second run dealing the Mediums (Dash granted mid-run), a run lost to hearts (progress kept), a Remix run
 - [x] Telemetry (C81): `core/run/telemetry.ts` (one record per attempt at a chamber or combat room: active time, hold-R resets, defeats, hearts lost, solved / left / run over; log kept in localStorage, newest 500; Markdown report) with tests; recorder in `game/telemetry.ts`; menu: "Playtest stats: N attempts [copy] [clear]", C copies. Verified in the game: a W-M attempt across a reset and a defeat, an expedition (seed, solved, left), an Arena heart lost, the copied report
-- [ ] Remix expeditions (only if time, C78): dealing (any 3 chambers), T3 and all abilities come with the generator and work; the best-run timer is left
+- [x] Remix expeditions (only if time, C78): dealing (any 3 chambers), T3 and all abilities come with the generator; best-run timer: run time = active play across the run's rooms, a clock in the Remix HUD, best kept on this browser (`core/run/records.ts`, tests), shown at the end ("new best!") and in the menu. Verified with two Remix runs
 - [x] Day 5 routine: screenshot `docs/screenshots/day5-expedition-reward-room-seed-42.png`; AI export `docs/ai-logs/day5-claude-part1*` (the Day 4 session's last part: rooms and docs check) and `day5-claude-part2*` (this session), emails redacted; devlog summary + AI bug log 29–32; commit + tag `day5`
 - [x] (user) Asked to commit to GitHub: Day 5 commits and the `day5` tag pushed
 - [x] (user) Asked: the Day 3 and Day 4 raw exports re-redacted (they still held the git author email); every AI log now scans clean. Earlier copies remain in git history

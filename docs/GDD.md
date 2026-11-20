@@ -12,7 +12,7 @@ A run is a short expedition (~10–15 min): start → combat room → puzzle cha
 - A level select opens any of the 9 chambers directly.
 
 ## Puzzle mechanics
-Three mechanics share one **signal system**: inputs (plates, receivers, crystals) power outputs (doors, trapdoors, phase state, mirrors) through always-visible wires.
+Three mechanics share one **signal system**: inputs (plates, receivers, crystals) power outputs (doors, trapdoors, phase state, mirrors) through always-visible dashed wires whose dashes travel toward the target while powered (a wire never looks like a beam).
 
 | Mechanic | Rule | What makes it interesting |
 |---|---|---|

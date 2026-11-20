@@ -3,6 +3,8 @@ import type { ChamberId } from '../core/chamber/types';
 import { generateRun, runAbilities, type RunPlan } from '../core/run/generator';
 import { isComplete, loadProgress, saveProgress, sealsOf, solve } from '../core/run/progression';
 import type { RoomDef } from '../core/run/rooms';
+import { recordRemixTime } from '../core/run/records';
+import { formatTime } from '../core/run/telemetry';
 import { newRun, type RunState } from '../core/run/upgrades';
 import { CHAMBERS } from '../data/chambers';
 import { CONNECTORS, EXIT_ROOM, REWARD_ROOM, START_ROOM } from '../data/rooms/expedition';
@@ -125,7 +127,15 @@ export class Expedition {
     const sealLine = `Seals ${[1, 2, 3].map((s) => (seals.includes(s as 1 | 2 | 3) ? '●' : '○')).join('')}`;
     const solved = this.solvedThisRun.length ? `Solved: ${this.solvedThisRun.join(', ')}` : 'No new chambers';
     const end = isComplete(PROGRESS_GRAPH, progress) && !this.plan.remix ? '\nRemix expeditions unlocked.' : '';
-    this.chamberScene()?.showEnd(`${this.plan.remix ? 'Remix complete!' : 'Expedition complete!'}\nSeed ${this.plan.seed}   ${solved}\n${sealLine}${end}`);
+    // Run time; Remix runs also chase a best time (C71).
+    let time = `Time ${formatTime(this.run.timeMs)}`;
+    if (this.plan.remix) {
+      const r = recordRemixTime(browserStore(), this.run.timeMs);
+      time += r.improved ? '  (new best!)' : `  (best ${formatTime(r.best)})`;
+    }
+    this.chamberScene()?.showEnd(
+      `${this.plan.remix ? 'Remix complete!' : 'Expedition complete!'}\nSeed ${this.plan.seed}   ${time}\n${this.plan.remix ? '' : `${solved}\n`}${sealLine}${end}`,
+    );
   }
 
   private chamberScene(): ChamberScene | undefined {

@@ -25,6 +25,7 @@ import {
 import { MELEE, swingBox } from '../../core/combat/melee';
 import { loseHeart } from '../../core/run/hearts';
 import { Telemetry } from '../telemetry';
+import { formatTime } from '../../core/run/telemetry';
 import type { Device } from '../../core/chamber/types';
 import { validateChamber } from '../../core/chamber/validator';
 import { PLAYER_BODY, TILE } from '../../core/player/metrics';
@@ -106,6 +107,8 @@ export class ChamberScene extends Phaser.Scene {
   /** Insight (C67): the beam a flip of the nearest free mirror would make, and plate targets. */
   private insight: { mirror?: Device; ghost?: BeamTrace; targets: Device[] } = { targets: [] };
   private insightG: Phaser.GameObjects.Graphics | undefined;
+  /** The Remix clock's last shown second (-1 = no clock). */
+  private shownSecond = -1;
 
   constructor() {
     super('Chamber');
@@ -117,6 +120,7 @@ export class ChamberScene extends Phaser.Scene {
     this.insight = { targets: [] };
     this.hud = undefined;
     this.insightG = undefined;
+    this.shownSecond = -1;
     this.chamberId = data.id ?? this.chamberId;
     this.pedestals = [];
     this.picked = false;
@@ -268,6 +272,7 @@ export class ChamberScene extends Phaser.Scene {
   private onStep(dt: number): void {
     if (this.solved || this.defeated) return;
     Telemetry.tick(dt * 1000);
+    if (this.play.expedition && this.play.run) this.play.run.timeMs += dt * 1000; // run time (C71)
     this.player.step(dt, this.crates);
     const world = { isSolid: (r: number, c: number) => this.logic.isSolid(r, c) };
     for (const c of this.crates) c.stepFlight(dt, world.isSolid);
@@ -583,7 +588,9 @@ export class ChamberScene extends Phaser.Scene {
     const hearts = '♥'.repeat(run.hearts.current) + '♡'.repeat(Math.max(0, run.hearts.max - run.hearts.current));
     const names = run.upgrades.filter((u) => u !== 'mend').map((u) => upgradeById(u).name);
     const e = this.play.expedition;
-    const where = e ? `   ${e.remix ? 'Remix ' : ''}seed ${e.seed} · room ${e.step}/${e.total}` : '';
+    // Remix runs show their clock (C71); normal runs don't put time pressure on puzzles.
+    const clock = e?.remix ? ` · ${formatTime(run.timeMs)}` : '';
+    const where = e ? `   ${e.remix ? 'Remix ' : ''}seed ${e.seed} · room ${e.step}/${e.total}${clock}` : '';
     this.hud.setText(`${hearts}${where}${names.length ? `   ${names.join(' · ')}` : ''}`);
   }
 
@@ -719,6 +726,12 @@ export class ChamberScene extends Phaser.Scene {
     for (const w of this.enemies) w.render();
     this.view.draw(this.pressed, this.beams);
     this.drawInsight();
+    // The Remix clock ticks once a second.
+    const second = this.play.expedition?.remix && this.play.run ? Math.floor(this.play.run.timeMs / 1000) : -1;
+    if (second !== this.shownSecond) {
+      this.shownSecond = second;
+      this.refreshHud();
+    }
   }
 
   /** Insight: a dashed ghost of the beams after a flip, and outlines on a plate's targets. */

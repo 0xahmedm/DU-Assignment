@@ -69,6 +69,11 @@ export interface RunState {
   upgrades: UpgradeId[];
   /** Abilities owned for good (C7); they gate the * upgrades. */
   abilities: Ability[];
+  /**
+   * Active play time so far, ms (physics steps in the run's rooms; the Remix timer, C71). The
+   * chamber scene adds to it every step, in place: the one field of a run that changes that often.
+   */
+  timeMs: number;
 }
 
 export const newRun = (seed: number, abilities: readonly Ability[] = []): RunState => ({
@@ -76,6 +81,7 @@ export const newRun = (seed: number, abilities: readonly Ability[] = []): RunSta
   hearts: newHearts(),
   upgrades: [],
   abilities: [...abilities],
+  timeMs: 0,
 });
 
 /** Takes an upgrade. Mend acts at once on the hearts (C66); the rest are kept for the run. */

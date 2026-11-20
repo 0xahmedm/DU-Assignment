@@ -8,6 +8,8 @@ import { CONNECTORS, EXIT_ROOM, REWARD_ROOM, START_ROOM } from '../../data/rooms
 import { Expedition } from '../expedition';
 import { browserStore, PROGRESS_GRAPH } from '../progress';
 import { copyText, Telemetry } from '../telemetry';
+import { loadBest } from '../../core/run/records';
+import { formatTime } from '../../core/run/telemetry';
 import { cssHex, PALETTE } from '../render/palette';
 
 const MECHANICS = ['Weight', 'Light', 'Phase'];
@@ -65,7 +67,10 @@ export class MenuScene extends Phaser.Scene {
     this.add.text(512, 82, summary, style(13, PALETTE.dim)).setOrigin(0.5);
 
     // Expeditions (C72).
-    const next = complete ? 'any three chambers, hardest encounters' : frontier(PROGRESS_GRAPH, progress).slice(0, 3).join(' · ');
+    const best = loadBest(browserStore());
+    const next = complete
+      ? `any three chambers, hardest encounters · best time ${best !== undefined ? formatTime(best) : '–'}`
+      : frontier(PROGRESS_GRAPH, progress).slice(0, 3).join(' · ');
     const newRun = this.item(512, 124, complete ? 'Remix expedition' : 'New expedition', 18, () => this.startRun(newSeed()));
     this.add.text(512, 146, next, style(11, PALETTE.dim)).setOrigin(0.5);
     this.seedText = String(urlSeed ?? Expedition.lastSeed() ?? '');

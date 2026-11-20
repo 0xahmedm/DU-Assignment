@@ -87,7 +87,7 @@ Each chamber's intended feeling (from the chamber data) and its key moment. Note
 | Chamber | Intended feeling | Key moment to watch | Known risk to check |
 |---|---|---|---|
 | W-E | "A plate opens a door, but only while something heavy stays on it", then "carrying makes me weaker" | Fetching the crate after the door closes behind them; finding the walkway in B when the plateau is too high while carrying | — |
-| L-E | "Light goes where I point it, and where light goes I cannot walk" | First up-attack on the mirror; understanding the beam barrier in B is solved by the mirror, not by force | Thin cyan wires from receivers to doors can be mistaken for beams |
+| L-E | "Light goes where I point it, and where light goes I cannot walk" | First up-attack on the mirror; understanding the beam barrier in B is solved by the mirror, not by force | Wires were made dashed before the playtests (they used to look like thin beams): does anyone still mistake a wire for a beam? |
 | P-E | "The outlines show what the other colour would give me", then "don't stand on the colour you're about to remove" | Reading the outlined blocks before the first swap; recovering from the pit | — |
 | W-M | "The enemy is my second weight" | Timing plate `s` so the walker drops onto `t` | — |
 | L-M | "Set the far mirror before the light fills the path": planning the order, not the aim | Going for M3 first; noticing the walkway fill up when M1 is set early | M1 can only be hit from the small step's right half or with a jump-attack (reach 1.3 tiles is just enough) |
