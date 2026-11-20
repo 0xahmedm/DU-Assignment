@@ -1,4 +1,5 @@
 import type { Cell, ChamberModel, Dir, MirrorState } from '../chamber/types';
+import { GateMap } from '../gates/gates';
 
 /**
  * Beam tracer (Light mechanic, C19, C26, C27, C30). Engine-free and deterministic: beams are
@@ -14,6 +15,8 @@ import type { Cell, ChamberModel, Dir, MirrorState } from '../chamber/types';
  *   dispensers) and at anything `blocks` reports (crates, enemies).
  * - It passes through air, crystals, plates, open doors, the inactive phase colour and the player
  *   (the player is pushed back by the game instead, C27).
+ * - A sideways beam entering a gate that is on leaves the twin's matching cell the same way (C106);
+ *   vertical beams pass gates as air.
  */
 
 export interface BeamWorld {
@@ -21,6 +24,8 @@ export interface BeamWorld {
   mirrorAt(r: number, c: number): MirrorState | undefined;
   /** Crates and enemies (cells they overlap). */
   blocks(r: number, c: number): boolean;
+  /** Is this gate pair on? (C106) Without it, every gate pair counts as on. */
+  gateOn?(pair: string): boolean;
 }
 
 /**
@@ -59,6 +64,7 @@ export function traceBeams(model: ChamberModel, world: BeamWorld): BeamTrace {
   const receiverAt = new Map<string, string>();
   for (const d of model.devices) if (d.kind === 'receiver') for (const [r, c] of d.cells) receiverAt.set(`${r},${c}`, d.id);
 
+  const gates = new GateMap(model);
   const segments: BeamSegment[] = [];
   const lit = new Set<string>();
   const cells = new Set<string>();
@@ -100,6 +106,20 @@ export function traceBeams(model: ChamberModel, world: BeamWorld): BeamTrace {
         dir = reflect(mirror, dir);
         start = [r, c];
         fromEdge = false;
+        continue;
+      }
+      const pair = dir === 'left' || dir === 'right' ? gates.pairAt(r, c) : undefined;
+      if (pair !== undefined && (world.gateOn?.(pair) ?? true)) {
+        // Into the gate: this piece ends at the gate's centre, the next starts at the twin's.
+        start ??= [r, c];
+        last = [r, c];
+        cells.add(key);
+        close();
+        [r, c] = gates.twinOf(r, c)!;
+        start = last = [r, c];
+        cells.add(`${r},${c}`);
+        fromEdge = false;
+        toEdge = false;
         continue;
       }
       if (world.isSolid(r, c) || world.blocks(r, c)) {

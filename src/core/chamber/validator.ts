@@ -8,7 +8,7 @@ export interface ValidationReport {
 }
 
 const SOURCES: ReadonlySet<DeviceKind> = new Set(['plate', 'receiver']);
-const TARGETS: ReadonlySet<DeviceKind> = new Set(['door', 'exit', 'trapdoor', 'mirror']);
+const TARGETS: ReadonlySet<DeviceKind> = new Set(['door', 'exit', 'trapdoor', 'mirror', 'gate']);
 const BORDER_OK = new Set(['#', 'D', 'E', '|', 'K', 'U', 'o', '>', '<', '^', 'v', '/', '\\']);
 
 /**
@@ -75,6 +75,15 @@ export function validateChamber(model: ChamberModel): ValidationReport {
   for (const s of model.spawns.filter((x) => x.kind !== 'crate')) {
     const below = at(s.cell[0] + 1, s.cell[1]);
     if (symbolInfo(below)?.tile === 'empty' && below !== '=') warnings.push(`${id}: ${s.kind} at row ${s.cell[0]} col ${s.cell[1]} starts in mid-air`);
+  }
+
+  // Gates (C106): a gate walled in on both sides can never be used. (A side with only one open
+  // row is legal: a beam can use that row; bodies cannot, they need both rows clear.)
+  for (const d of model.devices.filter((x) => x.kind === 'gate')) {
+    for (const gate of d.gates ?? []) {
+      const sideUsable = (dir: 1 | -1) => gate.some(([r, c]) => !isStaticSolid(at(r, c + dir)));
+      if (!sideUsable(1) && !sideUsable(-1)) errors.push(`${id}: gate "${d.id}" at row ${gate[0]![0]} col ${gate[0]![1]} is walled in on both sides`);
+    }
   }
 
   return { errors, warnings };

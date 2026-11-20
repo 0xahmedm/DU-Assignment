@@ -3,10 +3,16 @@
  * `ChamberModel` is what the parser produces for the game and the logic systems.
  */
 
-export type ChamberId = 'W-E' | 'W-M' | 'W-H' | 'L-E' | 'L-M' | 'L-H' | 'P-E' | 'P-M' | 'P-H';
+export type ChamberId =
+  | 'W-E' | 'W-M' | 'W-H'
+  | 'L-E' | 'L-M' | 'L-H'
+  | 'P-E' | 'P-M' | 'P-H'
+  | 'G-E' | 'G-M' | 'G-H';
 /** Expedition rooms go through the same parser and scene; their ids are prefixed (core/run/rooms). */
 export type RoomRef = `room:${string}`;
-export type Mechanic = 'weight' | 'light' | 'phase';
+export type Mechanic = 'weight' | 'light' | 'phase' | 'gate';
+/** Seals restored by the Hards (C21); the fourth arrived with the Gates mechanic (C105). */
+export type Seal = 1 | 2 | 3 | 4;
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export type Ability = 'throw' | 'bolt' | 'dash';
 export type PhaseColor = 'red' | 'blue';
@@ -47,7 +53,7 @@ export interface ChamberDef {
   /** Ability granted when the chamber is solved (C23). */
   grants?: Ability;
   /** Seal restored when solved (C21). */
-  seal?: 1 | 2 | 3;
+  seal?: Seal;
   initialPhase: PhaseColor;
   sections: readonly SectionDef[];
   /** Gives readable ids to devices: key "sectionId:row,col" (any cell of the device). */
@@ -77,7 +83,8 @@ export type DeviceKind =
   | 'crystal'
   | 'emitter'
   | 'mirror'
-  | 'receiver';
+  | 'receiver'
+  | 'gate';
 
 export interface Device {
   id: string;
@@ -88,6 +95,8 @@ export interface Device {
   dir?: Dir;
   /** Mirrors only: initial state. */
   mirror?: MirrorState;
+  /** Gate pairs only (C106): the two gates' cells, each top to bottom. `cells` holds both. */
+  gates?: readonly [readonly Cell[], readonly Cell[]];
 }
 
 export interface Spawn {

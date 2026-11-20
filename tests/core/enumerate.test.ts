@@ -18,6 +18,9 @@ const INTENDED: Record<ChamberId, Configuration & { note: string }> = {
   'P-E': { phase: 'blue', mirrors: {}, plates: [], note: 'exit is a doorway (always open)' },
   'P-M': { phase: 'red', mirrors: {}, plates: [], note: 'exit is a doorway (always open)' },
   'P-H': { phase: 'blue', mirrors: { mirror: '\\' }, plates: ['p', 'q'], note: 'crate on p, walker on qqq, mirror Bolted, Blue' },
+  'G-E': { phase: 'red', mirrors: {}, plates: ['a'], note: 'crate fetched through gate 1 onto a' },
+  'G-M': { phase: 'red', mirrors: {}, plates: ['a', 'x'], note: 'walker delivered by gate 2 onto a (gate 1 on), crate on x; c released' },
+  'G-H': { phase: 'red', mirrors: { Ma: '\\' }, plates: ['p'], note: 'crate on p holds gate 2, Ma sends the beam through gate 1 to r2' },
 };
 
 const fmt = (o: Outcome) => {

@@ -8,6 +8,7 @@
  * It is a design aid, not a proof: it is slightly optimistic (it assumes a run-up is always
  * possible) and ignores crates and enemies. Results are confirmed in the real game.
  */
+import type { Cell } from '../chamber/types';
 import { PLAYER_BODY, TILE } from './metrics';
 import { DEFAULT_MOVEMENT, initialMovementState, stepMovement, type MovementParams } from './movement';
 
@@ -211,14 +212,44 @@ export type FrameCallback = (
   dashed: boolean,
 ) => void;
 
+/** A linked gate pair that is on (C106): the two gates' cells, top to bottom. */
+export type ReachGatePair = readonly [readonly Cell[], readonly Cell[]];
+
+/**
+ * Walking through a gate (C106): from a segment the body can stand on beside a floor-standing gate,
+ * it comes out beside the twin, on the far side, and falls from there. Returns the landings.
+ */
+function throughGates(world: ReachWorld, segments: readonly Segment[], seg: Segment, gates: readonly ReachGatePair[], carrying: boolean, p: MovementParams): Segment[] {
+  const out: Segment[] = [];
+  const stand: Attempt = { dir: 0, steerFrom: 0, steerFor: 0, jump: false, jumpHoldFrames: 0, runStart: false };
+  for (const pair of gates) {
+    for (const g of [0, 1] as const) {
+      const from = pair[g];
+      const to = pair[1 - g];
+      const bottom = from[from.length - 1]!;
+      if (bottom[0] + 1 !== seg.row || bottom[1] < seg.c0 || bottom[1] > seg.c1) continue; // not standing on this floor
+      for (const dir of [1, -1] as const) {
+        const approach = bottom[1] - dir; // walking in from this side
+        if (approach < seg.c0 || approach > seg.c1) continue;
+        if (to.some(([r, c]) => world.isSolid(r, c + dir))) continue; // the twin's exit side is blocked
+        const toBottom = to[to.length - 1]!;
+        const left = dir === 1 ? (toBottom[1] + 1) * TILE + 0.5 : toBottom[1] * TILE - W - 0.5;
+        out.push(...simulate(world, segments, left, toBottom[0] + 1, stand, carrying, p));
+      }
+    }
+  }
+  return out;
+}
+
 /**
  * Floods out from the segment the player stands on at (row = floor tile row, col).
- * `dash` adds Dash attempts (kit with Dash); `onFrame` sees every frame of every attempt.
+ * `dash` adds Dash attempts (kit with Dash); `onFrame` sees every frame of every attempt;
+ * `gates` lists the gate pairs that are on (walking through a floor-standing gate).
  */
 export function reachFrom(
   world: ReachWorld,
   start: { row: number; col: number },
-  opts: { carrying?: boolean; params?: MovementParams; dash?: boolean; onFrame?: FrameCallback } = {},
+  opts: { carrying?: boolean; params?: MovementParams; dash?: boolean; onFrame?: FrameCallback; gates?: readonly ReachGatePair[] } = {},
 ): ReachResult {
   const p = opts.params ?? DEFAULT_MOVEMENT;
   const carrying = opts.carrying ?? false;
@@ -230,15 +261,17 @@ export function reachFrom(
     seen.set(segKey(first), first);
     queue.push(first);
   }
+  const visit = (landed: Segment) => {
+    if (seen.has(segKey(landed))) return;
+    seen.set(segKey(landed), landed);
+    queue.push(landed);
+  };
   while (queue.length > 0) {
     const seg = queue.shift()!;
+    for (const landed of throughGates(world, segments, seg, opts.gates ?? [], carrying, p)) visit(landed);
     for (const x of spots(world, seg)) {
       for (const a of opts.dash && !carrying ? [...ATTEMPTS, ...DASH_ATTEMPTS] : ATTEMPTS) {
-        for (const landed of simulate(world, segments, x, seg.row, a, carrying, p, opts.onFrame, seg)) {
-          if (seen.has(segKey(landed))) continue;
-          seen.set(segKey(landed), landed);
-          queue.push(landed);
-        }
+        for (const landed of simulate(world, segments, x, seg.row, a, carrying, p, opts.onFrame, seg)) visit(landed);
       }
     }
   }

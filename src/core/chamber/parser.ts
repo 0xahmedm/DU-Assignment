@@ -1,4 +1,4 @@
-import { EMITTER_DIRS, isPlate, symbolInfo } from './legend';
+import { EMITTER_DIRS, isGate, isPlate, symbolInfo } from './legend';
 import type { Cell, ChamberDef, ChamberModel, Device, DeviceKind, MirrorState, Spawn } from './types';
 
 export interface ParseResult {
@@ -93,6 +93,7 @@ export function parseChamber(def: ChamberDef): ParseResult {
   const spawns: Spawn[] = [];
   const devices: Device[] = [];
   const plateCells = new Map<string, Cell[]>();
+  const gateCells = new Map<string, Cell[]>();
   const claimed = new Set<string>();
   const key = (r: number, c: number) => `${r},${c}`;
 
@@ -124,6 +125,7 @@ export function parseChamber(def: ChamberDef): ParseResult {
       else if (ch === 'H') spawns.push({ kind: 'shieldbearer', cell: [r, c] });
       else if (ch === 'C') spawns.push({ kind: 'crate', cell: [r, c] });
       else if (isPlate(ch)) plateCells.set(ch, [...(plateCells.get(ch) ?? []), [r, c]]);
+      else if (isGate(ch)) gateCells.set(ch, [...(gateCells.get(ch) ?? []), [r, c]]);
       else if (ch === 'E' && !claimed.has(key(r, c))) add('exit', groupRun(r, c, ch));
       else if ((ch === '|' || ch === 'K') && !claimed.has(key(r, c))) add('door', groupRun(r, c, ch));
       else if (ch === '=' && !claimed.has(key(r, c))) add('trapdoor', groupRun(r, c, ch));
@@ -135,6 +137,20 @@ export function parseChamber(def: ChamberDef): ParseResult {
     });
   });
   for (const [letter, cells] of plateCells) devices.push({ id: letter, kind: 'plate', cells });
+  // Gates (C106): each digit must form exactly two gates, each one column wide and two cells tall.
+  for (const [digit, cells] of gateCells) {
+    const runs: Cell[][] = [];
+    for (const cell of [...cells].sort((a, b) => a[1] - b[1] || a[0] - b[0])) {
+      const run = runs.find((g) => g[0]![1] === cell[1] && g[g.length - 1]![0] === cell[0] - 1);
+      if (run) run.push(cell);
+      else runs.push([cell]);
+    }
+    if (runs.length !== 2 || runs.some((g) => g.length !== 2)) {
+      errors.push(`${def.id}: gate "${digit}" must be drawn as exactly two gates, each one cell wide and two cells tall`);
+      continue;
+    }
+    devices.push({ id: digit, kind: 'gate', cells: [...runs[0]!, ...runs[1]!], gates: [runs[0]!, runs[1]!] });
+  }
 
   if (!start) errors.push(`${def.id}: no start (S)`);
   if (devices.filter((d) => d.kind === 'exit').length > 1) errors.push(`${def.id}: exit cells must be one connected door`);

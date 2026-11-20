@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 7 · Follow-up call prep notes (`docs/follow-up-prep.md`: three rehearsed live changes, AI bug stories, likely challenges), then the final single-file zip + Pages check. Playtests deferred by the user (kit ready in [`docs/playtests/`](playtests/session-script.md)). Still waiting: (user) the Day 4 brief-change email
+**Next task →** Gates (C104): (user) approve the gate rules and the three layouts in [`gates-chambers-draft.md`](gates-chambers-draft.md); then the game layer, data entry and progression. Playtests deferred by the user (kit ready in [`docs/playtests/`](playtests/session-script.md)). Still waiting: (user) the Day 4 brief-change email
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -112,6 +112,16 @@ How to use this file:
 - [ ] (user) Playtest 3 → `docs/playtests/`
 - [ ] Triage the top 3 issues; fix; capture at least one before/after
 - [ ] Day 6 routine
+
+## Gates: the fourth mechanic (C104, C105; added 2026-11-20 with the extra time)
+- [x] (user) Decided: a fourth mechanic (12 chambers), Gates chosen over Wind and Conveyors; four seals, Eclipse stays final, the Gates Medium grants no ability
+- [x] Core: gates in the legend (digits), parser (pairs), validator (walled-in gates), signal logic (wired pairs), beam tracer (sideways beams through gates), body pass-through, reachability checker (walking through floor gates); `tests/core/gates.test.ts`
+- [x] Draft rules G1–G6 and three layouts (First Gate, Gatekeeper, Handover), each checked by the parser, validator, enumerator and reachability checker → [`gates-chambers-draft.md`](gates-chambers-draft.md)
+- [ ] (user) Approve the rules and the layouts (C106)
+- [ ] Game layer: gates drawn (pair colour + digit, lit while on), bodies (player, crate, walker, Shieldbearer) and beams through gates, sound + sparks
+- [ ] G-E, G-M, G-H entered as data and **solved end to end in the real game**; enumerator intended states, routes as regression tests
+- [ ] Progression: seal 4, Eclipse needs G-H, 4 × 3 chamber select, generator tests (about five runs cover all twelve), telemetry names
+- [ ] Docs: GDD (four mechanics; back under 4 pages), README, devlog, decision log, enumerator report
 
 ## Day 7: Polish and delivery
 - [x] Polish pass (feel, SFX, juice): every state change answers (C52): plates click, receivers chime, doors / trapdoors / the exit sound and spark, plate-wired mirrors turn audibly, crates thud with dust; movement (C58): jump and landing sounds, landing dust scaled by the fall; pick-up / put-down / throw sounds and a "refused" sound where the game says no; reward pick chord; **M** mutes (remembered). A quiet ~1/3 s at room start. Found and fixed: a quick pick-up + put-down in place was refused (AI bug #33). Verified in W-E, L-H and W-H by logging every sound by name

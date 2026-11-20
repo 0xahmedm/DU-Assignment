@@ -1,4 +1,4 @@
-import type { Ability, ChamberId, Difficulty } from '../chamber/types';
+import type { Ability, ChamberId, Difficulty, Seal } from '../chamber/types';
 
 /**
  * Permanent progress (C7, C10, C11, C20–C23, C76). Engine-free; the game passes the chamber data
@@ -18,7 +18,7 @@ export interface ChamberInfo {
   difficulty: Difficulty;
   prerequisites: readonly ChamberId[];
   grants?: Ability;
-  seal?: 1 | 2 | 3;
+  seal?: Seal;
 }
 
 export interface Progress {
@@ -67,7 +67,7 @@ export function abilitiesOf(g: ProgressGraph, p: Progress): Ability[] {
 }
 
 /** Seals restored so far, in seal order (C21). */
-export function sealsOf(g: ProgressGraph, p: Progress): (1 | 2 | 3)[] {
+export function sealsOf(g: ProgressGraph, p: Progress): Seal[] {
   return g.chambers
     .filter((c) => c.seal !== undefined && isSolved(p, c.id))
     .map((c) => c.seal!)
@@ -82,7 +82,7 @@ export interface SolveResult {
   /** False if it was already solved (nothing new). */
   first: boolean;
   ability?: Ability;
-  seal?: 1 | 2 | 3;
+  seal?: Seal;
   /** Chambers this solve unlocked. */
   unlocked: ChamberId[];
   /** The final chamber was solved: every seal is restored (C21). */

@@ -47,7 +47,7 @@ export function evaluate(model: ChamberModel, config: Configuration): Outcome {
   let lit = new Set<string>();
   for (let i = 0; i < 8; i++) {
     logic.update(report);
-    const trace = traceBeams(model, { isSolid: (r, c) => logic.isSolid(r, c), mirrorAt: (r, c) => logic.mirrorAt(r, c), blocks: () => false });
+    const trace = traceBeams(model, { isSolid: (r, c) => logic.isSolid(r, c), mirrorAt: (r, c) => logic.mirrorAt(r, c), blocks: () => false, gateOn: (id) => logic.isGateOn(id) });
     const same = trace.lit.size === lit.size && [...trace.lit].every((x) => lit.has(x));
     lit = trace.lit;
     logic.setLitReceivers(lit);

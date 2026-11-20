@@ -43,12 +43,14 @@ const flip = (m: MirrorState): MirrorState => (m === '/' ? '\\' : '/');
  * - One red/blue state per chamber; crystals toggle it, never a timer. C28
  * - Ghost rule: a block that becomes solid on an occupant stays non-solid until vacated. C30
  * - Mirrors are 2-state and flipped by hits; mirrors wired to a plate are locked to it. C26, C42
+ * - Gate pairs: unwired pairs are always on, wired pairs are on while powered. C106
  */
 export class ChamberLogic {
   phase: PhaseColor;
   private readonly devices: ReadonlyMap<string, Device>;
   private readonly sourcesOf = new Map<string, { from: readonly string[]; logic: 'OR' | 'AND' }>();
   private readonly openDoors = new Set<string>();
+  private readonly gatesOn = new Set<string>();
   private readonly mirrorStates = new Map<string, MirrorState>();
   private readonly wiredMirrors = new Set<string>();
   private readonly ghosted = new Set<string>();
@@ -72,6 +74,7 @@ export class ChamberLogic {
     // the validator requires `exitAlwaysOpen` to be declared so a forgotten link is still caught).
     for (const d of model.devices) {
       if ((d.kind === 'door' || d.kind === 'exit') && !this.sourcesOf.has(d.id)) this.openDoors.add(d.id);
+      if (d.kind === 'gate' && !this.sourcesOf.has(d.id)) this.gatesOn.add(d.id);
     }
   }
 
@@ -154,6 +157,19 @@ export class ChamberLogic {
       }
     }
 
+    // Wired gate pairs follow their signal (nothing to "close on": a gate is never solid).
+    for (const [id, dev] of this.devices) {
+      if (dev.kind !== 'gate' || !this.sourcesOf.has(id)) continue;
+      const on = this.isPowered(id);
+      if (on && !this.gatesOn.has(id)) {
+        this.gatesOn.add(id);
+        this.pending.opened.push(id);
+      } else if (!on && this.gatesOn.has(id)) {
+        this.gatesOn.delete(id);
+        this.pending.closed.push(id);
+      }
+    }
+
     // Doors, trapdoors and the exit.
     for (const [id, dev] of this.devices) {
       if (!(dev.kind === 'door' || dev.kind === 'trapdoor' || dev.kind === 'exit')) continue;
@@ -201,6 +217,11 @@ export class ChamberLogic {
 
   isOpen(id: string): boolean {
     return this.openDoors.has(id) && !this.held.has(id);
+  }
+
+  /** Is this gate pair carrying things right now? (C106) */
+  isGateOn(id: string): boolean {
+    return this.gatesOn.has(id);
   }
 
   /** Holds a door (e.g. the exit) shut regardless of its signals, or releases it. */

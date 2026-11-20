@@ -35,6 +35,11 @@ export const LEGEND: Readonly<Record<string, SymbolInfo>> = {
   H: { tile: 'empty', meaning: 'Shieldbearer spawn' },
 };
 
+/** Digits 1–9 are gates (C106): two stacked cells make one gate, and the same digit drawn twice is a linked pair. */
+export function isGate(ch: string): boolean {
+  return ch.length === 1 && ch >= '1' && ch <= '9';
+}
+
 /** Lowercase letters are plates, except the ones the legend reserves (o, v, w). */
 export function isPlate(ch: string): boolean {
   return ch.length === 1 && ch >= 'a' && ch <= 'z' && !(ch in LEGEND);
@@ -42,6 +47,7 @@ export function isPlate(ch: string): boolean {
 
 export function symbolInfo(ch: string): SymbolInfo | undefined {
   if (isPlate(ch)) return { tile: 'empty', meaning: `plate "${ch}" (sits on the tile below)` };
+  if (isGate(ch)) return { tile: 'empty', meaning: `gate "${ch}" (two cells tall; the same digit twice is a linked pair)` };
   return LEGEND[ch];
 }
 
