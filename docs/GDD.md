@@ -5,9 +5,9 @@
 ## Core loop
 **On short, freshly assembled expeditions, fight, choose upgrades and solve handcrafted puzzle chambers to restore four seals, keeping every solved chamber and unlocked ability so each new run rearranges the world around harder puzzles that combine what you've mastered.**
 
-- **A run** takes about 10–15 minutes over up to 11 rooms: Start → [combat room → puzzle chamber → pick 1 of 3 upgrades] × up to 3 → Seal exit. The seed is shown and can be replayed.
+- **A run** takes about 20–25 minutes over up to 18 rooms: Start → [two combat rooms → puzzle chamber → pick 1 of 3 upgrades] × up to 4 → Seal exit (C112). The HUD counts rooms cleared, never the rooms left. Runs are seeded; testers can see and replay a seed (C114).
 - **Kept between runs:** solved chambers, abilities, seals. **Lost when a run ends:** hearts and upgrades.
-- **Completion:** the game is complete when all four seals are restored. After that, expeditions become timed **Remix** runs (any three chambers, hardest encounters, best time kept).
+- **Completion:** the game is complete when all four seals are restored. After that come timed **Remix** runs (any four chambers, hardest encounters, best time kept) and **Endless** runs: rooms keep coming, the fighting gets harder every loop, and the score is rooms cleared before the hearts run out (C113).
 - **Chamber select** opens any of the twelve chambers directly.
 
 ## Puzzle mechanics
@@ -56,7 +56,7 @@ They combine because each one changes the others' rules: crates, enemies and sol
 ## Upgrades & replayability
 - **After each chamber, pick 1 of 3 run upgrades:** combat (Heavy Swing, Long Reach, Shockwave, Shield Breaker, Piercing Bolt), survival (Mend, Guard, Phantom Dash) or puzzle help (Insight shows where a mirror flip would send the beam; Throw Sight). Ability upgrades appear only once you own the ability.
 - Hearts return only through Mend, so survival competes with power. Upgrades never touch the puzzle metrics: Long Reach, for example, lengthens the swing against enemies only.
-- **Replay comes from** seeded runs, different chambers dealt each run, encounters that scale, upgrade combinations and timed Remix runs.
+- **Replay comes from** seeded runs, different chambers dealt each run, encounters that scale, upgrade combinations, timed Remix runs and the Endless best.
 
 ## Schedule & why it was reordered
 - **Day 1 was design only.** All 9 chambers were drawn as text grids before any code.

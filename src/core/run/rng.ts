@@ -27,3 +27,18 @@ export function shuffled<T>(items: readonly T[], next: () => number): T[] {
 
 /** Mixes a seed with a stream number, so independent choices (deal, rooms, offers) don't correlate. */
 export const subSeed = (seed: number, stream: number): number => (seed ^ Math.imul(stream + 1, 0x9e3779b1)) >>> 0;
+
+/**
+ * `count` items drawn in shuffled cycles of `items`: every item once before any repeats, and never
+ * the same item twice in a row (also across cycles). Used where a run needs more rooms than there
+ * are templates (C112) and for endless runs (C113).
+ */
+export function cycled<T>(items: readonly T[], seed: number, count: number): T[] {
+  const out: T[] = [];
+  for (let cycle = 0; out.length < count; cycle++) {
+    const order = shuffled(items, rng(subSeed(seed, 1000 + cycle)));
+    if (order.length > 1 && order[0] === out[out.length - 1]) [order[0], order[1]] = [order[1]!, order[0]!];
+    out.push(...order);
+  }
+  return out.slice(0, count);
+}

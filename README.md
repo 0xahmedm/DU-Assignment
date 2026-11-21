@@ -11,9 +11,10 @@ A browser-playable 2D puzzle action-platformer prototype. It has **12 puzzle cha
   - The menu opens on a title screen (the four seals, chambers solved) with **Expedition**, **Chamber select**, **How to play**, **Controls** and **Options & tools** (sound, the movement test room, playtest stats, reset progress).
   - Every chamber shows its controls along the bottom of the screen.
   - An exit opens when the room's puzzle is solved and its enemies are defeated (a walker a puzzle needs on a plate may stay). Beams push you back and cost a heart.
-  - **New expedition** deals up to three chambers based on your progress, with combat rooms and reward rooms between them. Runs are seeded: the seed is shown in the HUD and can be replayed from the menu.
+  - **New expedition** deals up to four chambers based on your progress, with two combat rooms before each and a reward room after: up to 18 rooms. The HUD counts rooms cleared.
+  - Runs are seeded. Testers can turn on **Developer options** (menu → Options & tools) to see the seed and replay it from the Expedition screen.
   - Solved chambers, abilities and seals are saved in this browser.
-  - Once all four seals are restored, expeditions become timed Remix runs.
+  - Once all four seals are restored, the Expedition screen offers timed **Remix** runs and **Endless** runs: rooms keep coming and the fighting gets harder; the score is rooms cleared, best kept on this browser.
   - **Chamber select** (4 × 3) opens any of the twelve chambers with its declared kit.
 - **Sound** starts after your first key press (a browser rule). **M** turns it on or off.
 
@@ -64,7 +65,7 @@ What the tests cover (`tests/`):
 - **Movement metrics:** jump 3, gap 4, carrying 2 / 3, Throw lands 5 ahead, Dash covers 4. They are measured on the same code the game runs.
 - **Combat, enemies and run systems:**
   - Melee reach, hits and enemy behaviour.
-  - Upgrades, hearts, progression and save (including corrupted or blocked storage), the seeded generator, telemetry and Remix records.
+  - Upgrades, hearts, progression and save (including corrupted or blocked storage), the seeded generator, endless runs and their difficulty curve, telemetry, and Remix and Endless records.
 - **Architecture guard** (`tests/architecture.test.ts`): `src/core` may not import Phaser or touch the DOM or browser storage. ESLint enforces the same rule.
 - **Docs check** (`tests/docs.test.ts`):
   - Every decision id cited is recorded, and every link and screenshot exists.

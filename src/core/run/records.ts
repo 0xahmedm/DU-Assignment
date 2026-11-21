@@ -27,3 +27,27 @@ export function recordRemixTime(store: KeyValueStore | undefined, ms: number): {
   }
   return { best: ms, improved: true };
 }
+
+/** Endless best (C113): the most rooms cleared in one endless run, on this browser. */
+export const ENDLESS_BEST_KEY = 'seal-chambers.endlessBest';
+
+export function loadEndlessBest(store: KeyValueStore | undefined): number | undefined {
+  try {
+    const n = Number(store?.getItem(ENDLESS_BEST_KEY));
+    return Number.isInteger(n) && n > 0 ? n : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Records a finished endless run; returns the best and whether this run set it. */
+export function recordEndless(store: KeyValueStore | undefined, rooms: number): { best: number; improved: boolean } {
+  const old = loadEndlessBest(store);
+  if (!(rooms > 0) || (old !== undefined && old >= rooms)) return { best: old ?? rooms, improved: false };
+  try {
+    store?.setItem(ENDLESS_BEST_KEY, String(rooms));
+  } catch {
+    // Not saved; still the best of this session.
+  }
+  return { best: rooms, improved: true };
+}

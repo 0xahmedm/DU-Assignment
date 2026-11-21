@@ -53,6 +53,8 @@ export class PatrolEnemy {
     readonly kind: PatrolKind,
     /** Puzzle chambers respawn their enemies; expedition connectors do not (R1, C102). */
     private readonly respawns = true,
+    /** Endless runs (C113): hits it takes on top of its kind's health. */
+    private readonly extraHp = 0,
   ) {
     const y = spawnBottom - kind.height / 2;
     this.rect = scene.add.rectangle(spawnX, y, kind.width, kind.height, PALETTE.enemy).setDepth(9);
@@ -70,7 +72,7 @@ export class PatrolEnemy {
       .setOrigin(0.5)
       .setDepth(13)
       .setVisible(false);
-    this.hp = ENEMY_RULES.health[kind.kind];
+    this.hp = ENEMY_RULES.health[kind.kind] + extraHp;
   }
 
   get alive(): boolean {
@@ -208,7 +210,7 @@ export class PatrolEnemy {
   }
 
   private respawn(): void {
-    this.hp = ENEMY_RULES.health[this.kind.kind];
+    this.hp = ENEMY_RULES.health[this.kind.kind] + this.extraHp;
     this.dir = 1;
     this.body.enable = true;
     this.body.reset(this.spawnX, this.spawnBottom - this.kind.height / 2);

@@ -1,22 +1,26 @@
 import type { ChamberId } from '../chamber/types';
 import { abilitiesOf, frontier, isComplete, type Progress, type ProgressGraph } from './progression';
-import { rng, shuffled, subSeed } from './rng';
+import { cycled, rng, shuffled, subSeed } from './rng';
 import { tierFor, type Tier } from './rooms';
 
 /**
- * Expedition generator (C8, C11, C12, C15, C22, C70, C71). It only chains hand-built rooms:
+ * Expedition generator (C8, C11, C12, C15, C22, C70, C71; length C112). It only chains hand-built
+ * rooms:
  *
- *   Start → [connector → chamber → reward] × N → Seal exit
+ *   Start → [connector → connector → chamber → reward] × N → Seal exit      (N ≤ 4: up to 18 rooms)
  *
- * - Chambers: up to 3 from the unlocked frontier, easiest first (seeded order inside a
+ * - Chambers: up to 4 from the unlocked frontier, easiest first (seeded order inside a
  *   difficulty); W-E opens the very first run (C22); the final chamber is always dealt alone.
- * - Connectors: one per chamber, seeded, never repeated within a run.
+ * - Connectors: two before each chamber, seeded, in cycles: all five templates before any repeats,
+ *   never the same one twice in a row.
  * - Encounter tier from progress at the start of the run (R4, C70); Remix runs use the hardest.
- * - Remix (C71, after the final chamber): any 3 chambers, hardest tier.
+ * - Remix (C71, after the final chamber): any 4 chambers, hardest tier.
  * The same seed and the same progress always give the same expedition.
  */
 
-export const CHAMBERS_PER_RUN = 3;
+export const CHAMBERS_PER_RUN = 4;
+/** Combat rooms before each chamber (C112). */
+export const COMBAT_PER_CHAMBER = 2;
 
 export type RunStep =
   | { kind: 'start' }
@@ -58,14 +62,17 @@ export function dealChambers(g: ProgressGraph, p: Progress, seed: number, remix 
 export function generateRun(g: ProgressGraph, p: Progress, seed: number, connectorIds: readonly string[], remix = false): RunPlan {
   const chambers = dealChambers(g, p, seed, remix);
   if (chambers.length === 0) throw new Error('nothing to deal: every chamber is solved (start a Remix run instead)');
-  if (connectorIds.length < chambers.length) throw new Error(`need ${chambers.length} connectors, have ${connectorIds.length}`);
-  const connectors = shuffled(connectorIds, rng(subSeed(seed, STREAM.connectors)));
+  if (connectorIds.length < 2) throw new Error(`need at least 2 connector templates, have ${connectorIds.length}`);
+  const connectors = cycled(connectorIds, subSeed(seed, STREAM.connectors), chambers.length * COMBAT_PER_CHAMBER);
 
   const solvedOf = (difficulty: string) => p.solved.filter((id) => g.chambers.find((c) => c.id === id)?.difficulty === difficulty).length;
   const tier = tierFor({ mediums: solvedOf('medium'), hards: solvedOf('hard') }, remix);
 
   const steps: RunStep[] = [{ kind: 'start' }];
-  chambers.forEach((id, i) => steps.push({ kind: 'connector', roomId: connectors[i]! }, { kind: 'chamber', id }, { kind: 'reward' }));
+  chambers.forEach((id, i) => {
+    for (let j = 0; j < COMBAT_PER_CHAMBER; j++) steps.push({ kind: 'connector', roomId: connectors[i * COMBAT_PER_CHAMBER + j]! });
+    steps.push({ kind: 'chamber', id }, { kind: 'reward' });
+  });
   steps.push({ kind: 'exit' });
   return { seed: seed >>> 0, remix, tier, chambers, steps };
 }

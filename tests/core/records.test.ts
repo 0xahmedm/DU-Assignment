@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { KeyValueStore } from '../../src/core/run/progression';
-import { loadBest, recordRemixTime, REMIX_BEST_KEY } from '../../src/core/run/records';
+import { ENDLESS_BEST_KEY, loadBest, loadEndlessBest, recordEndless, recordRemixTime, REMIX_BEST_KEY } from '../../src/core/run/records';
 import { newRun, takeUpgrade } from '../../src/core/run/upgrades';
 
 const memoryStore = (): KeyValueStore & { data: Map<string, string> } => {
@@ -45,5 +45,20 @@ describe('run time', () => {
     const run = { ...newRun(1), timeMs: 12_345 };
     expect(newRun(1).timeMs).toBe(0);
     expect(takeUpgrade(run, 'guard').timeMs).toBe(12_345);
+  });
+});
+
+describe('endless best (C113)', () => {
+  it('keeps the most rooms cleared, tolerating garbage and blocked storage', () => {
+    const data = new Map<string, string>();
+    const store = { getItem: (k: string) => data.get(k) ?? null, setItem: (k: string, v: string) => void data.set(k, v), removeItem: (k: string) => void data.delete(k) };
+    expect(loadEndlessBest(store)).toBeUndefined();
+    expect(recordEndless(store, 12)).toEqual({ best: 12, improved: true });
+    expect(recordEndless(store, 9)).toEqual({ best: 12, improved: false });
+    expect(recordEndless(store, 20)).toEqual({ best: 20, improved: true });
+    data.set(ENDLESS_BEST_KEY, 'garbage');
+    expect(loadEndlessBest(store)).toBeUndefined();
+    const blocked = { getItem: () => { throw new Error('x'); }, setItem: () => { throw new Error('x'); }, removeItem: () => {} };
+    expect(recordEndless(blocked, 5)).toEqual({ best: 5, improved: true });
   });
 });

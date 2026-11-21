@@ -185,6 +185,15 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
     - Three beam hits in L-E restart it.
     - With a run, Guard absorbs a hit, and the last heart ends the run.
   - Screenshot: [`day7-menu-how-to-play.png`](screenshots/day7-menu-how-to-play.png).
+- **Runs (C112–C114), from the user's play:**
+  - **Length:** expeditions are now up to 18 rooms (4 chambers, two combat rooms before each). The five combat rooms come in cycles, never one twice in a row.
+  - **HUD:** it counts rooms cleared and never shows a total.
+  - **Seeds:** they show only with the new Developer options toggle (Options & tools), which also brings back Replay seed.
+  - **Endless:** after all four seals, it sits beside Remix. Rooms keep coming, enemies get tougher and faster every loop, and the score is rooms cleared (best kept).
+  - **Checked in the game:**
+    - A seed-42 run is 18 rooms with no combat room repeated back to back, and the summary says "18 rooms cleared".
+    - An Endless run escalated from T2 to T3, enemy speed went 48 → 53 → 58, and an extra hit appeared at room 13. Its run-over summary saved a new best.
+    - The Replay seed row disappears with Developer options off.
 
 ### AI bug log (Day 7)
 | # | What the AI got wrong | How it was found | Fix |

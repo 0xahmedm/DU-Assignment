@@ -27,6 +27,7 @@ import { MELEE, swingBox } from '../../core/combat/melee';
 import { loseHeart, newHearts, type Hearts } from '../../core/run/hearts';
 import { enemiesLeft, enemiesRespawn } from '../../core/run/clearing';
 import { controlsLine } from '../input/controlsText';
+import { DevOptions } from '../devOptions';
 import { Telemetry } from '../telemetry';
 import { formatTime } from '../../core/run/telemetry';
 import type { Device } from '../../core/chamber/types';
@@ -53,10 +54,14 @@ const RESET_HOLD_MS = 1000; // hold R this long to reset (C51)
  */
 export interface PlayData {
   id?: ChamberId;
-  room?: { def: RoomDef; tier: Tier; choices?: readonly RewardChoice[]; kit?: readonly Ability[] };
+  /** `mods`: endless runs harden combat rooms (C113): extra hits per enemy, faster patrols. */
+  room?: { def: RoomDef; tier: Tier; choices?: readonly RewardChoice[]; kit?: readonly Ability[]; mods?: { extraHp: number; speedScale: number } };
   run?: RunState;
-  /** Set by the expedition controller: the seed and where we are (HUD, C72), and a one-off banner. */
-  expedition?: { seed: number; step: number; total: number; remix: boolean; banner?: string };
+  /**
+   * Set by the expedition controller: the seed (shown only with developer options, C114), rooms
+   * cleared so far (never the total), the mode, and a one-off banner.
+   */
+  expedition?: { seed: number; cleared: number; remix: boolean; endless: boolean; banner?: string };
 }
 
 const GUARD_GRACE = 1; // s of invulnerability after Guard absorbs a hit
@@ -231,9 +236,11 @@ export class ChamberScene extends Phaser.Scene {
     // Respawning (C109): only in a chamber whose enemies are all used by its solution.
     const respawns = enemiesRespawn(room ? 'connector' : 'chamber', spawns.length, room ? 0 : (def.enemiesUsed ?? 0));
     this.enemySpawnRows = spawns.map((s) => s.cell[0]);
+    const mods = room?.mods;
     for (const s of spawns) {
-      const kind = s.kind === 'walker' ? WALKER_KIND : SHIELDBEARER_KIND;
-      const enemy = new PatrolEnemy(this, s.cell[1] * TILE + TILE / 2, (s.cell[0] + 1) * TILE, kind, respawns);
+      const base = s.kind === 'walker' ? WALKER_KIND : SHIELDBEARER_KIND;
+      const kind = mods ? { ...base, speed: base.speed * mods.speedScale } : base;
+      const enemy = new PatrolEnemy(this, s.cell[1] * TILE + TILE / 2, (s.cell[0] + 1) * TILE, kind, respawns, mods?.extraHp ?? 0);
       this.enemies.push(enemy);
       this.physics.add.collider(enemy.rect, solids);
       for (const c of this.crates) this.physics.add.collider(enemy.rect, c.rect);
@@ -739,7 +746,10 @@ export class ChamberScene extends Phaser.Scene {
     const e = this.play.expedition;
     // Remix runs show their clock (C71); normal runs don't put time pressure on puzzles.
     const clock = e?.remix ? ` · ${formatTime(run.timeMs)}` : '';
-    const where = e ? `   ${e.remix ? 'Remix ' : ''}seed ${e.seed} · room ${e.step}/${e.total}${clock}` : '';
+    // Rooms cleared, never how many are left (C114); the seed only for testers.
+    const mode = e?.endless ? 'Endless · ' : e?.remix ? 'Remix · ' : '';
+    const seed = e && DevOptions.on ? ` · seed ${e.seed}` : '';
+    const where = e ? `   ${mode}rooms cleared ${e.cleared}${clock}${seed}` : '';
     this.hud.setText(`${hearts}${where}${names.length ? `   ${names.join(' · ')}` : ''}`);
   }
 

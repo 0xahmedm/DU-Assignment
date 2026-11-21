@@ -51,7 +51,7 @@ The goal is to watch, not to teach: every hint you give hides a problem we need 
 | 4 | **The tester's Medium** (table below) | Chamber select | 5 min |
 | 5 | 30 s in the **Movement test room** to try the ability the Hard uses | Menu → Options & tools → Movement test room | 0.5 min |
 | 6 | **The tester's Hard** | Chamber select | 7 min |
-| 7 | **One expedition run**, seed **42** | Menu → Expedition → type `42`, choose Replay seed, Enter | 8 min |
+| 7 | **One expedition run**, seed **42** | Menu → Options & tools → Developer options on (once per browser) → Expedition → type `42`, choose Replay seed, Enter. The run is now up to 18 rooms: cut it after the first reward room past 20 minutes | 8 min |
 | 8 | Questions (section 6) and copy the stats | Esc → menu → Options & tools, press **C** | 3 min |
 
 **Rotation**, so the three sessions cover all nine chambers between them:

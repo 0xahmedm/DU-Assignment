@@ -7,9 +7,10 @@ import { CHAMBER_GRID, CHAMBERS } from '../../data/chambers';
 import { CONNECTORS, EXIT_ROOM, REWARD_ROOM, START_ROOM } from '../../data/rooms/expedition';
 import { Sfx } from '../audio/Sfx';
 import { Expedition } from '../expedition';
+import { DevOptions } from '../devOptions';
 import { browserStore, PROGRESS_GRAPH } from '../progress';
 import { copyText, Telemetry } from '../telemetry';
-import { loadBest } from '../../core/run/records';
+import { loadBest, loadEndlessBest } from '../../core/run/records';
 import { formatTime } from '../../core/run/telemetry';
 import { cssHex, PALETTE } from '../render/palette';
 import { CONTROL_ROWS } from '../input/controlsText';
@@ -160,24 +161,41 @@ export class MenuScene extends Phaser.Scene {
   private buildExpedition(progress: Progress): void {
     this.header('EXPEDITION');
     const complete = isComplete(PROGRESS_GRAPH, progress);
-    // What the next run deals (C11): exact when three or fewer chambers are open; otherwise the seed
-    // picks three of the open ones, easiest first.
-    const open = frontier(PROGRESS_GRAPH, progress);
-    const sub = complete
-      ? 'Any three chambers, hardest encounters, against the clock'
-      : open.length <= 3
-        ? `Deals: ${open.map((id) => CHAMBERS[id]?.name ?? id).join(' · ')}`
-        : `Deals three of: ${open.join(' · ')}`;
-    this.rows.push([this.button(CX, 150, 460, 70, complete ? 'Remix expedition' : 'New expedition', { sub, size: 22, accent: PALETTE.lightCore, onActivate: () => this.startRun(newSeed()) })]);
+    if (complete) {
+      // After completion (C71, C113): Remix runs against the clock, or Endless for the longest run.
+      const best = loadBest(browserStore());
+      const endlessBest = loadEndlessBest(browserStore());
+      this.rows.push([
+        this.button(CX - 117, 146, 226, 76, 'Remix', {
+          sub: `four chambers, timed\nbest ${best !== undefined ? formatTime(best) : '–'}`,
+          size: 20,
+          accent: PALETTE.lightCore,
+          onActivate: () => this.startRun(newSeed()),
+        }),
+        this.button(CX + 117, 146, 226, 76, 'Endless', {
+          sub: `harder every few rooms\nbest ${endlessBest !== undefined ? `${endlessBest} rooms` : '–'}`,
+          size: 20,
+          accent: PALETTE.enemy,
+          onActivate: () => this.startEndless(),
+        }),
+      ]);
+    } else {
+      // What the next run deals (C11): exact when four or fewer chambers are open; otherwise the
+      // seed picks four of the open ones, easiest first.
+      const open = frontier(PROGRESS_GRAPH, progress);
+      const sub = open.length <= 4 ? `Deals: ${open.map((id) => CHAMBERS[id]?.name ?? id).join(' · ')}` : `Deals four of: ${open.join(' · ')}`;
+      this.rows.push([this.button(CX, 150, 460, 70, 'New expedition', { sub, size: 22, accent: PALETTE.lightCore, onActivate: () => this.startRun(newSeed()) })]);
+    }
 
-    const replay = this.button(CX, 238, 460, 48, '', { size: 16, onActivate: () => this.replaySeed() });
-    this.rows.push([replay]);
-    const refreshReplay = () => replay.label.setText(`Replay seed  ${this.seedText || '(type a number)'}`);
+    // Replay seed: testers only (developer options, C114).
+    const replay = DevOptions.on ? this.button(CX, 238, 460, 44, '', { size: 16, onActivate: () => this.replaySeed() }) : undefined;
+    if (replay) this.rows.push([replay]);
+    const refreshReplay = () => replay?.label.setText(`Replay seed  ${this.seedText || '(type a number)'}`);
     refreshReplay();
-    this.add.text(CX, 272, 'digits: type a seed    Backspace: delete', text(11, PALETTE.dim)).setOrigin(0.5);
+    if (replay) this.add.text(CX, 270, 'developer option · digits: type a seed    Backspace: delete', text(11, PALETTE.dim)).setOrigin(0.5);
     // Typing a seed (C72): the first digit replaces the remembered seed, the next ones append.
     let typing = false;
-    this.input.keyboard!.on('keydown', (e: KeyboardEvent) => {
+    if (replay) this.input.keyboard!.on('keydown', (e: KeyboardEvent) => {
       if (/^[0-9]$/.test(e.key)) {
         const base = typing && this.seedText !== '0' ? this.seedText : '';
         typing = true;
@@ -211,11 +229,8 @@ export class MenuScene extends Phaser.Scene {
     const total = CHAMBER_GRID.flat().length;
     this.add.text(CX - 262, 440, 'Chambers', text(14)).setOrigin(0, 0.5);
     this.add.text(CX - 70 - 42, 440, `${progress.solved.length} / ${total} solved`, text(13, PALETTE.dim)).setOrigin(0, 0.5);
-    const best = loadBest(browserStore());
-    if (complete || best !== undefined) {
-      this.add.text(CX + 262, 440, `Remix best ${best !== undefined ? formatTime(best) : '–'}`, text(13, PALETTE.dim)).setOrigin(1, 0.5);
-    }
-    this.hint('arrows / mouse: choose    Enter: start    digits: seed    Esc: back');
+
+    this.hint(DevOptions.on ? 'arrows / mouse: choose    Enter: start    digits: seed    Esc: back' : 'arrows / mouse: choose    Enter: start    Esc: back');
   }
 
   private buildChambers(progress: Progress): void {
@@ -393,7 +408,19 @@ export class MenuScene extends Phaser.Scene {
       this.scene.restart({ page: 'tools' });
     };
 
-    this.rows = [[sound], [test], [copy, clear], [reset]];
+    // Developer options (C114): seeds and Replay seed, for testers.
+    const dev = this.button(CX, 440, 460, 48, '', {
+      size: 16,
+      sub: 'for testers: shows seeds and Replay seed',
+      onActivate: () => {
+        DevOptions.toggle();
+        refreshDev();
+      },
+    });
+    const refreshDev = () => dev.label.setText(`Developer options: ${DevOptions.on ? 'on' : 'off'}`);
+    refreshDev();
+
+    this.rows = [[sound], [test], [copy, clear], [reset], [dev]];
     this.input.keyboard!.on('keydown-C', () => void copyStats());
     this.input.keyboard!.on('keydown-DELETE', tryReset);
     this.hint('arrows / mouse: choose    Enter: use    C: copy stats    Delete: reset    Esc: back');
@@ -454,9 +481,10 @@ export class MenuScene extends Phaser.Scene {
     const accent = opts.accent ?? PALETTE.text;
     const box = this.add.rectangle(x, y, w, h, PANEL).setStrokeStyle(2, PALETTE.terrainEdge).setInteractive({ useHandCursor: true });
     const marker = this.add.rectangle(x - w / 2 + 3, y, 4, h - 10, accent).setVisible(false);
-    const labelY = opts.sub ? y - 8 : y;
+    const subLines = opts.sub ? opts.sub.split('\n').length : 0;
+    const labelY = subLines > 1 ? y - 16 : subLines ? y - 8 : y;
     const t = this.add.text(x, labelY, label, text(opts.size ?? 16, PALETTE.text, true)).setOrigin(0.5);
-    const sub = opts.sub ? this.add.text(x, y + 12, opts.sub, text(11, PALETTE.dim)).setOrigin(0.5) : undefined;
+    const sub = opts.sub ? this.add.text(x, y + 12, opts.sub, { ...text(11, PALETTE.dim), align: 'center' }).setOrigin(0.5) : undefined;
     const item: Item & { label: Phaser.GameObjects.Text } = {
       label: t,
       activate: () => {
@@ -551,6 +579,11 @@ export class MenuScene extends Phaser.Scene {
       Sfx.refuse();
       this.cameras.main.shake(80, 0.003);
     }
+  }
+
+  private startEndless(): void {
+    this.registry.set('menuReturn', 'expedition');
+    this.leave(() => Expedition.startEndless(this, newSeed()));
   }
 
   private startRun(seed: number): void {
