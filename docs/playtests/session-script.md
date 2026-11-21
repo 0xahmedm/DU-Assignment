@@ -6,6 +6,8 @@ The goal is to watch, not to teach: every hint you give hides a problem we need 
 
 ---
 
+
+> **Remote testers** (no facilitator): send `release/seal-chambers-playtest.zip` (rebuild with `npm run build:single` first). It holds the game and [`HOW-TO-PLAYTEST.txt`](HOW-TO-PLAYTEST.txt): a self-guided order (four Easys, one Medium, an expedition), then Options & tools → Copy stats and six questions. Paste what comes back into `notes-template.md`.
 ## 1. Before the tester arrives (5 min)
 
 - [ ] **Build:** open https://0xahmedm.github.io/DU-Assignment/ (or the single-file build). Write the date and the latest commit (from GitHub) in the notes.

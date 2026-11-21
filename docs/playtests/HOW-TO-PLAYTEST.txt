@@ -1,0 +1,39 @@
+SEAL CHAMBERS - playtest build
+==============================
+
+Thanks for testing! It takes about 25-30 minutes.
+
+1. START
+   - Unzip everything, then double-click index.html.
+     It opens in your browser (Chrome, Edge or Firefox). No install, no internet needed.
+   - Sound starts after your first key press. M turns it on or off.
+   - Menu: arrow keys + Enter, or the mouse. Esc goes back.
+   - The menu has "How to play" and "Controls" if you want them,
+     and the controls are always shown at the bottom of the screen in game.
+
+2. PLAY, in this order
+   a) Chamber select: the four Easy chambers (left column), top to bottom.
+   b) Chamber select: any one Medium chamber (middle column).
+   c) Expedition: start a New expedition and play as far as you can.
+
+   Please play the way you naturally would. There are no wrong answers:
+   if something confuses you, that's exactly what we want to know.
+   Stuck for more than about 2 minutes? Note where, then hold R to reset
+   the chamber or press Esc and try the next one.
+
+3. WHEN YOU'RE DONE
+   - Go to the menu: Options & tools, then "Copy stats" (or press C there).
+     This copies a small table of your times, resets and hearts lost.
+   - Paste it into a message to the person who sent you the game,
+     with a few lines answering:
+       * Where did you get stuck, and for how long?
+       * What confused you? (mechanics, wires, beams, gates, the exit...)
+       * Which chamber did you like most? Which least, and why?
+       * Did anything feel unfair? (enemies, beam hits, hearts)
+       * How did the controls and jumping feel?
+       * Did the expedition feel too long, too short, or about right?
+
+   Notes:
+   - Your progress is saved in your browser. To start over:
+     Options & tools > Reset progress (press it twice).
+   - Please leave "Developer options" off.

@@ -105,6 +105,7 @@ How to use this file:
 - [x] (user) Asked: the Day 3 and Day 4 raw exports re-redacted (they still held the git author email); every AI log now scans clean. Earlier copies remain in git history
 
 ## Day 6: Playtesting
+- [x] Playtest zip for remote testers (2026-11-21): `release/seal-chambers-playtest.zip` (not committed) = the single-file build + [`HOW-TO-PLAYTEST.txt`](playtests/HOW-TO-PLAYTEST.txt) (self-guided order: four Easys, one Medium, an expedition; copy stats + six questions). Checked: opens from disk in headless Edge, plays from the menu with no console errors, no dev hooks
 - [x] Notes template + session script (three Easys, a Medium, a Hard, one run): [`session-script.md`](playtests/session-script.md) (setup, words to say, order + time caps, rotation covering all nine chambers, stuck/hint rules, what to watch per chamber, questions), [`notes-template.md`](playtests/notes-template.md), [`playtest-summary.md`](playtests/playtest-summary.md) (triage + before/after). Menu: the first digit typed now replaces the remembered seed (it used to append, and a 6-digit seed blocked typing)
 - (user, 2026-11-20) Playtests deferred for now; the kit is ready, and triage, the before/after and the GDD's playtest section wait for them
 - [ ] (user) Playtest 1 → `docs/playtests/`
