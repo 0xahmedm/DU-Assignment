@@ -2,7 +2,8 @@ import type { KeyValueStore } from './progression';
 
 /**
  * Built-in playtest telemetry (C81): one record per attempt at a chamber or combat room, with
- * active play time, hold-R resets, defeats (hearts lost in an expedition) and how it ended.
+ * active play time, hold-R resets, defeats, hearts lost (enemy contact in an expedition, beam hits
+ * anywhere, C110) and how it ended.
  * Defeats and resets restart the room but continue the same attempt; it ends when the room is
  * solved, left (menu, next room) or the run is over. Exported as a Markdown table for
  * `docs/playtests/`, the hard numbers behind the Day 6 before/after. Engine-free.
@@ -33,6 +34,8 @@ export function startAttempt(a: Pick<Attempt, 'id' | 'kind' | 'mode' | 'seed' | 
 export const addTime = (a: Attempt, ms: number): Attempt => ({ ...a, timeMs: a.timeMs + Math.max(0, ms) });
 export const addReset = (a: Attempt): Attempt => ({ ...a, resets: a.resets + 1 });
 export const addDefeat = (a: Attempt, heartLost: boolean): Attempt => ({ ...a, defeats: a.defeats + 1, heartsLost: a.heartsLost + (heartLost ? 1 : 0) });
+/** A beam hit (C110): a heart lost without a defeat, in an expedition or in chamber select. */
+export const addHeartLost = (a: Attempt): Attempt => ({ ...a, heartsLost: a.heartsLost + 1 });
 export const finish = (a: Attempt, outcome: Outcome): Attempt => ({ ...a, outcome });
 
 // --- the log -------------------------------------------------------------------------------------
@@ -103,7 +106,7 @@ export function formatReport(log: readonly Attempt[], exportedAt: string, nameOf
   lines.push('## Attempts', '', '| # | Started | Chamber / room | Mode | Seed | Result | Time | Resets | Defeats | Hearts lost |', '|---|---|---|---|---|---|---|---|---|---|');
   log.forEach((a, i) => {
     lines.push(
-      `| ${i + 1} | ${a.started.slice(11, 16)} | ${nameOf(a.id)} | ${a.mode} | ${a.seed ?? ''} | ${a.outcome ?? 'in progress'} | ${formatTime(a.timeMs)} | ${a.resets} | ${a.defeats} | ${a.mode === 'expedition' ? a.heartsLost : '–'} |`,
+      `| ${i + 1} | ${a.started.slice(11, 16)} | ${nameOf(a.id)} | ${a.mode} | ${a.seed ?? ''} | ${a.outcome ?? 'in progress'} | ${formatTime(a.timeMs)} | ${a.resets} | ${a.defeats} | ${a.heartsLost} |`,
     );
   });
 

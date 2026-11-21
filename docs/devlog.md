@@ -174,6 +174,17 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
   - Every screen has menu sounds and a short fade, and Esc goes back. A chamber, run or test room returns to the screen it came from, on the same tile.
   - Found on the way: the movement test room had no way back to the menu (Esc now works).
   - Checked with keyboard and mouse, with and without saved progress. Screenshots: [`day7-menu-title.png`](screenshots/day7-menu-title.png), [`day7-menu-chamber-select.png`](screenshots/day7-menu-chamber-select.png).
+- **Rules from the user's own play (C109–C111):**
+  - **Exits:** an exit now waits for the room's enemies as well as its puzzle. Combat rooms open once cleared. Chambers keep the walker their puzzle needs on a plate ("all enemies − 1").
+  - **P-M:** by the user's choice, P-M's bridge guard must now be defeated. Dropping it into the chasm needs a reset, and the game says so.
+  - **Beams:** they still push back, and each hit now costs a heart, with 1 s of grace. Chamber select got 3 hearts per attempt for beam hits.
+  - **Controls:** written along the bottom of every chamber and the test room (only the abilities the room allows), and the existing top line stays. The menu got How to play and Controls screens.
+  - **Checked in the game:**
+    - The Corridor is locked until its walker falls.
+    - P-M's guard doesn't respawn, and its defeat opens the exit.
+    - Three beam hits in L-E restart it.
+    - With a run, Guard absorbs a hit, and the last heart ends the run.
+  - Screenshot: [`day7-menu-how-to-play.png`](screenshots/day7-menu-how-to-play.png).
 
 ### AI bug log (Day 7)
 | # | What the AI got wrong | How it was found | Fix |

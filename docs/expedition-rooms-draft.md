@@ -13,7 +13,7 @@
 
 **New rules, for approval:**
 - **R1:** enemies in connectors **do not respawn.** Respawning stays a puzzle-chamber rule (W-M, L-H).
-- **R2:** connector exits are **always open**. Enemies are obstacles: you can fight them or avoid them. The exception is the **Arena**, whose exit opens when every enemy is defeated.
+- **R2:** connector exits are **always open**. Enemies are obstacles: you can fight them or avoid them. The exception is the **Arena**, whose exit opens when every enemy is defeated. *(Revised 2026-11-21 by C109: every connector's exit opens once its enemies are defeated.)*
 - **R3 (reward room):** three pedestals each show an upgrade.
   - Taking one: stand on a pedestal (its name and effect appear) and press attack.
   - Afterwards the other two fade and the exit opens.

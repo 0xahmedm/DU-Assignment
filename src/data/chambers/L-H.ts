@@ -16,6 +16,7 @@ export const L_H: ChamberDef = {
   prerequisites: ['L-M', 'W-E'],
   kit: ['bolt'],
   seal: 2,
+  enemiesUsed: 1, // the caged walker dropped onto b (C109): it need not be defeated
   initialPhase: 'red',
   sections: [
     {

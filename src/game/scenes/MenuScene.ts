@@ -12,17 +12,19 @@ import { copyText, Telemetry } from '../telemetry';
 import { loadBest } from '../../core/run/records';
 import { formatTime } from '../../core/run/telemetry';
 import { cssHex, PALETTE } from '../render/palette';
+import { CONTROL_ROWS } from '../input/controlsText';
 
 /**
  * Main menu (C53, C72, reworked as C108): a title screen with three entries, each opening its own
  * screen:
  * - Expedition: New (or Remix) expedition, Replay seed, saved progress (seals, abilities, solved).
  * - Chamber select: the 4 × 3 grid as tiles coloured by mechanic, with details of the selected one.
+ * - How to play and Controls (C111): the goal, the rules, the four mechanics; every key.
  * - Options & tools: sound, the movement test room, playtest stats, reset progress.
  * Arrow keys + Enter, or the mouse; Esc goes back. Opening the menu ends any running expedition.
  * Leaving for a chamber, a run or the test room remembers the screen, so Esc there comes back to it.
  */
-type Page = 'title' | 'expedition' | 'chambers' | 'tools';
+type Page = 'title' | 'expedition' | 'chambers' | 'howto' | 'controls' | 'tools';
 
 interface Item {
   activate(): void;
@@ -97,6 +99,8 @@ export class MenuScene extends Phaser.Scene {
     if (this.page === 'title') this.buildTitle(progress);
     else if (this.page === 'expedition') this.buildExpedition(progress);
     else if (this.page === 'chambers') this.buildChambers(progress);
+    else if (this.page === 'howto') this.buildHowTo();
+    else if (this.page === 'controls') this.buildControls();
     else this.buildTools();
 
     const kb = this.input.keyboard!;
@@ -134,20 +138,22 @@ export class MenuScene extends Phaser.Scene {
   // --- screens ------------------------------------------------------------------------------------
 
   private buildTitle(progress: Progress): void {
-    this.add.text(CX, 108, 'SEAL CHAMBERS', text(52, PALETTE.player, true)).setOrigin(0.5);
+    this.add.text(CX, 96, 'SEAL CHAMBERS', text(52, PALETTE.player, true)).setOrigin(0.5);
     this.deco = this.add.graphics();
-    this.drawSeals(CX, 212, sealsOf(PROGRESS_GRAPH, progress), 17, 58);
+    this.drawSeals(CX, 196, sealsOf(PROGRESS_GRAPH, progress), 17, 58);
     const total = CHAMBER_GRID.flat().length;
-    this.add.text(CX, 248, `${progress.solved.length} / ${total} chambers solved`, text(13, PALETTE.dim)).setOrigin(0.5);
+    this.add.text(CX, 230, `${progress.solved.length} / ${total} chambers solved`, text(13, PALETTE.dim)).setOrigin(0.5);
 
-    const entries: [string, string, Page][] = [
-      ['Expedition', isComplete(PROGRESS_GRAPH, progress) ? 'Remix runs, best time' : 'Runs through combat, puzzles and rewards', 'expedition'],
-      ['Chamber select', 'Any of the twelve chambers, any time', 'chambers'],
-      ['Options & tools', 'Sound, test room, playtest stats, reset', 'tools'],
-    ];
-    entries.forEach(([label, sub, page], i) => {
-      this.rows.push([this.button(CX, 314 + i * 64, 400, 52, label, { sub, size: 19, onActivate: () => this.open(page) })]);
-    });
+    const y0 = 290;
+    const step = 58;
+    const entry = (y: number, label: string, sub: string, page: Page) => this.button(CX, y, 400, 48, label, { sub, size: 18, onActivate: () => this.open(page) });
+    this.rows.push([entry(y0, 'Expedition', isComplete(PROGRESS_GRAPH, progress) ? 'Remix runs, best time' : 'Runs through combat, puzzles and rewards', 'expedition')]);
+    this.rows.push([entry(y0 + step, 'Chamber select', 'Any of the twelve chambers, any time', 'chambers')]);
+    this.rows.push([
+      this.button(CX - 103, y0 + 2 * step, 194, 48, 'How to play', { size: 16, onActivate: () => this.open('howto') }),
+      this.button(CX + 103, y0 + 2 * step, 194, 48, 'Controls', { size: 16, onActivate: () => this.open('controls') }),
+    ]);
+    this.rows.push([entry(y0 + 3 * step, 'Options & tools', 'Sound, test room, playtest stats, reset', 'tools')]);
     this.hint('arrows / mouse: choose    Enter: open    M: sound');
   }
 
@@ -257,6 +263,63 @@ export class MenuScene extends Phaser.Scene {
       );
     });
     this.hint('arrows / mouse: choose    Enter: play    Esc: back');
+  }
+
+  /** How to play (C111): the goal, the rules and the four mechanics, in two columns. */
+  private buildHowTo(): void {
+    this.header('HOW TO PLAY');
+    const col = (x: number, y: number, title: string, lines: readonly (readonly [string, number?])[]) => {
+      this.add.text(x, y, title, text(12, PALETTE.dim)).setOrigin(0, 0);
+      let yy = y + 22;
+      for (const [line, swatch] of lines) {
+        const indent = swatch !== undefined ? 16 : 0;
+        if (swatch !== undefined) this.add.rectangle(x + 4, yy + 8, 6, 14, swatch);
+        if (swatch === PALETTE.phaseRed) this.add.rectangle(x + 4, yy + 11.5, 6, 7, PALETTE.phaseBlue);
+        const t = this.add.text(x + indent, yy, line, { ...text(12, PALETTE.text), wordWrap: { width: 410 - indent }, lineSpacing: 2 });
+        yy += t.height + 9;
+      }
+      return yy;
+    };
+    const left = 92;
+    const right = 532;
+    const y = col(left, 84, 'THE GOAL', [
+      ['Restore the four seals. Each Hard chamber restores one; Eclipse, the last, needs the other three.'],
+      ['An expedition: a combat room, a puzzle chamber and an upgrade pick, up to three times, then the Seal altar. Solved chambers, abilities and seals are kept; hearts and upgrades last one run.'],
+      ['Chamber select plays any chamber at any time. Progress is earned in expeditions.'],
+    ]);
+    col(left, y + 6, 'THE RULES', [
+      ['An exit opens when its puzzle is solved and its enemies are defeated. A walker the puzzle needs on a plate may stay.'],
+      ['In a run: touching an enemy costs a heart and restarts the room; a beam pushes you back and costs a heart. 3 hearts per run (the Mend upgrade gives one back).'],
+      ['In chamber select: touching an enemy restarts the chamber; you get 3 hearts per attempt for beam hits. Stuck anywhere? Hold R to reset.'],
+    ]);
+    col(right, 84, 'THE MECHANICS', [
+      ['Weight: a plate holds its door open while something heavy rests on it: you, a crate or an enemy.', PALETTE.weight],
+      ['Light: hit mirrors to turn beams; a lit receiver powers its door. Beams block your way and hurt.', PALETTE.light],
+      ['Phase: hit a crystal to swap which colour, red or blue, is solid. Where you stand matters.', PALETTE.phaseRed],
+      ['Gates: what goes into one frame comes out of its twin, going the same way. Light, crates and enemies too.', PALETTE.gatePairs[0]!],
+      ['Abilities, from the Medium chambers: Throw a crate 5 tiles, Bolt a target from afar, Dash 4 tiles (beams cannot touch you).'],
+    ]);
+    this.hint('Esc: back    Controls are on their own screen');
+  }
+
+  /** Controls (C111): every key, from the keymap; abilities marked until they are unlocked. */
+  private buildControls(): void {
+    this.header('CONTROLS');
+    const keysX = CX + 40;
+    CONTROL_ROWS.forEach((row, i) => {
+      const y = 100 + i * 30;
+      this.add.rectangle(CX, y, 620, 26, i % 2 === 0 ? PANEL : PALETTE.background, 0.8);
+      this.add.text(CX - 296, y, row.action, text(14)).setOrigin(0, 0.5);
+      if (row.ability) this.add.text(keysX - 20, y, 'ability', text(11, PALETTE.dim)).setOrigin(1, 0.5);
+      this.add.text(keysX, y, row.keys, text(14, PALETTE.lightCore, true)).setOrigin(0, 0.5);
+    });
+    const y = 100 + CONTROL_ROWS.length * 30 + 18;
+    this.add.text(CX, y, 'Abilities work once unlocked, and only in chambers that allow them.', text(12, PALETTE.dim)).setOrigin(0.5);
+    this.add.text(CX, y + 30, 'MENU', text(12, PALETTE.dim)).setOrigin(0.5);
+    this.add
+      .text(CX, y + 54, 'arrows or mouse: choose    Enter or click: open    Esc: back\ndigits: type a seed (Expedition)    C: copy stats    Delete: reset progress (Options & tools)', { ...text(12), align: 'center', lineSpacing: 4 })
+      .setOrigin(0.5, 0);
+    this.hint('Esc: back');
   }
 
   private buildTools(): void {

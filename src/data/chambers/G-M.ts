@@ -13,6 +13,7 @@ export const G_M: ChamberDef = {
   difficulty: 'medium',
   prerequisites: ['G-E'],
   kit: [],
+  enemiesUsed: 1, // the walker delivered onto a (C109): it need not be defeated
   initialPhase: 'red',
   sections: [
     {

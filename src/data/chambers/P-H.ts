@@ -21,6 +21,7 @@ export const P_H: ChamberDef = {
   prerequisites: ['P-M', 'W-H', 'L-H', 'G-H'],
   kit: ['dash', 'bolt'],
   seal: 4,
+  enemiesUsed: 1, // the walker sealed on qqq (C109): it need not be defeated
   initialPhase: 'red',
   sections: [
     {

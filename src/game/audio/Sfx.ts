@@ -78,6 +78,11 @@ export const Sfx = {
     tone('square', 220, 40, 700, 0.06, 80);
   },
   swap: () => tone('sine', 520, 880, 120, 0.08),
+  /** A beam hit costs a heart (C110): a sharp falling buzz. */
+  hurt: () => {
+    tone('sawtooth', 520, 140, 180, 0.07);
+    noise(90, 0.05, 900);
+  },
   bolt: () => tone('square', 900, 1600, 80, 0.05),
   dash: () => noise(120, 0.07, 1800),
   mirror: () => tone('triangle', 700, 1050, 90, 0.07),

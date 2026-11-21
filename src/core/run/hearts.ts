@@ -2,8 +2,9 @@
  * Hearts (C54, C55, C66). Three per run and no health bar: any hit or enemy contact costs one.
  * Losing a heart resets the current room (the player respawns at its entrance); hearts do not
  * refill. At zero the run ends (abilities and solved chambers are kept, C7). Only the Mend upgrade
- * restores a heart, or adds one if full (C66). Hearts are off in level select: a defeat there only
- * resets the chamber.
+ * restores a heart, or adds one if full (C66). A beam hit also costs one, without a reset (C110).
+ * Chamber select has 3 hearts per attempt, lost only to beams; an enemy defeat there only resets the
+ * chamber.
  */
 export interface Hearts {
   current: number;

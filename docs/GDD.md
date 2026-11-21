@@ -25,8 +25,8 @@ They combine because each one changes the others' rules: crates, enemies and sol
 | | Easy (teach) | Medium (deepen) | Hard (combine) |
 |---|---|---|---|
 | **Weight** | *First Weight:* a crate keeps a door open; carrying lowers your jump | *Borrowed Weight:* open a trapdoor as the walker crosses it, and it drops onto the plate for the crate's door (grants **Throw**) | *Drop Delivery* (Weight × Phase): throw the crate in red, drop it onto its plate in blue |
-| **Light** | *First Light:* flip mirrors to power doors; beams block paths | *Order of Light:* set the far mirror before the beam fills your path (grants **Bolt**) | *Chain Reaction* (Light × Weight): one Bolt opens a trapdoor, the caged walker drops onto a plate, a plate-locked mirror turns and the beam reaches the exit |
-| **Phase** | *First Phase:* swap colours from safe ground to cross | *Footing:* swap only from neutral footholds; your own swaps drop the bridge's guard into the chasm, so swap back to restore the bridge (grants **Dash**) | *Eclipse* (the final chamber, all three): the light needs blue and the bridge needs red, so Dash home through the dilemma |
+| **Light** | *First Light:* flip mirrors to power doors; beams block paths and hurt | *Order of Light:* set the far mirror before the beam fills your path (grants **Bolt**) | *Chain Reaction* (Light × Weight): one Bolt opens a trapdoor, the caged walker drops onto a plate, a plate-locked mirror turns and the beam reaches the exit |
+| **Phase** | *First Phase:* swap colours from safe ground to cross | *Footing:* swap only from neutral footholds, then defeat the bridge's Shieldbearer from behind; swapping the bridge away drops it out of reach (grants **Dash**) | *Eclipse* (the final chamber, all three): the light needs blue and the bridge needs red, so Dash home through the dilemma |
 | **Gates** | *First Gate:* fetch a crate from behind a wall through a gate, both ways | *Gatekeeper:* open a gate for the walker; it drops onto the plate that keeps your own gate open | *Handover* (Gates × Light): one beam can power your gate or the exit, never both, so a crate takes over the gate's job |
 
 ## How solvability is ensured
@@ -48,9 +48,10 @@ They combine because each one changes the others' rules: crates, enemies and sol
 - **Movement** has fast acceleration, a variable jump with apex hang, coyote time and jump buffering, and no wall jump (it would break the metrics).
 - **Abilities** (from the Weight, Light and Phase Mediums): **Throw** lands a crate exactly 5 tiles ahead; **Bolt** flies straight and hits the first target (any enemy in front of you, or a puzzle target at chest height); **Dash** covers exactly 4 tiles with brief invulnerability.
 - **Melee** hits forward and up, with a 60 ms hit-stop, knockback, shake and flash. Every puzzle state change and every action has its own generated sound and particles, so a chain reaction can be followed by ear.
-- **Hearts:** you get 3 per expedition. Enemy contact costs one and restarts the room (beams only push you back), and losing the last ends the run. Level select has no hearts.
+- **Exits** open when the room's puzzle is solved and its enemies are defeated; a walker the puzzle needs on a plate may stay (C109).
+- **Hearts:** 3 per expedition. Enemy contact costs one and restarts the room; a beam hit costs one and pushes you back (C110). Losing the last ends the run. Chamber select gives 3 per attempt for beam hits.
 - **Enemies:** the **Walker** (2 hits) turns at walls and gaps, even an open trapdoor, and falls only when the floor vanishes under it. The **Shieldbearer** (3 hits) blocks melee and Bolt from the front; strike its back, and it turns after a telegraphed pause. Beams kill any enemy.
-- **Combat rooms** reuse the puzzle systems: Gap run, Corridor, Shaft, Red-floor arena (swap to drop the enemies) and Arena (locked until cleared).
+- **Combat rooms** reuse the puzzle systems: Gap run, Corridor, Shaft, Red-floor arena (swap to drop the enemies) and Arena; each opens once its enemies are defeated.
 
 ## Upgrades & replayability
 - **After each chamber, pick 1 of 3 run upgrades:** combat (Heavy Swing, Long Reach, Shockwave, Shield Breaker, Piercing Bolt), survival (Mend, Guard, Phantom Dash) or puzzle help (Insight shows where a mirror flip would send the beam; Throw Sight). Ability upgrades appear only once you own the ability.

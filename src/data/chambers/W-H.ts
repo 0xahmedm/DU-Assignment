@@ -20,6 +20,7 @@ export const W_H: ChamberDef = {
   prerequisites: ['W-M', 'P-E'],
   kit: ['throw'],
   seal: 1,
+  enemiesUsed: 1, // the walker dropped onto y (C109): it need not be defeated
   initialPhase: 'red',
   sections: [
     {

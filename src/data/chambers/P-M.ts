@@ -68,14 +68,15 @@ export const P_M: ChamberDef = {
   ],
   names: { 'T:17,9': 'crystalFloor', 'T:13,5': 'crystalLow', 'T:8,11': 'crystalHigh', 'B:6,2': 'crystalBridge' },
   links: [],
-  exitAlwaysOpen: 'The design has no exit inputs: crossing the bridge to the exit is the goal.',
+  exitAlwaysOpen: 'No exit inputs: the exit opens once the bridge guard is defeated (C109).',
   solution: [
     'Tower: hit the floor crystal (the floor is neutral, so it is safe) → Blue.',
     'Climb the blue platform. Its crystal is right above your head, and hitting it from there removes your footing: step onto the 1-tile neutral nub instead and hit the crystal sideways → Red.',
     'Climb the red platform. Same trap, mirrored: use the next neutral nub → Blue.',
     'Climb the blue platform to the exit ledge and go through the doorway.',
-    'Bridge: hit the crystal on the entry ledge → Blue: the Shieldbearer falls into the sealed chasm.',
-    'Hit it again → Red: the bridge returns, empty. Walk across to the exit.',
+    'Bridge: the Shieldbearer guards it and must be defeated (C109): its shield blocks hits from the front, so jump over it and strike its back three times (it turns after a telegraphed pause).',
+    'Do not swap the bridge away while the guard is on it: it falls into the sealed chasm, out of reach, and the exit stays locked (hold R to reset).',
+    'With the guard defeated the exit opens. Walk across.',
   ],
   intendedFeeling: '"Where I stand when I swap matters", then "the swap reshapes the room for everyone in it".',
 };

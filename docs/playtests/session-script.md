@@ -97,7 +97,7 @@ Each chamber's intended feeling (from the chamber data) and its key moment. Note
 | P-H | "Light needs Blue, the bridge needs Red", resolved by an earned ability | The up-Bolt in Red; the jump + Dash across the chasm at the end | — |
 
 **In the expedition**, watch for:
-- Do they understand hearts (any enemy touch costs one; beams only push)?
+- Do they understand hearts (any enemy touch costs one; a beam hit costs one and pushes back) and that exits wait for the room's enemies?
 - Do they read the upgrade offers, and why do they pick what they pick?
 - Do they notice the seed and room count in the HUD? Do they understand that solved chambers and abilities are kept?
 - Red-floor arena, if it comes up: a walker on the neutral tile beside the right bumper survives the swap (known; does it matter?).

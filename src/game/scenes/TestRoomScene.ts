@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { PLAYER_BODY, TILE } from '../../core/player/metrics';
 import { MOVEMENT_TEST_ROOM } from '../../data/rooms/movementTest';
 import { Controls } from '../input/Controls';
+import { controlsLine } from '../input/controlsText';
 import { Crate } from '../player/Crate';
 import { Player } from '../player/Player';
 import { centredBounds } from '../render/camera';
@@ -66,6 +67,12 @@ export class TestRoomScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(100);
 
+    // The controls line, as in every chamber (C111); the line at the top stays.
+    this.add
+      .text(12, this.scale.height - 8, controlsLine(new Set(['throw', 'bolt', 'dash'] as const)), { fontFamily: 'monospace', fontSize: '12px', color: cssHex(PALETTE.text), backgroundColor: '#000000aa', padding: { x: 6, y: 3 } })
+      .setOrigin(0, 1)
+      .setScrollFactor(0)
+      .setDepth(100);
     this.cameras.main.startFollow(this.player.hitbox, true, 0.15, 0.15);
     // Back to the menu's Options & tools screen (it had no way out before the menu rework, C108).
     this.input.keyboard?.on('keydown-ESC', () => this.scene.start('Menu', { page: 'tools' }));

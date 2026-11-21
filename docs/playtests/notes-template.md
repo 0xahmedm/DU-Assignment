@@ -46,7 +46,7 @@ What they tried, what they said, where they looked. Quotes in quotation marks, w
 | Hearts lost, and where | |
 | Upgrades picked, and why (their words) | |
 | Read the offers? Noticed seed / room count? | |
-| Understood hearts (enemies cost one, beams only push)? | |
+| Understood hearts (enemies and beams cost one) and that exits wait for the enemies? | |
 | Understood what is kept after a run? | |
 | Ended by | Seal altar / out of hearts / time cap |
 

@@ -210,7 +210,6 @@ export const CONNECTORS: readonly RoomDef[] = [
     id: 'arena',
     name: 'Arena',
     kind: 'connector',
-    lockUntilCleared: true,
     grid: [
       '################################',
       '#..............................#',

@@ -27,6 +27,11 @@ export class ChamberView {
   private readonly dynamic: Phaser.GameObjects.Graphics;
   /** Device id -> time (ms) its hit flash started. */
   private readonly flashes = new Map<string, number>();
+  /**
+   * The exit's "enemies" lamp (C109): undefined when no enemy has to be defeated, false while some
+   * still must be, true once they are. Drawn in the enemies' violet beside the signal lamps.
+   */
+  enemyLamp: boolean | undefined;
   /** Cells flashed in a colour (a refused gate pass marks what blocks it). */
   private cellFlashes: { cells: readonly (readonly [number, number])[]; color: number; t0: number }[] = [];
 
@@ -313,12 +318,21 @@ export class ChamberView {
     const top = Math.min(...exit.cells.map(([r]) => r));
     const xs = exit.cells.map(([, c]) => c);
     const cx = ((Math.min(...xs) + Math.max(...xs) + 1) / 2) * TILE;
-    const lamps = this.logic.exitLamps();
+    const lamps: { on: boolean; enemy?: boolean }[] = this.logic.exitLamps().map((l) => ({ on: l.on }));
+    if (this.enemyLamp !== undefined) lamps.push({ on: this.enemyLamp, enemy: true });
     lamps.forEach((lamp, i) => {
       const x = cx + (i - (lamps.length - 1) / 2) * 12;
       const y = top * TILE - 8;
+      if (lamp.enemy) {
+        // Violet: "defeat the enemies". A diamond, so it never reads as a signal lamp by colour alone.
+        const pts = [{ x, y: y - 5 }, { x: x + 5, y }, { x, y: y + 5 }, { x: x - 5, y }];
+        g.fillStyle(lamp.on ? PALETTE.enemy : 0x3a3d45, 1).fillPoints(pts, true);
+        g.lineStyle(1, lamp.on ? PALETTE.lightCore : PALETTE.enemy, 1).strokePoints(pts, true);
+        return;
+      }
       g.fillStyle(lamp.on ? PALETTE.lightCore : 0x3a3d45, 1).fillCircle(x, y, 4);
       g.lineStyle(1, PALETTE.dim, 1).strokeCircle(x, y, 4);
     });
   }
+
 }

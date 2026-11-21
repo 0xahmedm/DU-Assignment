@@ -77,6 +77,10 @@ export function validateChamber(model: ChamberModel): ValidationReport {
     if (symbolInfo(below)?.tile === 'empty' && below !== '=') warnings.push(`${id}: ${s.kind} at row ${s.cell[0]} col ${s.cell[1]} starts in mid-air`);
   }
 
+  // Enemies the solution uses (C109) cannot outnumber the enemies there are.
+  const enemyCount = model.spawns.filter((x) => x.kind !== 'crate').length;
+  if ((def.enemiesUsed ?? 0) > enemyCount) errors.push(`${id}: enemiesUsed is ${def.enemiesUsed} but the chamber has ${enemyCount} enemies`);
+
   // Gates (C106): a gate walled in on both sides can never be used. (A side with only one open
   // row is legal: a beam can use that row; bodies cannot, they need both rows clear.)
   for (const d of model.devices.filter((x) => x.kind === 'gate')) {

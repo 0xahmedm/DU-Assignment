@@ -67,6 +67,11 @@ export interface ChamberDef {
   exitAlwaysOpen?: string;
   /** Set when crates have no dispenser because the layout cannot lose them (validator warning otherwise). */
   cratesCannotBeLost?: string;
+  /**
+   * Enemies the solution uses (a walker it needs on a plate, C109): they need not be defeated for
+   * the exit to open. Every other enemy must be. Default 0.
+   */
+  enemiesUsed?: number;
 }
 
 // ---------------------------------------------------------------------------------------------

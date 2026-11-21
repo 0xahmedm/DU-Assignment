@@ -97,7 +97,7 @@ describe('the report', () => {
     ];
     const report = formatReport(log, '2026-11-19 15:00', (id) => (id === 'W-E' ? 'W-E First Weight' : id));
     expect(report).toContain('3 attempts');
-    expect(report).toContain('| 1 | 14:03 | W-E First Weight | select |  | left | 2:00 | 2 | 0 | – |');
+    expect(report).toContain('| 1 | 14:03 | W-E First Weight | select |  | left | 2:00 | 2 | 0 | 0 |');
     expect(report).toContain('| 3 | 14:03 | room:arena | expedition | 42 | run-over | 0:30 | 0 | 2 | 2 |');
     // Per chamber: 2 attempts, 1 solved, 3:00 in total, best solve 1:00, 3 resets, 1 defeat.
     expect(report).toContain('| W-E First Weight | 2 | 1 | 3:00 | 1:00 | 3 | 1 | 0 |');

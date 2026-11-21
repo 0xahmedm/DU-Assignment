@@ -228,6 +228,13 @@ export class Player {
     return this.state.dashing || this.dashGrace > 0;
   }
 
+  /** A blink only (after a beam hit, C110): no invulnerability, so beams still push back. */
+  blink(seconds: number): void {
+    this.scene.tweens.killTweensOf(this.sprite);
+    this.sprite.setAlpha(1).setScale(1);
+    this.scene.tweens.add({ targets: this.sprite, alpha: 0.3, duration: 80, yoyo: true, repeat: Math.floor(seconds / 0.16), onComplete: () => this.sprite.setAlpha(1) });
+  }
+
   /** A moment of invulnerability (Guard absorbing a hit, C67), shown as a blink. */
   protect(seconds: number): void {
     this.dashGrace = Math.max(this.dashGrace, seconds);

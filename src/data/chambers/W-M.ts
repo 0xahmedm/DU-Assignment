@@ -15,6 +15,7 @@ export const W_M: ChamberDef = {
   prerequisites: ['W-E'],
   kit: [],
   grants: 'throw',
+  enemiesUsed: 1, // the walker held on t (C109): it need not be defeated
   initialPhase: 'red',
   sections: [
     {

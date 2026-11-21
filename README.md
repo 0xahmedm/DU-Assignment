@@ -8,7 +8,9 @@ A browser-playable 2D puzzle action-platformer prototype. It has **12 puzzle cha
 - **Online:** https://0xahmedm.github.io/DU-Assignment/ (add `?chamber=W-E` to open a chamber directly).
 - **Offline:** unzip the release and double-click `index.html`. It is one self-contained file and needs no server or internet connection.
 - **What's playable:**
-  - The menu opens on a title screen (the four seals, chambers solved) with three entries: **Expedition**, **Chamber select** and **Options & tools** (sound, the movement test room, playtest stats, reset progress).
+  - The menu opens on a title screen (the four seals, chambers solved) with **Expedition**, **Chamber select**, **How to play**, **Controls** and **Options & tools** (sound, the movement test room, playtest stats, reset progress).
+  - Every chamber shows its controls along the bottom of the screen.
+  - An exit opens when the room's puzzle is solved and its enemies are defeated (a walker a puzzle needs on a plate may stay). Beams push you back and cost a heart.
   - **New expedition** deals up to three chambers based on your progress, with combat rooms and reward rooms between them. Runs are seeded: the seed is shown in the HUD and can be replayed from the menu.
   - Solved chambers, abilities and seals are saved in this browser.
   - Once all four seals are restored, expeditions become timed Remix runs.

@@ -24,7 +24,9 @@ import {
   type UpgradeId,
 } from '../../core/run/upgrades';
 import { MELEE, swingBox } from '../../core/combat/melee';
-import { loseHeart } from '../../core/run/hearts';
+import { loseHeart, newHearts, type Hearts } from '../../core/run/hearts';
+import { enemiesLeft, enemiesRespawn } from '../../core/run/clearing';
+import { controlsLine } from '../input/controlsText';
 import { Telemetry } from '../telemetry';
 import { formatTime } from '../../core/run/telemetry';
 import type { Device } from '../../core/chamber/types';
@@ -58,6 +60,7 @@ export interface PlayData {
 }
 
 const GUARD_GRACE = 1; // s of invulnerability after Guard absorbs a hit
+const BEAM_GRACE = 1; // s after a beam hit before the next one costs a heart (C110); the push back never stops
 const QUIET_START_STEPS = 20; // ~1/3 s: crates settling and starting signals make no sound
 
 /** Game events a run controller listens to (the expedition loop, Day 5). */
@@ -103,7 +106,6 @@ export class ChamberScene extends Phaser.Scene {
   private play: PlayData = {};
   private pedestals: { col: number; row: number; label: Phaser.GameObjects.Text; block: Phaser.GameObjects.Rectangle }[] = [];
   private picked = false;
-  private cleared = false;
   private info!: Phaser.GameObjects.Text;
   private fx: UpgradeEffects = NO_UPGRADES;
   private offers: readonly RewardChoice[] = [];
@@ -118,6 +120,15 @@ export class ChamberScene extends Phaser.Scene {
   private shownSecond = -1;
   /** Steps at room start without state-change feedback (a door that starts powered isn't news). */
   private quietSteps = QUIET_START_STEPS;
+  /** Seconds until a beam hit costs a heart again (C110). */
+  private beamGrace = 0;
+  /** Chamber select: 3 hearts per attempt, lost only to beams (C110); undefined in a run. */
+  private selectHearts: Hearts | undefined;
+  /** Enemies the exit still waits for (C109), and whether that was true last step. */
+  private enemiesNote: Phaser.GameObjects.Text | undefined;
+  private waitingForEnemies = false;
+  /** Each enemy's spawn row, to notice one that fell far below it (out of reach, C109). */
+  private enemySpawnRows: number[] = [];
 
   constructor() {
     super('Chamber');
@@ -134,7 +145,6 @@ export class ChamberScene extends Phaser.Scene {
     this.chamberId = data.id ?? this.chamberId;
     this.pedestals = [];
     this.picked = false;
-    this.cleared = false;
     this.crates = [];
     this.enemies = [];
     this.cellBodies = [];
@@ -218,9 +228,12 @@ export class ChamberScene extends Phaser.Scene {
     // defeat (C55), checked every step. `enemies` holds every patroller.
     // Rooms take their enemies from the encounter tier (R4) and never respawn them (R1).
     const spawns = room ? (room.def.tiers?.[room.tier] ?? []) : this.model.spawns.filter((x) => x.kind === 'walker' || x.kind === 'shieldbearer');
+    // Respawning (C109): only in a chamber whose enemies are all used by its solution.
+    const respawns = enemiesRespawn(room ? 'connector' : 'chamber', spawns.length, room ? 0 : (def.enemiesUsed ?? 0));
+    this.enemySpawnRows = spawns.map((s) => s.cell[0]);
     for (const s of spawns) {
       const kind = s.kind === 'walker' ? WALKER_KIND : SHIELDBEARER_KIND;
-      const enemy = new PatrolEnemy(this, s.cell[1] * TILE + TILE / 2, (s.cell[0] + 1) * TILE, kind, !room);
+      const enemy = new PatrolEnemy(this, s.cell[1] * TILE + TILE / 2, (s.cell[0] + 1) * TILE, kind, respawns);
       this.enemies.push(enemy);
       this.physics.add.collider(enemy.rect, solids);
       for (const c of this.crates) this.physics.add.collider(enemy.rect, c.rect);
@@ -247,13 +260,27 @@ export class ChamberScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(100)
       .setVisible(false);
-    if (run) {
-      this.hud = this.add
-        .text(12, 30, '', { fontFamily: 'monospace', fontSize: '13px', color: cssHex(PALETTE.text) })
-        .setScrollFactor(0)
-        .setDepth(100);
-      this.refreshHud();
-    }
+    // Chamber select has 3 hearts per attempt, lost only to beams (C110); a run carries its own.
+    this.selectHearts = run ? undefined : newHearts();
+    this.beamGrace = 0;
+    this.waitingForEnemies = false;
+    this.hud = this.add
+      .text(12, 30, '', { fontFamily: 'monospace', fontSize: '13px', color: cssHex(PALETTE.text) })
+      .setScrollFactor(0)
+      .setDepth(100);
+    this.refreshHud();
+    // The controls, always on screen (C111): base controls plus the abilities this room allows.
+    this.add
+      .text(12, this.scale.height - 8, controlsLine(kit), { fontFamily: 'monospace', fontSize: '12px', color: cssHex(PALETTE.text), backgroundColor: '#000000aa', padding: { x: 6, y: 3 } })
+      .setOrigin(0, 1)
+      .setScrollFactor(0)
+      .setDepth(100);
+    // What the exit still waits for (C109): enemies to defeat.
+    this.enemiesNote = this.add
+      .text(this.scale.width - 12, 10, '', { fontFamily: 'monospace', fontSize: '13px', color: cssHex(PALETTE.enemy) })
+      .setOrigin(1, 0)
+      .setScrollFactor(0)
+      .setDepth(100);
     // A one-off banner from the run controller (e.g. "W-M solved: Throw unlocked"); not repeated
     // when the room restarts after a defeat or a reset.
     const banner = this.play.expedition?.banner;
@@ -422,10 +449,17 @@ export class ChamberScene extends Phaser.Scene {
       }
     }
 
-    // Beams are a barrier for the player: a push back, never a heart (C27).
+    // Beams push the player back (C27) and each hit costs a heart (C110), with a moment of grace so
+    // one touch costs one heart. Dashing makes the player immune to beams (C60).
+    this.beamGrace = Math.max(0, this.beamGrace - dt);
     const touch = beamContact(this.beams.segments, bodies[0]!, TILE);
-    // Dashing makes the player immune to beams (C60): a Dash passes straight through a fence.
-    if (touch && !this.player.invulnerable && this.player.knockback(touch.axis, touch.at)) this.cameras.main.shake(60, 0.002);
+    if (touch && !this.player.invulnerable) {
+      if (this.player.knockback(touch.axis, touch.at)) this.cameras.main.shake(60, 0.002);
+      if (this.beamGrace <= 0) {
+        this.beamGrace = BEAM_GRACE;
+        if (this.beamHit()) return;
+      }
+    }
     // Doors, trapdoors, the exit and plate-wired mirrors changing state (C52). Mirrors flipped by
     // a hit already answered in onHits, so only wired ones are handled here.
     const events = this.logic.takeEvents();
@@ -435,9 +469,75 @@ export class ChamberScene extends Phaser.Scene {
       for (const id of events.closed) this.feedback(id, isGate(id) ? 'gateOff' : 'doorClose');
       for (const id of events.mirrorsFlipped) if (this.logic.isMirrorLocked(id)) this.feedback(id, 'mirror');
     }
+    this.updateEnemyLock(alive.length);
     this.syncSolids();
     this.checkExit(bodies[0]!);
     this.updateReset(dt);
+  }
+
+  /**
+   * A beam hit (C110): Guard absorbs the first hit in a room (C67); otherwise a heart is lost, from
+   * the run or from chamber select's three. Returns true when the room ends (out of hearts).
+   */
+  private beamHit(): boolean {
+    this.player.blink(BEAM_GRACE);
+    if (this.guardLeft > 0) {
+      this.guardLeft--;
+      Sfx.clang();
+      this.cameras.main.flash(120, 255, 209, 102, false);
+      return false;
+    }
+    Sfx.hurt();
+    this.cameras.main.flash(140, 255, 90, 90, false);
+    this.cameras.main.shake(90, 0.004);
+    Telemetry.heartLost();
+    const run = this.play.run;
+    const lost = loseHeart(run ? run.hearts : this.selectHearts!);
+    if (run) this.play.run = { ...run, hearts: lost.hearts };
+    else this.selectHearts = lost.hearts;
+    this.refreshHud();
+    this.tweens.add({ targets: this.hud, scale: 1.25, duration: 120, yoyo: true });
+    if (!lost.runOver) return false;
+    if (run) {
+      // The last heart: the run is over, as after a defeat (C54).
+      this.defeated = true;
+      this.physics.world.timeScale = 3;
+      this.time.delayedCall(350, () => this.endRun());
+    } else {
+      this.defeat(); // chamber select: out of hearts restarts the chamber with three
+    }
+    return true;
+  }
+
+  /**
+   * C109: the exit stays shut while enemies the solution does not use are alive (in a combat room,
+   * any enemy). A lamp on the exit and a note in the corner show it; clearing them opens the exit.
+   */
+  private updateEnemyLock(alive: number): void {
+    const room = this.play.room;
+    const applies = room ? room.def.kind === 'connector' && this.enemies.length > 0 : this.enemies.length > (this.model.def.enemiesUsed ?? 0);
+    if (!applies) {
+      this.view.enemyLamp = undefined;
+      return;
+    }
+    const left = enemiesLeft(alive, room ? 0 : (this.model.def.enemiesUsed ?? 0));
+    const waiting = left > 0;
+    this.logic.holdClosed('exit', waiting || (Boolean(room?.def.pedestals) && !this.picked));
+    this.view.enemyLamp = !waiting;
+    // An enemy that fell 3+ tiles below its spawn in a chamber may be out of reach (P-M's guard
+    // dropped into the sealed chasm): suggest a reset. Every enemy in a combat room can be reached.
+    const fell = !room && this.enemies.some((w, i) => w.alive && w.rect.y / TILE - (this.enemySpawnRows[i] ?? Infinity) >= 3);
+    this.enemiesNote?.setText(waiting ? `${left} enem${left === 1 ? 'y' : 'ies'} left to defeat${fell ? '  (fell out of reach? hold R)' : ''}` : '');
+    if (this.waitingForEnemies && !waiting && !this.quietSteps) {
+      // Cleared: the exit answers (C52).
+      if (this.logic.isOpen('exit')) this.feedback('exit', 'exitOpen');
+      else {
+        Sfx.pick();
+        this.view.flash('exit');
+      }
+      this.cameras.main.flash(120, 255, 255, 255, false);
+    }
+    this.waitingForEnemies = waiting;
   }
 
   /**
@@ -572,7 +672,6 @@ export class ChamberScene extends Phaser.Scene {
 
   /** Pedestals (R3), the Seal altar, and exits held shut by the room rules (R2, R3). */
   private setUpRoom(room: RoomDef): void {
-    if (room.lockUntilCleared) this.logic.holdClosed('exit', true);
     if (room.pedestals) {
       this.logic.holdClosed('exit', true);
       const offers = this.offers;
@@ -626,10 +725,15 @@ export class ChamberScene extends Phaser.Scene {
     this.game.events.emit(ROOM_EVENTS.reward, choice, this.play.run);
   }
 
-  /** Hearts and run upgrades, under the title (expeditions only). */
+  /** Hearts and run upgrades, under the title; chamber select shows its own 3 hearts (C110). */
   private refreshHud(): void {
     const run = this.play.run;
-    if (!this.hud || !run) return;
+    if (!this.hud) return;
+    if (!run) {
+      const h = this.selectHearts;
+      if (h) this.hud.setText(`${'♥'.repeat(h.current)}${'♡'.repeat(Math.max(0, h.max - h.current))}   (beam hits cost a heart; at 0 the chamber restarts)`);
+      return;
+    }
     const hearts = '♥'.repeat(run.hearts.current) + '♡'.repeat(Math.max(0, run.hearts.max - run.hearts.current));
     const names = run.upgrades.filter((u) => u !== 'mend').map((u) => upgradeById(u).name);
     const e = this.play.expedition;
@@ -653,12 +757,6 @@ export class ChamberScene extends Phaser.Scene {
       const i = this.pedestalUnder(player);
       const choice = this.offers[i];
       this.info.setText(choice ? `${choice.name}\n${choice.description}\n(attack to take it)` : '').setVisible(Boolean(choice));
-    }
-    if (room.def.lockUntilCleared && !this.cleared && this.enemies.every((w) => w.gone)) {
-      this.cleared = true;
-      this.logic.holdClosed('exit', false);
-      Sfx.swap();
-      this.cameras.main.flash(120, 255, 255, 255, false);
     }
     if (room.def.altar) {
       const [row, col] = room.def.altar;

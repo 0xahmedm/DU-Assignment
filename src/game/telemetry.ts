@@ -1,5 +1,6 @@
 import {
   addDefeat,
+  addHeartLost,
   addReset,
   addTime,
   clearLog,
@@ -46,6 +47,10 @@ export const Telemetry = {
   },
   defeat(heartLost: boolean): void {
     if (current) current = addDefeat(current, heartLost);
+  },
+  /** A heart lost to a beam (C110), in a run or in chamber select. */
+  heartLost(): void {
+    if (current) current = addHeartLost(current);
   },
   /** Closes the open attempt (solved, left, run over) and saves the log. */
   end(outcome: Outcome): void {

@@ -25,8 +25,6 @@ export interface RoomDef {
   pedestals?: readonly Cell[];
   /** Exit room: reaching this cell ends the run. */
   altar?: Cell;
-  /** R2: the exit opens only when every enemy is defeated (the Arena). */
-  lockUntilCleared?: boolean;
 }
 
 /** One upgrade offered on a reward pedestal (R3); the upgrade pool fills these in. */
