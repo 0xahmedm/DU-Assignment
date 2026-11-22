@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { ChamberId } from '../core/chamber/types';
 import { generateRun, runAbilities, type RunPlan, type RunStep } from '../core/run/generator';
-import { endlessLevel, endlessStep } from '../core/run/endless';
+import { ENDLESS_LIMITS, endlessLevel, endlessStep } from '../core/run/endless';
 import { isComplete, loadProgress, saveProgress, sealsOf, solve } from '../core/run/progression';
 import type { RoomDef } from '../core/run/rooms';
 import { recordEndless, recordRemixTime } from '../core/run/records';
@@ -50,7 +50,9 @@ export class Expedition {
     Expedition.stop();
     const plan: RunPlan = { seed: seed >>> 0, remix: false, tier: 'T2', chambers: [], steps: [] };
     rememberSeed(plan.seed);
-    const exp = new Expedition(from.game, plan, newRun(plan.seed, runAbilities(PROGRESS_GRAPH, loadProgress(PROGRESS_GRAPH, browserStore()), true)), true);
+    // Endless limits (C115): 4 upgrades at most (a new one replaces the oldest), max hearts 4.
+    const run = { ...newRun(plan.seed, runAbilities(PROGRESS_GRAPH, loadProgress(PROGRESS_GRAPH, browserStore()), true)), limits: ENDLESS_LIMITS };
+    const exp = new Expedition(from.game, plan, run, true);
     Expedition.current = exp;
     from.scene.start('Chamber', exp.playData(firstBanner(plan, true)));
   }

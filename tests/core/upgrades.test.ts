@@ -8,6 +8,7 @@ import {
   newRun,
   NO_UPGRADES,
   offersFor,
+  replacedBy,
   takeUpgrade,
   UPGRADES,
   type UpgradeId,
@@ -112,5 +113,45 @@ describe('upgrade effects', () => {
     for (const k of Object.keys(DEFAULT_MOVEMENT) as (keyof typeof DEFAULT_MOVEMENT)[]) {
       if (k !== 'dashCooldown') expect(moved[k]).toBe(DEFAULT_MOVEMENT[k]);
     }
+  });
+});
+
+describe('Endless limits (C115)', () => {
+  const limited = (ids: UpgradeId[] = []) => ids.reduce(takeUpgrade, { ...newRun(7, ['throw', 'bolt', 'dash']), limits: { upgrades: 4, maxHearts: 4 } });
+
+  it('holds at most 4 upgrades: a fifth replaces the oldest, and says so first', () => {
+    const run = limited(['heavy-swing', 'guard', 'insight', 'long-reach']);
+    expect(replacedBy(run, 'shockwave')).toBe('heavy-swing');
+    const next = takeUpgrade(run, 'shockwave');
+    expect(next.upgrades).toEqual(['guard', 'insight', 'long-reach', 'shockwave']);
+    expect(effectsOf(next.upgrades).meleeDamage).toBe(1); // Heavy Swing's effect is gone
+    expect(replacedBy(limited(['guard']), 'insight')).toBeUndefined();
+    expect(replacedBy(run, 'mend')).toBeUndefined(); // Mend is used at once, never held
+  });
+
+  it('Mend never lifts max hearts above 4, and is not offered when it could not help', () => {
+    let run = limited(['mend']); // 3/3 full: +1 max -> 4/4
+    expect(run.hearts).toEqual({ current: 4, max: 4 });
+    run = takeUpgrade(run, 'mend');
+    expect(run.hearts).toEqual({ current: 4, max: 4 });
+    for (let i = 0; i < 30; i++) expect(offersFor({ ...run, picks: i }).some((u) => u.id === 'mend')).toBe(false);
+  });
+
+  it('offers keep changing pick after pick even though the held list stays at 4', () => {
+    let run = limited(['heavy-swing', 'guard', 'insight', 'long-reach']);
+    const seen = new Set<string>();
+    for (let i = 0; i < 6; i++) {
+      const offer = offersFor(run);
+      expect(offer).toHaveLength(3);
+      seen.add(offer.map((u) => u.id).join());
+      run = takeUpgrade(run, offer[0]!.id);
+    }
+    expect(seen.size).toBeGreaterThan(1);
+  });
+
+  it('normal runs have no limit', () => {
+    const run = (['heavy-swing', 'guard', 'insight', 'long-reach', 'shockwave'] as UpgradeId[]).reduce(takeUpgrade, newRun(1, ['bolt']));
+    expect(run.upgrades).toHaveLength(5);
+    expect(replacedBy(run, 'piercing-bolt')).toBeUndefined();
   });
 });

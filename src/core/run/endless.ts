@@ -3,6 +3,10 @@ import type { RunStep } from './generator';
 import { COMBAT_PER_CHAMBER } from './generator';
 import { cycled, subSeed } from './rng';
 import type { Tier } from './rooms';
+import type { RunLimits } from './upgrades';
+
+/** Endless rules (C115): at most 4 upgrades held (a new one replaces the oldest), max hearts never above 4. */
+export const ENDLESS_LIMITS: RunLimits = { upgrades: 4, maxHearts: 4 };
 
 /**
  * Endless expeditions (C113), unlocked with Remix once every seal is restored. Rooms keep coming in
@@ -36,7 +40,7 @@ export interface EndlessLevel {
   level: number;
   /** Encounter tier for combat rooms (R4): T2 for the first loop, then T3. */
   tier: Tier;
-  /** Extra hits every enemy in a combat room takes (one more every two levels past the first). */
+  /** Extra hits every enemy in a combat room takes: one more every level past the first (C115). */
   extraHp: number;
   /** Enemy patrol speed multiplier (10% more per level past the first, at most 1.6). */
   speedScale: number;
@@ -49,5 +53,5 @@ export interface EndlessLevel {
 export function endlessLevel(roomsCleared: number): EndlessLevel {
   const level = Math.floor(Math.max(0, roomsCleared) / LOOP);
   const beyond = Math.max(0, level - 1);
-  return { level, tier: level === 0 ? 'T2' : 'T3', extraHp: Math.floor(beyond / 2), speedScale: Math.min(1.6, 1 + 0.1 * beyond) };
+  return { level, tier: level === 0 ? 'T2' : 'T3', extraHp: beyond, speedScale: Math.min(1.6, 1 + 0.1 * beyond) };
 }

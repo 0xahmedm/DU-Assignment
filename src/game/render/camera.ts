@@ -20,3 +20,17 @@ export function centredBounds(worldW: number, worldH: number, viewW: number, vie
     height: Math.max(worldH, viewH),
   };
 }
+
+/**
+ * Camera bounds for the band between the HUD bars (C116): the top bar (title, hearts) and the
+ * bottom bar (controls) are opaque, so the world is laid out in the band between them. A world
+ * shorter than the band is centred in it; a taller one can scroll until its top row sits just under
+ * the top bar and its bottom row just above the bottom bar, so nothing is ever hidden behind text.
+ * Horizontally it is centredBounds.
+ */
+export function bandBounds(worldW: number, worldH: number, viewW: number, viewH: number, top: number, bottom: number): Rect {
+  const band = viewH - top - bottom;
+  const x = centredBounds(worldW, worldH, viewW, viewH);
+  if (worldH <= band) return { x: x.x, width: x.width, y: -(top + (band - worldH) / 2), height: viewH };
+  return { x: x.x, width: x.width, y: -top, height: worldH + top + bottom };
+}

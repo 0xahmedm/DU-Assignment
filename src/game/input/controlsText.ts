@@ -29,13 +29,17 @@ export const CONTROL_ROWS: readonly ControlRow[] = [
   { action: 'Throw a crate', keys: keysOf('throw'), ability: 'throw' },
   { action: 'Bolt (hold ↑ / W: up)', keys: keysOf('bolt'), ability: 'bolt' },
   { action: 'Dash', keys: keysOf('dash'), ability: 'dash' },
+  { action: 'Interact (take an upgrade)', keys: keysOf('interact') },
   { action: 'Reset the chamber', keys: `hold ${keysOf('reset')}` },
   { action: 'Menu', keys: 'Esc' },
   { action: 'Sound on / off', keys: 'M' },
 ];
 
-/** The one-line reminder shown in game: the base controls plus the abilities this room allows. */
-export function controlsLine(kit: ReadonlySet<Ability>): string {
+/**
+ * The one-line reminder shown in game: the base controls plus the abilities this room allows, and
+ * the interact key where there is something to interact with (a reward room).
+ */
+export function controlsLine(kit: ReadonlySet<Ability>, interact = false): string {
   const parts = [
     `move ${moveKeys()}`,
     `jump ${keysOf('jump')}`,
@@ -45,5 +49,6 @@ export function controlsLine(kit: ReadonlySet<Ability>): string {
   if (kit.has('throw')) parts.push(`throw ${keysOf('throw')}`);
   if (kit.has('bolt')) parts.push(`bolt ${keysOf('bolt')}`);
   if (kit.has('dash')) parts.push(`dash ${keysOf('dash')}`);
+  if (interact) parts.push(`interact ${keysOf('interact')}`);
   return parts.join('   ');
 }

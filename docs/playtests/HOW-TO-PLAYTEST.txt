@@ -8,6 +8,7 @@ Thanks for testing! It takes about 25-30 minutes.
      It opens in your browser (Chrome, Edge or Firefox). No install, no internet needed.
    - Sound starts after your first key press. M turns it on or off.
    - Menu: arrow keys + Enter, or the mouse. Esc goes back.
+   - To take an upgrade, stand on a pedestal and press E.
    - The menu has "How to play" and "Controls" if you want them,
      and the controls are always shown at the bottom of the screen in game.
 

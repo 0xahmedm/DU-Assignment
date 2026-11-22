@@ -25,6 +25,7 @@ import {
 } from '../../core/run/upgrades';
 import { MELEE, swingBox } from '../../core/combat/melee';
 import { loseHeart, newHearts, type Hearts } from '../../core/run/hearts';
+import { replacedBy } from '../../core/run/upgrades';
 import { enemiesLeft, enemiesRespawn } from '../../core/run/clearing';
 import { controlsLine } from '../input/controlsText';
 import { DevOptions } from '../devOptions';
@@ -41,7 +42,7 @@ import { PatrolEnemy, SHIELDBEARER_KIND, WALKER_KIND } from '../enemies/PatrolEn
 import { Crate } from '../player/Crate';
 import { Player } from '../player/Player';
 import { ChamberView } from '../render/ChamberView';
-import { centredBounds } from '../render/camera';
+import { bandBounds } from '../render/camera';
 import { afterimage, dust, ring, sparks } from '../render/fx';
 import { cssHex, gateColor, PALETTE } from '../render/palette';
 
@@ -67,6 +68,9 @@ export interface PlayData {
 const GUARD_GRACE = 1; // s of invulnerability after Guard absorbs a hit
 const BEAM_GRACE = 1; // s after a beam hit before the next one costs a heart (C110); the push back never stops
 const QUIET_START_STEPS = 20; // ~1/3 s: crates settling and starting signals make no sound
+/** HUD bars (C116): the title and hearts on top, the controls at the bottom; the world sits between. */
+export const HUD_TOP = 48;
+export const HUD_BOTTOM = 26;
 
 /** Game events a run controller listens to (the expedition loop, Day 5). */
 export const ROOM_EVENTS = { done: 'room-done', reward: 'reward-picked', runComplete: 'run-complete', runOver: 'run-over' } as const;
@@ -134,6 +138,8 @@ export class ChamberScene extends Phaser.Scene {
   private waitingForEnemies = false;
   /** Each enemy's spawn row, to notice one that fell far below it (out of reach, C109). */
   private enemySpawnRows: number[] = [];
+  /** "[E] take …" over the player on a reward pedestal (C116). */
+  private prompt: Phaser.GameObjects.Text | undefined;
 
   constructor() {
     super('Chamber');
@@ -185,8 +191,9 @@ export class ChamberScene extends Phaser.Scene {
     const width = this.model.width * TILE;
     const height = this.model.height * TILE;
     this.physics.world.setBounds(0, 0, width, height);
-    // Worlds smaller than the screen are centred (most rooms, the Easys' height, W-M / L-M's width).
-    const cam = centredBounds(width, height, this.scale.width, this.scale.height);
+    // The world sits in the band between the HUD bars (C116): centred when it is smaller, and able to
+    // scroll fully into view when it is larger, so the bars never hide part of it.
+    const cam = bandBounds(width, height, this.scale.width, this.scale.height, HUD_TOP, HUD_BOTTOM);
     this.cameras.main.setBounds(cam.x, cam.y, cam.width, cam.height).setBackgroundColor(PALETTE.background);
 
     // Collision: one static body per cell that is, or can become, solid (terrain, solid devices,
@@ -262,7 +269,7 @@ export class ChamberScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-ESC', () => this.scene.start('Menu'));
 
     this.info = this.add
-      .text(this.scale.width / 2, 40, '', { fontFamily: 'monospace', fontSize: '15px', color: cssHex(PALETTE.text), align: 'center', backgroundColor: '#000000aa', padding: { x: 10, y: 6 } })
+      .text(this.scale.width / 2, HUD_TOP + 8, '', { fontFamily: 'monospace', fontSize: '15px', color: cssHex(PALETTE.text), align: 'center', backgroundColor: '#000000aa', padding: { x: 10, y: 6 } })
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(100)
@@ -276,9 +283,19 @@ export class ChamberScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(100);
     this.refreshHud();
+    // Opaque HUD bars (C116, a playtest fix: the text used to sit on top of the chamber).
+    const bars = this.add.graphics().setScrollFactor(0).setDepth(99);
+    bars.fillStyle(0x0e0f12, 1).fillRect(0, 0, this.scale.width, HUD_TOP).fillRect(0, this.scale.height - HUD_BOTTOM, this.scale.width, HUD_BOTTOM);
+    bars.fillStyle(PALETTE.terrainEdge, 1).fillRect(0, HUD_TOP - 2, this.scale.width, 2).fillRect(0, this.scale.height - HUD_BOTTOM, this.scale.width, 2);
+    // The interact prompt (C116): a key cap over the player when something underfoot can be used.
+    this.prompt = this.add
+      .text(0, 0, '', { fontFamily: 'monospace', fontSize: '13px', color: '#15161a', backgroundColor: '#ffd166', padding: { x: 6, y: 3 }, fontStyle: 'bold' })
+      .setOrigin(0.5, 1)
+      .setDepth(60)
+      .setVisible(false);
     // The controls, always on screen (C111): base controls plus the abilities this room allows.
     this.add
-      .text(12, this.scale.height - 8, controlsLine(kit), { fontFamily: 'monospace', fontSize: '12px', color: cssHex(PALETTE.text), backgroundColor: '#000000aa', padding: { x: 6, y: 3 } })
+      .text(12, this.scale.height - 6, controlsLine(kit, Boolean(room?.def.pedestals)), { fontFamily: 'monospace', fontSize: '12px', color: cssHex(PALETTE.text) })
       .setOrigin(0, 1)
       .setScrollFactor(0)
       .setDepth(100);
@@ -379,8 +396,8 @@ export class ChamberScene extends Phaser.Scene {
       const enemyBox = this.fx.enemyReachBonus ? swingBox(playerBox, swing.facing, swing.dir, MELEE.reach + this.fx.enemyReachBonus) : swing.box;
       const mods = { damage: this.fx.meleeDamage, knockbackScale: this.fx.knockbackScale, stagger: this.fx.shieldStagger };
       for (const w of alive) if (overlap(enemyBox, w.bounds())) this.onEnemyHit(w, w.hit('melee', fromX, mods));
-      this.tryPick(playerBox);
     }
+    if (this.player.takeInteract()) this.tryPick(playerBox);
     this.updateRoomRules(playerBox);
     this.lastOccupied = occupied;
     const bolt = this.player.takeBolt();
@@ -681,13 +698,12 @@ export class ChamberScene extends Phaser.Scene {
   private setUpRoom(room: RoomDef): void {
     if (room.pedestals) {
       this.logic.holdClosed('exit', true);
-      const offers = this.offers;
       room.pedestals.forEach(([row, col], i) => {
         const x = col * TILE + TILE / 2;
         const y = (row + 1) * TILE;
         const block = this.add.rectangle(x, y - 6, TILE - 6, 12, PALETTE.weight).setStrokeStyle(2, PALETTE.lightCore).setDepth(4);
         const label = this.add
-          .text(x, y - 34, offers[i]?.name ?? '', { fontFamily: 'monospace', fontSize: '11px', color: cssHex(PALETTE.text), align: 'center' })
+          .text(x, y - 34, this.pedestalLabel(i), { fontFamily: 'monospace', fontSize: '11px', color: cssHex(PALETTE.text), align: 'center' })
           .setOrigin(0.5, 1)
           .setDepth(4);
         this.pedestals.push({ col, row, label, block });
@@ -697,6 +713,14 @@ export class ChamberScene extends Phaser.Scene {
       const [row, col] = room.altar;
       this.add.rectangle(col * TILE + TILE / 2, (row + 1) * TILE - 10, TILE, 20, PALETTE.lightCore).setStrokeStyle(3, PALETTE.light).setDepth(4);
     }
+  }
+
+  /** A pedestal's label: the upgrade's name and, at the Endless limit, what taking it replaces (C115). */
+  private pedestalLabel(i: number): string {
+    const choice = this.offers[i];
+    if (!choice) return '';
+    const out = this.play.run && UPGRADE_IDS.has(choice.id) ? replacedBy(this.play.run, choice.id as UpgradeId) : undefined;
+    return out ? `${choice.name}\n− ${upgradeById(out).name}` : choice.name;
   }
 
   private pedestalUnder(player: Bounds): number {
@@ -728,6 +752,7 @@ export class ChamberScene extends Phaser.Scene {
       else this.tweens.add({ targets: [p.block, p.label], alpha: 0, duration: 300 });
     });
     this.logic.holdClosed('exit', false);
+    this.prompt?.setVisible(false);
     this.info.setText(`${choice.name}\n${choice.description}`).setVisible(true);
     this.game.events.emit(ROOM_EVENTS.reward, choice, this.play.run);
   }
@@ -766,7 +791,15 @@ export class ChamberScene extends Phaser.Scene {
     if (room.def.pedestals && !this.picked) {
       const i = this.pedestalUnder(player);
       const choice = this.offers[i];
-      this.info.setText(choice ? `${choice.name}\n${choice.description}\n(attack to take it)` : '').setVisible(Boolean(choice));
+      const out = choice && this.play.run && UPGRADE_IDS.has(choice.id) ? replacedBy(this.play.run, choice.id as UpgradeId) : undefined;
+      this.info.setText(choice ? `${choice.name}\n${choice.description}${out ? `\nReplaces ${upgradeById(out).name} (you hold 4 at most)` : ''}` : '').setVisible(Boolean(choice));
+      // The pedestal underfoot hides its label: the key cap and the box above say it all.
+      this.pedestals.forEach((p, j) => p.label.setAlpha(j === i ? 0 : 1));
+      // The key cap over the player, so the way to take it is never missed (playtest fix, C116).
+      if (this.prompt) {
+        this.prompt.setText(choice ? `E  take ${choice.name}` : '').setVisible(Boolean(choice));
+        if (choice) this.prompt.setPosition((player.left + player.right) / 2, player.top - 10);
+      }
     }
     if (room.def.altar) {
       const [row, col] = room.def.altar;

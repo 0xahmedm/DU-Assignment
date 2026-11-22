@@ -77,12 +77,44 @@ export class Player {
   }
 
   get grounded(): boolean {
-    return this.body.blocked.down || this.body.touching.down;
+    return this.body.blocked.down || this.body.touching.down || this.onCrate;
+  }
+
+  /** Set each step: the feet rest on a crate's top (see standsOnCrate). */
+  private onCrate = false;
+  private interactPressed = false;
+
+  /**
+   * The top of the crate the player stands on, if any. Standing, the movement model keeps a small
+   * downward speed to stick to the ground; tiles push back every step, but a crate (a moving body)
+   * let the player sink up to ~4 px before separating them. In between the player counted as
+   * falling, so standing still on a crate flickered: a "landing" squash and a bounce every few
+   * steps (playtest bug, AI bug #35). Feet within a few px of a resting crate's top, overlapping it
+   * sideways, count as standing, and step() snaps them onto it.
+   */
+  private crateUnderfoot(crates: readonly Crate[]): number | undefined {
+    const feet = this.body.bottom;
+    for (const c of crates) {
+      if (c.carried || c.flying || !c.body.enable) continue;
+      const top = c.body.top;
+      if (feet >= top - 2 && feet <= top + 6 && this.body.right > c.body.left + 1 && this.body.left < c.body.right - 1) return top;
+    }
+    return undefined;
+  }
+
+  /** True once per press of the interact key (E): the scene takes an upgrade if one is underfoot. */
+  takeInteract(): boolean {
+    const p = this.interactPressed;
+    this.interactPressed = false;
+    return p;
   }
 
   /** One fixed physics step (60 Hz). */
   step(dt: number, crates: readonly Crate[]): void {
+    const crateTop = this.body.velocity.y >= 0 ? this.crateUnderfoot(crates) : undefined;
+    this.onCrate = crateTop !== undefined;
     const grounded = this.grounded;
+    if (this.controls.consume('interact')) this.interactPressed = true;
     if (this.controls.consume('carry')) this.toggleCarry(crates);
     if (this.controls.consume('throw')) this.throwCrate(grounded);
     this.swingCooldown = Math.max(0, this.swingCooldown - dt);
@@ -121,6 +153,11 @@ export class Player {
       dt,
     );
     this.body.setVelocity(this.state.vx, this.state.vy);
+    // On a crate: stand exactly on its top, without the ground-stick speed sinking into it (#35).
+    if (crateTop !== undefined && this.state.vy >= 0 && !this.state.dashing) {
+      this.body.setVelocityY(0);
+      this.body.y = crateTop - this.body.height;
+    }
     if (this.state.dashing) {
       if (!wasDashing) {
         this.squash(1.3, 0.75);

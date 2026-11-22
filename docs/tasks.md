@@ -108,10 +108,10 @@ How to use this file:
 - [x] Playtest zip for remote testers (2026-11-21): `release/seal-chambers-playtest.zip` (not committed) = the single-file build + [`HOW-TO-PLAYTEST.txt`](playtests/HOW-TO-PLAYTEST.txt) (self-guided order: four Easys, one Medium, an expedition; copy stats + six questions). Checked: opens from disk in headless Edge, plays from the menu with no console errors, no dev hooks
 - [x] Notes template + session script (three Easys, a Medium, a Hard, one run): [`session-script.md`](playtests/session-script.md) (setup, words to say, order + time caps, rotation covering all nine chambers, stuck/hint rules, what to watch per chamber, questions), [`notes-template.md`](playtests/notes-template.md), [`playtest-summary.md`](playtests/playtest-summary.md) (triage + before/after). Menu: the first digit typed now replaces the remembered seed (it used to append, and a 6-digit seed blocked typing)
 - (user, 2026-11-20) Playtests deferred for now; the kit is ready, and triage, the before/after and the GDD's playtest section wait for them
-- [ ] (user) Playtest 1 → `docs/playtests/`
-- [ ] (user) Playtest 2 → `docs/playtests/`
-- [ ] (user) Playtest 3 → `docs/playtests/`
-- [ ] Triage the top 3 issues; fix; capture at least one before/after
+- [x] (user) Playtest 1 → `docs/playtests/`: remote (2026-11-22), feedback relayed + built-in stats ([`remote-tester-1-stats.md`](playtests/remote-tester-1-stats.md))
+- [x] (user) Playtest 2 → `docs/playtests/`: remote (2026-11-22), feedback relayed ([`remote-playtests-2026-11-22.md`](playtests/remote-playtests-2026-11-22.md))
+- [x] (user) Playtest 3 → `docs/playtests/`: remote (2026-11-22), feedback relayed
+- [x] Triage the top 3 issues; fix; capture at least one before/after: [`playtest-summary.md`](playtests/playtest-summary.md); four fixed (E interact, crate stutter 39 → 0 flips, HUD bars, Endless cap + swaps, C115/C116) with numbers and screenshots; W-H and W-M on watch
 - [ ] Day 6 routine
 
 ## Gates: the fourth mechanic (C104, C105; added 2026-11-20 with the extra time)

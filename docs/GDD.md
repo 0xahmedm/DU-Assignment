@@ -1,6 +1,6 @@
 # Game Design Document: Seal Chambers
 
-> Final draft (Day 7). Two sections wait on events still to come: the Day 4 brief change and the playtests. Decision ids (C…) point to the reasoning in [`design-decision-log.md`](design-decision-log.md). All names are placeholders.
+> Final draft (Day 7). One section waits on an event still to come: the Day 4 brief change. Decision ids (C…) point to the reasoning in [`design-decision-log.md`](design-decision-log.md). All names are placeholders.
 
 ## Core loop
 **On short, freshly assembled expeditions, fight, choose upgrades and solve handcrafted puzzle chambers to restore four seals, keeping every solved chamber and unlocked ability so each new run rearranges the world around harder puzzles that combine what you've mastered.**
@@ -74,7 +74,13 @@ They combine because each one changes the others' rules: crates, enemies and sol
 **Pending:** the change, its impact on the decisions above and how it was handled.
 
 ## Playtesting & iteration
-**Pending:** the sessions are planned (three new players; [script](playtests/session-script.md)), and the game records time, resets, defeats and hearts lost per chamber. This section will hold the top issues and at least one before/after with those numbers.
+Three new players tested a zip of the game remotely ([summary](playtests/playtest-summary.md)). The built-in stats came from one of them: 103 attempts, with W-H as the slowest puzzle (11:08 first solve, after two abandoned attempts).
+- **Top issues, all fixed:**
+  - One tester couldn't see how to take an upgrade, so taking one moved to **E**, with a key cap over the player.
+  - Standing on a crate stuttered: **39** standing/falling flips in 2 s, now **0**.
+  - HUD text covered the game, so the HUD moved into opaque bars.
+  - Endless got easy once every upgrade was owned (one run went about 39 rooms). Now you hold at most 4 upgrades and swap the oldest, and enemies gain a hit every level (**+4** hits at that depth before, **+8** now; C115, C116).
+- **Watched next:** W-H's readability and W-M's walker (7 defeats).
 
 ## One idea we cut, and why
 **The fully procedural Metroidvania world.** The original vision generated an explorable, ability-gated world around the chambers each run (C4, C5). On 2026-11-12, with no artist and limited level-design capacity, it was reduced to lean expeditions (C12). The full version needed about 15–20 more hand-built rooms for a 5% category, and that time would have come out of puzzle quality. What survived is a thin seeded generator that arranges authored rooms, plus permanent abilities that open harder chambers. Two later cuts followed the agreed cut order (C78): the Spitter enemy and ability-gated side rooms.

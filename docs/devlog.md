@@ -194,8 +194,16 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
     - A seed-42 run is 18 rooms with no combat room repeated back to back, and the summary says "18 rooms cleared".
     - An Endless run escalated from T2 to T3, enemy speed went 48 → 53 → 58, and an extra hit appeared at room 13. Its run-over summary saved a new best.
     - The Replay seed row disappears with Developer options off.
+- **Remote playtests (3 friends, 2026-11-22)** ([summary](playtests/playtest-summary.md)). One tester's built-in stats came back: 103 attempts, with W-H the slowest puzzle at 11:08 after 2 abandoned attempts.
+  - **The four reported issues are fixed:**
+    - Taking an upgrade is now **E**, with a key cap over the player.
+    - The crate stutter went from 39 flips in 2 s to 0.
+    - The HUD sits in opaque bars.
+    - Endless holds 4 upgrades at most, with swaps, and enemies get +1 hit per level.
+  - Before/after screenshots: [`playtest-before-reward-pick.png`](screenshots/playtest-before-reward-pick.png) → [`playtest-after-reward-pick.png`](screenshots/playtest-after-reward-pick.png), [`playtest-before-hud-over-P-M.png`](screenshots/playtest-before-hud-over-P-M.png) → [`playtest-after-hud-bars-P-M.png`](screenshots/playtest-after-hud-bars-P-M.png), [`playtest-after-endless-swap.png`](screenshots/playtest-after-endless-swap.png).
 
 ### AI bug log (Day 7)
 | # | What the AI got wrong | How it was found | Fix |
 |---|---|---|---|
 | 34 | The new gate code remembered each body's position from the last step it was checked. A crate carried away kept its old position, so putting it down far from where it was picked up looked like walking across a gate, and it jumped to the twin | Solving First Gate in the game: the crate put down beside plate `a` appeared in the far room | Carried and flying crates are forgotten; a move of more than half a tile in one step is never a crossing |
+| 35 | Standing on a crate stuttered: the AI's movement code keeps a small downward speed to stick to the ground, which tiles absorb every step, but a crate (a moving physics body) let the player sink a few px before pushing back, so the player counted as falling every few steps | A remote playtester; then measured in the game: 39 flips between standing and falling in 2 s | Feet on a resting crate's top count as standing and snap onto it; measured again: 0 flips |

@@ -59,6 +59,8 @@ describe('controls written out (C111)', () => {
     const all = controlsLine(new Set(['throw', 'bolt', 'dash'] as const));
     expect(all).toContain('throw V / L');
     expect(all).toContain('dash Shift / O');
+    expect(base).not.toContain('interact');
+    expect(controlsLine(new Set(), true)).toContain('interact E'); // reward rooms (C116)
   });
 
   it('the Controls screen lists every binding, abilities marked', () => {

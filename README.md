@@ -26,6 +26,7 @@ A browser-playable 2D puzzle action-platformer prototype. It has **12 puzzle cha
 | Jump (hold = higher) | Space or Z |
 | Attack | X or J |
 | Pick up / put down crate | C or K |
+| Interact (take an upgrade on a pedestal) | E |
 | Throw (ability) | V or L |
 | Bolt (ability) | F or I |
 | Dash (ability) | Shift or O |

@@ -141,10 +141,12 @@ describe('endless runs (C113)', () => {
     for (let i = 1; i < connectors.length; i++) expect(connectors[i]).not.toBe(connectors[i - 1]);
   });
 
-  it('gets harder in the fighting: T2, then T3, then tougher and faster enemies (speed capped)', () => {
+  it('gets harder in the fighting: T2, then T3, then +1 hit and +10% speed per level (speed capped; C115)', () => {
     expect(endlessLevel(0)).toEqual({ level: 0, tier: 'T2', extraHp: 0, speedScale: 1 });
     expect(endlessLevel(LOOP)).toMatchObject({ level: 1, tier: 'T3', extraHp: 0, speedScale: 1 });
-    expect(endlessLevel(LOOP * 3).extraHp).toBe(1);
+    expect(endlessLevel(LOOP * 3).extraHp).toBe(2);
+    // The tester's 36-room run: level 9, enemies take 8 extra hits (was 4 before the rebalance).
+    expect(endlessLevel(36)).toMatchObject({ level: 9, extraHp: 8 });
     expect(endlessLevel(LOOP * 3).speedScale).toBeCloseTo(1.2);
     expect(endlessLevel(LOOP * 100).speedScale).toBe(1.6);
     expect(endlessLevel(LOOP * 101).extraHp).toBeGreaterThan(endlessLevel(LOOP * 9).extraHp);

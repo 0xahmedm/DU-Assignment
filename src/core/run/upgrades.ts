@@ -74,6 +74,23 @@ export interface RunState {
    * chamber scene adds to it every step, in place: the one field of a run that changes that often.
    */
   timeMs: number;
+  /** Endless rules (C115): how many upgrades may be held, and Mend's ceiling on max hearts. */
+  limits?: RunLimits;
+  /** Upgrades picked so far (seeds the next offer; swaps keep the held list short). */
+  picks?: number;
+}
+
+/** Endless (C115): hold at most `upgrades` (a new one replaces the oldest); Mend never lifts max hearts above `maxHearts`. */
+export interface RunLimits {
+  upgrades: number;
+  maxHearts: number;
+}
+
+/** The upgrade that taking `id` would replace: the oldest held, when the run's limit is reached (C115). */
+export function replacedBy(run: RunState, id: UpgradeId): UpgradeId | undefined {
+  if (!run.limits || id === 'mend') return undefined;
+  const held = run.upgrades.filter((u) => u !== 'mend');
+  return held.length >= run.limits.upgrades ? held[0] : undefined;
 }
 
 export const newRun = (seed: number, abilities: readonly Ability[] = []): RunState => ({
@@ -86,15 +103,25 @@ export const newRun = (seed: number, abilities: readonly Ability[] = []): RunSta
 
 /** Takes an upgrade. Mend acts at once on the hearts (C66); the rest are kept for the run. */
 export function takeUpgrade(run: RunState, id: UpgradeId): RunState {
-  return {
-    ...run,
-    hearts: id === 'mend' ? mend(run.hearts) : run.hearts,
-    upgrades: [...run.upgrades, id],
-  };
+  const out = replacedBy(run, id);
+  const upgrades = [...run.upgrades];
+  if (out) upgrades.splice(upgrades.indexOf(out), 1);
+  upgrades.push(id);
+  let hearts = id === 'mend' ? mend(run.hearts) : run.hearts;
+  const cap = run.limits?.maxHearts;
+  if (cap !== undefined) hearts = { max: Math.min(hearts.max, Math.max(cap, run.hearts.max)), current: Math.min(hearts.current, Math.max(cap, run.hearts.max)) };
+  return { ...run, hearts, upgrades, picks: (run.picks ?? run.upgrades.length) + 1 };
 }
 
-/** The offer for the run's next reward room. */
-export const offersFor = (run: RunState): Upgrade[] => dealOffers(run.seed, run.upgrades.length, new Set(run.abilities), run.upgrades);
+/**
+ * The offer for the run's next reward room. Under Endless limits (C115) Mend is left out when it
+ * could not help (hearts full at the ceiling), so every pedestal is a real choice.
+ */
+export function offersFor(run: RunState): Upgrade[] {
+  const deal = dealOffers(run.seed, run.picks ?? run.upgrades.length, new Set(run.abilities), run.upgrades, 6);
+  const mendUseless = run.limits !== undefined && run.hearts.current >= run.hearts.max && run.hearts.max >= run.limits.maxHearts;
+  return deal.filter((u) => !(mendUseless && u.id === 'mend')).slice(0, 3);
+}
 
 /** The numbers the game reads, so no upgrade check is scattered through the scene. */
 export interface UpgradeEffects {

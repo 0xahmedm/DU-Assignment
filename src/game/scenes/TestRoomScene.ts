@@ -5,7 +5,8 @@ import { Controls } from '../input/Controls';
 import { controlsLine } from '../input/controlsText';
 import { Crate } from '../player/Crate';
 import { Player } from '../player/Player';
-import { centredBounds } from '../render/camera';
+import { bandBounds } from '../render/camera';
+import { HUD_BOTTOM, HUD_TOP } from './ChamberScene';
 import { cssHex, PALETTE } from '../render/palette';
 import { buildSolids, findCell } from '../render/solids';
 
@@ -24,7 +25,7 @@ export class TestRoomScene extends Phaser.Scene {
     const width = room.grid[0]!.length * TILE;
     const height = room.grid.length * TILE;
     this.physics.world.setBounds(0, 0, width, height);
-    const cam = centredBounds(width, height, this.scale.width, this.scale.height); // small worlds are centred
+    const cam = bandBounds(width, height, this.scale.width, this.scale.height, HUD_TOP, HUD_BOTTOM); // between the HUD bars (C116)
     this.cameras.main.setBounds(cam.x, cam.y, cam.width, cam.height).setBackgroundColor(PALETTE.background);
 
     const solids = buildSolids(this, room.grid);
@@ -67,9 +68,13 @@ export class TestRoomScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(100);
 
+    // Opaque HUD bars, as in every chamber (C116).
+    const bars = this.add.graphics().setScrollFactor(0).setDepth(99);
+    bars.fillStyle(0x0e0f12, 1).fillRect(0, 0, this.scale.width, HUD_TOP).fillRect(0, this.scale.height - HUD_BOTTOM, this.scale.width, HUD_BOTTOM);
+    bars.fillStyle(PALETTE.terrainEdge, 1).fillRect(0, HUD_TOP - 2, this.scale.width, 2).fillRect(0, this.scale.height - HUD_BOTTOM, this.scale.width, 2);
     // The controls line, as in every chamber (C111); the line at the top stays.
     this.add
-      .text(12, this.scale.height - 8, controlsLine(new Set(['throw', 'bolt', 'dash'] as const)), { fontFamily: 'monospace', fontSize: '12px', color: cssHex(PALETTE.text), backgroundColor: '#000000aa', padding: { x: 6, y: 3 } })
+      .text(12, this.scale.height - 6, controlsLine(new Set(['throw', 'bolt', 'dash'] as const)), { fontFamily: 'monospace', fontSize: '12px', color: cssHex(PALETTE.text) })
       .setOrigin(0, 1)
       .setScrollFactor(0)
       .setDepth(100);

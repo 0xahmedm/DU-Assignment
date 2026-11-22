@@ -10,6 +10,7 @@ export const KEYMAP = {
   bolt: ['F', 'I'], // needs Bolt
   dash: ['SHIFT', 'O'], // needs Dash
   reset: ['R'], // hold ~1 s
+  interact: ['E'], // take an upgrade on a pedestal (C116)
 } as const;
 
 export type Action = keyof typeof KEYMAP;

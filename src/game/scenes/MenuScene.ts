@@ -299,7 +299,7 @@ export class MenuScene extends Phaser.Scene {
     const right = 532;
     const y = col(left, 84, 'THE GOAL', [
       ['Restore the four seals. Each Hard chamber restores one; Eclipse, the last, needs the other three.'],
-      ['An expedition: a combat room, a puzzle chamber and an upgrade pick, up to three times, then the Seal altar. Solved chambers, abilities and seals are kept; hearts and upgrades last one run.'],
+      ['An expedition: two combat rooms, a puzzle chamber and an upgrade pick (stand on a pedestal, press E), up to four times, then the Seal altar. Solved chambers, abilities and seals are kept; hearts and upgrades last one run.'],
       ['Chamber select plays any chamber at any time. Progress is earned in expeditions.'],
     ]);
     col(left, y + 6, 'THE RULES', [
