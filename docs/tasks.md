@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Day 7 · Follow-up call prep notes (`docs/follow-up-prep.md`: three rehearsed live changes, AI bug stories, likely challenges), then the final single-file zip + Pages check. Playtests deferred by the user (kit ready in [`docs/playtests/`](playtests/session-script.md)). Still waiting: (user) the Day 4 brief-change email
+**Next task →** Follow-up call prep notes (`docs/follow-up-prep.md`: three rehearsed live changes, AI bug stories, likely challenges). Still to do, the user's: the 5-minute voiceover video
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -83,7 +83,7 @@ How to use this file:
 - [x] Walker combat (2 hits, respawn after 1.5 s) · Shieldbearer (front immune to melee and Bolt with a clang that pushes you back; 3 hits from behind; notices you behind it, shows "!", turns after 0.6 s) · Bolt hits the first enemy on its line · beams kill enemies (core-tested). Verified in the game (W-M walker, P-M Shieldbearer)
 - [x] Defeat on enemy contact (C55; not while dashing, C60): slow-motion flash, fade, chamber restarts at the entrance; hearts off in level select (C54). Hearts rules (3, lose one, run over at 0, Mend) in core and tested
 - [x] Hearts in expeditions: a defeat with a run costs a heart (HUD ♥♥♡), the room restarts; at 0 the run is over (`run-over` event for the expedition controller; opened alone: message, Enter → menu). Verified in the Arena (3 → 2 → 1 → 0); level select unchanged
-- [ ] **Day 4 brief change:** save the email → impact analysis vs the decision log → plan agreed with user → implement → document (devlog + GDD + decision log)
+- [x] **Day 4 brief change:** no brief-change email was received; at the user's request (2026-11-23) the GDD's section for it was removed for the submission
 - [x] Day 4 routine: AI export (`docs/ai-logs/day4-*`, redacted) · devlog · commit + tag `day4` (the brief change, when it arrives, is logged on top)
 - [x] (user) Approved: Day 4 commit and `day4` tag pushed
 
@@ -112,7 +112,7 @@ How to use this file:
 - [x] (user) Playtest 2 → `docs/playtests/`: remote (2026-11-22), feedback relayed ([`remote-playtests-2026-11-22.md`](playtests/remote-playtests-2026-11-22.md))
 - [x] (user) Playtest 3 → `docs/playtests/`: remote (2026-11-22), feedback relayed
 - [x] Triage the top 3 issues; fix; capture at least one before/after: [`playtest-summary.md`](playtests/playtest-summary.md); four fixed (E interact, crate stutter 39 → 0 flips, HUD bars, Endless cap + swaps, C115/C116) with numbers and screenshots; W-H and W-M on watch
-- [ ] Day 6 routine
+- [x] Day 6 routine: playtest evidence in `docs/playtests/` (remote sessions, stats, triage, before/after screenshots), AI log exported with the Day 7 one (`docs/ai-logs/day6-7-claude*`, emails redacted), devlog
 
 ## Gates: the fourth mechanic (C104, C105; added 2026-11-20 with the extra time)
 - [x] (user) Decided: a fourth mechanic (12 chambers), Gates chosen over Wind and Conveyors; four seals, Eclipse stays final, the Gates Medium grants no ability
@@ -130,11 +130,11 @@ How to use this file:
 - [x] (user, after playing) Exits need the room's enemies defeated, except a walker the puzzle uses (C109; P-M's guard must be defeated); beams cost a heart per hit, knockback kept, 3 hearts per attempt in chamber select (C110); controls written in game + How to play and Controls in the menu (C111). Verified in the game (Corridor, P-M, L-E, a run with Guard); tests for the rules, the census of used enemies and the controls text
 - [x] (user) Menu rework (C108): title screen + Expedition / Chamber select / Options & tools screens, drawn in the game's visual language with menu sounds and fades; screens remembered when returning from a chamber, a run or the test room; the test room got its missing Esc. Verified with keyboard and mouse, fresh and with saved progress; playtest script, README and ASSETS updated
 - [x] Polish pass (feel, SFX, juice): every state change answers (C52): plates click, receivers chime, doors / trapdoors / the exit sound and spark, plate-wired mirrors turn audibly, crates thud with dust; movement (C58): jump and landing sounds, landing dust scaled by the fall; pick-up / put-down / throw sounds and a "refused" sound where the game says no; reward pick chord; **M** mutes (remembered). A quiet ~1/3 s at room start. Found and fixed: a quick pick-up + put-down in place was refused (AI bug #33). Verified in W-E, L-H and W-H by logging every sound by name
-- [ ] Balance pass (needs the playtest numbers)
-- [ ] `GDD.md` final, 2–4 pages (cut idea, playtest changes, Day 4 change, schedule rationale). Final shape done: trimmed and rewritten, schedule rationale with the actual days, cut idea (the procedural Metroidvania world, C5/C12); 3¼ A4 pages at 11 pt (checked by printing to PDF), leaving ¾ page for the two **pending** sections: Day 4 brief change, playtest changes
+- [x] Balance pass (from the playtest numbers): Endless cap and steeper curve (C115); beam hits cost hearts (C110) and exits wait for enemies (C109) were the user's own balance calls; W-H and W-M left on watch by the user
+- [x] `GDD.md` final, 2–4 pages: cut idea, playtest changes (remote playtests, numbers), schedule rationale; the brief-change section removed (none received); about 3½ A4 pages, checked by printing to PDF
 - [x] `ASSETS.md` final (every asset and tool with source and licence, versions from `node_modules`, AI assistance, no media files); README run/test instructions (requirements, dev, tests and what they cover, a single test file, `check` = the CI gate, build / preview / single-file, deploy, URL options)
 - [ ] (user) 5-minute voiceover video
-- [ ] All AI exports collected; one screenshot per day present
+- [x] All AI exports collected (`docs/ai-logs/`: Day 1 Claude + ChatGPT, Days 2–5, Days 6–7; emails redacted); one screenshot per day present (Day 1 design files, Days 2–7 gameplay)
 - [ ] Final Pages deploy + single-file zip (run `npm run build:single` first; the file doesn't rebuild itself)
 - [ ] Follow-up call prep: rehearse 3 live changes, AI bug stories, answers to likely challenges
 

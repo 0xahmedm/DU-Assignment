@@ -201,6 +201,10 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
     - The HUD sits in opaque bars.
     - Endless holds 4 upgrades at most, with swaps, and enemies get +1 hit per level.
   - Before/after screenshots: [`playtest-before-reward-pick.png`](screenshots/playtest-before-reward-pick.png) → [`playtest-after-reward-pick.png`](screenshots/playtest-after-reward-pick.png), [`playtest-before-hud-over-P-M.png`](screenshots/playtest-before-hud-over-P-M.png) → [`playtest-after-hud-bars-P-M.png`](screenshots/playtest-after-hud-bars-P-M.png), [`playtest-after-endless-swap.png`](screenshots/playtest-after-endless-swap.png).
+- **Final delivery:**
+  - **GDD:** final and within 4 pages. The brief-change section was removed at the user's request, since no brief-change email came.
+  - **AI log:** this session exported, emails redacted: [`day6-7-claude.md`](ai-logs/day6-7-claude.md) and its raw zip.
+  - **Builds:** the submission zip is the single-file build plus a README. The GitHub Pages build deploys from `main`.
 
 ### AI bug log (Day 7)
 | # | What the AI got wrong | How it was found | Fix |

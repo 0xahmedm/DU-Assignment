@@ -1133,4 +1133,5 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
   - The Endless swap always drops the oldest upgrade. The pedestal shows "− name" and the box above spells it out.
   - Offers are now seeded by a pick counter, so they keep changing after swaps.
   - Normal and Remix runs keep the old rules (no upgrade cap).
+- 2026-11-23 (final delivery): no Day 4 brief-change email was received. At the user's request, the GDD's brief-change section was removed for the submission. The planned facilitated playtests became remote playtests (three testers, 2026-11-22).
 - 2026-11-17 (Day 5): Docs refreshed and an automated docs check added (`tests/docs.test.ts`, C86). Historical sections that still said "awaiting user" now point to the confirmed decisions; a reading note at the top explains how proposals, decisions and revisions relate.

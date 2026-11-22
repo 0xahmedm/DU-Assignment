@@ -82,9 +82,12 @@ src/core/     engine-free TS, unit-tested (as built):
                         reach (reachability checker incl. Dash and melee-reach hook)
               combat/   melee (swing area, cells hit), enemies (hit rules, notice, contact)
               enemies/  walker (shared patrol), shieldbearer
-              run/      hearts, rooms (RoomDef, tiers, roomToChamber)
-src/game/     Phaser layer: scenes (menu, chamber + rooms, test room), player, enemies,
-              render (chamber view, solids, palette), input, audio (generated SFX)
+              run/      hearts, rooms (RoomDef, tiers, roomToChamber), upgrades (+ Endless limits), progression
+                        (+ save), generator (18-room runs), endless, clearing (exits wait for enemies),
+                        records (Remix, Endless), rng (+ cycles), telemetry
+src/game/     Phaser layer: scenes (menu with sub-screens, chamber + rooms, test room), player, enemies,
+              render (chamber view, solids, palette, camera band, fx), input (keymap, controls text),
+              audio (generated SFX), expedition (run controller incl. Endless), devOptions, telemetry
 src/data/     chambers/W-E.ts … P-H.ts, G-E.ts … G-H.ts, rooms/expedition.ts (start, reward, exit, 5 connectors
               with tiers), rooms/movementTest.ts
 tests/        Vitest: one file per core system + chambers, rooms, reachability, enumerator
@@ -244,9 +247,9 @@ G:\Du\DU Assignment
 │  │  ├─ player/                           metrics, movement, jumpSim, throw, bolt, reach
 │  │  ├─ combat/                           melee, enemies
 │  │  ├─ enemies/                          walker, shieldbearer
-│  │  └─ run/                              hearts, rooms, upgrades (+ seeded rng), progression (+ save), generator, rng, telemetry
+│  │  └─ run/                              hearts, rooms, upgrades (+ Endless limits), progression (+ save), generator, endless, clearing, records, rng, telemetry
 │  ├─ data/                                chambers/*.ts · rooms/expedition.ts · rooms/movementTest.ts
-│  └─ game/                                scenes/ · player/ · enemies/ · render/ · input/ · audio/ · progress.ts (graph + localStorage) · expedition.ts (run controller) · telemetry.ts (recorder + clipboard)
+│  └─ game/                                scenes/ · player/ · enemies/ · render/ · input/ · audio/ · progress.ts (graph + localStorage) · expedition.ts (run controller, Endless) · devOptions.ts · telemetry.ts (recorder + clipboard)
 └─ tests/                                  core/*.test.ts · architecture.test.ts
 ```
 The planned `ports.ts`, `grid/`, `signals/`, `devices/` and `phase/` folders were folded into `chamber/` (one `ChamberLogic` owns signals, doors, phase and mirrors), which kept the core smaller and easier to explain.

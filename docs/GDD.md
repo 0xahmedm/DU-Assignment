@@ -1,6 +1,6 @@
 # Game Design Document: Seal Chambers
 
-> Final draft (Day 7). One section waits on an event still to come: the Day 4 brief change. Decision ids (C…) point to the reasoning in [`design-decision-log.md`](design-decision-log.md). All names are placeholders.
+> Final (submitted). Decision ids (C…) point to the reasoning in [`design-decision-log.md`](design-decision-log.md). All names are placeholders.
 
 ## Core loop
 **On short, freshly assembled expeditions, fight, choose upgrades and solve handcrafted puzzle chambers to restore four seals, keeping every solved chamber and unlocked ability so each new run rearranges the world around harder puzzles that combine what you've mastered.**
@@ -69,9 +69,6 @@ They combine because each one changes the others' rules: crates, enemies and sol
   - Day 6: the playtest kit, clarity fixes (dashed wires, centred small chambers), the Remix timer.
   - Day 7: the feedback and sound polish pass, these documents and, with the time left, a fourth mechanic: Gates and its three chambers, built on the same pipeline (drafted as grids, checked by every tool, approved, then solved in the game).
 - **The payoff:** all nine chambers were playable by Day 4, so the expedition loop on Day 5 only had to arrange finished pieces. Playing each chamber as it was built exposed the Day 1 headroom errors early, and that is why the reachability checker exists.
-
-## Day 4 brief change
-**Pending:** the change, its impact on the decisions above and how it was handled.
 
 ## Playtesting & iteration
 Three new players tested a zip of the game remotely ([summary](playtests/playtest-summary.md)). The built-in stats came from one of them: 103 attempts, with W-H as the slowest puzzle (11:08 first solve, after two abandoned attempts).
