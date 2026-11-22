@@ -1,6 +1,6 @@
 # Tasks: checkpoint list
 
-**Next task →** Follow-up call prep notes (`docs/follow-up-prep.md`: three rehearsed live changes, AI bug stories, likely challenges). Still to do, the user's: the 5-minute voiceover video
+**Next task →** (user) the 5-minute voiceover video, then submit (the Pages link, the repo, `release/seal-chambers.zip`). Everything else on this list is done or a standing watch item
 
 How to use this file:
 - Tick a box only when the task is **verified** (run, tested or checked in the browser), not when the code is merely written.
@@ -135,8 +135,8 @@ How to use this file:
 - [x] `ASSETS.md` final (every asset and tool with source and licence, versions from `node_modules`, AI assistance, no media files); README run/test instructions (requirements, dev, tests and what they cover, a single test file, `check` = the CI gate, build / preview / single-file, deploy, URL options)
 - [ ] (user) 5-minute voiceover video
 - [x] All AI exports collected (`docs/ai-logs/`: Day 1 Claude + ChatGPT, Days 2–5, Days 6–7; emails redacted); one screenshot per day present (Day 1 design files, Days 2–7 gameplay)
-- [ ] Final Pages deploy + single-file zip (run `npm run build:single` first; the file doesn't rebuild itself)
-- [ ] Follow-up call prep: rehearse 3 live changes, AI bug stories, answers to likely challenges
+- [x] Final Pages deploy + single-file zip: the live site serves the latest build (checked 2026-11-23: E interact, Endless, Developer options in the bundle; no dev hooks); submission zip `release/seal-chambers.zip` = index.html + README.txt ([`SUBMISSION-README.txt`](SUBMISSION-README.txt)) + GDD.pdf
+- [x] Follow-up call prep: [`follow-up-prep.md`](follow-up-prep.md): three live changes rehearsed on a clean tree with the tools' real output (grid edit, weaker jump: 13 route tests fail, a door + plate), intended feelings, six AI bug stories, likely challenges, numbers
 
 ## Stretch (only if ahead; C78/C80)
 - [ ] Spitter enemy
