@@ -137,6 +137,7 @@ How to use this file:
 - [x] All AI exports collected (`docs/ai-logs/`: Day 1 Claude + ChatGPT, Days 2–5, Days 6–7; emails redacted); one screenshot per day present (Day 1 design files, Days 2–7 gameplay)
 - [x] Final Pages deploy + single-file zip: the live site serves the latest build (checked 2026-11-23: E interact, Endless, Developer options in the bundle; no dev hooks); submission zip `release/seal-chambers.zip` = index.html + README.txt ([`SUBMISSION-README.txt`](SUBMISSION-README.txt)) + GDD.pdf
 - [x] Ability unlock card (C117, from the user's play): offers were already correct (a Medium's ability counts at once); the unlock is now a card with the key, pedestals name the ability, the opening banner lists abilities; whole-campaign offer test
+- [x] Sharp rendering (C118, from the user): the canvas has the screen's real pixels (render scale 1-3), cameras zoom to match, text drawn at that resolution, a fixed HUD camera; layouts unchanged
 - [x] Follow-up call prep: [`follow-up-prep.md`](follow-up-prep.md): three live changes rehearsed on a clean tree with the tools' real output (grid edit, weaker jump: 13 route tests fail, a door + plate), intended feelings, six AI bug stories, likely challenges, numbers
 
 ## Stretch (only if ahead; C78/C80)

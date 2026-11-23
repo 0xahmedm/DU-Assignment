@@ -7,7 +7,7 @@ Notes for the follow-up call (Point 10 of the plan, C82): how to run the project
 ```bash
 npm install
 npm run dev          # http://localhost:5173 (hot reload: saved edits appear in the game at once)
-npm test             # 343 tests in 28 files, about 40 s
+npm test             # 344 tests in 28 files, about 40 s
 ```
 
 - Useful URLs:
@@ -116,8 +116,8 @@ Each one was rehearsed on 2026-11-23 on a clean tree and then reverted. The resu
 | Combat rooms | 5, each with 3 encounter tiers; plus start, reward and exit rooms |
 | Expedition | up to 18 rooms (4 chambers, 2 combat rooms before each); Remix and Endless after all four seals |
 | Upgrades | 10 (Endless: at most 4 held) |
-| Tests | 343 in 28 files; `npm run check` is the CI gate before every deploy |
-| Decisions | 117 (C1–C117), each with who decided |
+| Tests | 344 in 28 files; `npm run check` is the CI gate before every deploy |
+| Decisions | 118 (C1–C118), each with who decided |
 | AI bug log | 35 entries |
 | Playtests | 3 remote testers; tester 1: 103 attempts, W-H 11:08 first solve; crate stutter 39 → 0 flips |
 | Commits | 50+, tags `day2` … `day7` |

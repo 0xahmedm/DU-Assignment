@@ -34,3 +34,19 @@ export function bandBounds(worldW: number, worldH: number, viewW: number, viewH:
   if (worldH <= band) return { x: x.x, width: x.width, y: -(top + (band - worldH) / 2), height: viewH };
   return { x: x.x, width: x.width, y: -top, height: worldH + top + bottom };
 }
+
+/** The logical view every layout is written in: 1024 x 576 (32 x 18 tiles). */
+export const VIEW = { width: 1024, height: 576 } as const;
+
+/**
+ * Render scale (C118): canvas pixels per logical pixel. The canvas used to be exactly VIEW and the
+ * browser stretched it to fill the screen (about 1.9x on a 1080p display), so text and edges came
+ * out blurry. Now the canvas is VIEW x scale, enough for the screen's real pixels (device pixel
+ * ratio included), and the cameras zoom by the same factor, so layouts don't change. A whole
+ * number keeps pixel edges even; 3 is the cap (a 4K screen), to keep the canvas cheap.
+ */
+export function renderScaleFor(devicePixelRatio: number, screenW: number, screenH: number): number {
+  const fit = Math.min(screenW / VIEW.width, screenH / VIEW.height);
+  const scale = Math.ceil((devicePixelRatio || 1) * (fit || 1) - 0.01);
+  return Math.min(3, Math.max(1, scale));
+}

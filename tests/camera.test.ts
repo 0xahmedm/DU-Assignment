@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bandBounds, centredBounds } from '../src/game/render/camera';
+import { bandBounds, centredBounds, renderScaleFor } from '../src/game/render/camera';
 
 const VIEW = [1024, 576] as const; // 32 x 18 tiles of 32 px
 
@@ -38,5 +38,17 @@ describe('bandBounds (C116): the world between the HUD bars', () => {
     const b = bandBounds(32 * 32, 20 * 32, W, H, TOP, BOTTOM); // 640 tall
     expect(b.y).toBe(-TOP);
     expect(b.y + b.height - H).toBe(640 + BOTTOM - H); // last scroll: world bottom at screen H - BOTTOM
+  });
+});
+
+describe('render scale (C118)', () => {
+  it('matches the screen: 1080p is 2x, a 4K screen is capped at 3, never below 1', () => {
+    expect(renderScaleFor(1, 1920, 1080)).toBe(2);
+    expect(renderScaleFor(1.5, 1280, 720)).toBe(2); // 1080p at 150% Windows scaling
+    expect(renderScaleFor(1, 1024, 576)).toBe(1); // exactly the view
+    expect(renderScaleFor(1.25, 2048, 1152)).toBe(3); // 1440p+ at 125%
+    expect(renderScaleFor(2, 3840, 2160)).toBe(3);
+    expect(renderScaleFor(1, 800, 600)).toBe(1);
+    expect(renderScaleFor(0, 0, 0)).toBe(1); // nothing reported: no scaling
   });
 });

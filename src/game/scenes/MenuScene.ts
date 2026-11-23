@@ -7,6 +7,7 @@ import { CHAMBER_GRID, CHAMBERS } from '../../data/chambers';
 import { CONNECTORS, EXIT_ROOM, REWARD_ROOM, START_ROOM } from '../../data/rooms/expedition';
 import { Sfx } from '../audio/Sfx';
 import { Expedition } from '../expedition';
+import { zoomFlat } from '../render/view';
 import { DevOptions } from '../devOptions';
 import { browserStore, PROGRESS_GRAPH } from '../progress';
 import { copyText, Telemetry } from '../telemetry';
@@ -93,6 +94,7 @@ export class MenuScene extends Phaser.Scene {
     this.selCol = 0;
     this.deco = undefined;
     this.seedText = String(urlSeed ?? Expedition.lastSeed() ?? '');
+    zoomFlat(this); // sharp rendering (C118)
     this.cameras.main.setBackgroundColor(PALETTE.background).fadeIn(160, 21, 22, 26);
     this.drawFloor();
 

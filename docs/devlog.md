@@ -210,6 +210,11 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
   - **Fix:** the room after the Medium opens with a card: the ability, its key, what it does, a flash and a new sound. Play waits for E or Enter. Pedestals name the ability an upgrade belongs to, and the opening banner lists your abilities.
   - **Checked:** the card shows, E closes it, and physics resumes with no key left over (no accidental pick). A new test plays 60 whole campaigns and checks every reward room offers ability upgrades only for abilities the save owns. It also confirms the just-unlocked case happens.
   - Screenshot: [`day7-ability-unlock-card.png`](screenshots/day7-ability-unlock-card.png).
+- **Sharp rendering (C118), from the user: "all the UI feels blurry or pixelated".**
+  - **Cause:** the game drew a fixed 1024 x 576 canvas and the browser stretched it to the window. On this machine (1536 x 864 at 125% scaling) that is a 1.9x stretch of every letter and edge.
+  - **Fix:** the canvas is now 1024 x 576 times 2 here (3 on 4K screens). The cameras zoom to match and text is drawn at that resolution, so every layout keeps its coordinates. Chambers and rooms use two cameras: the world camera follows and shakes, and a HUD camera keeps the bars and text fixed.
+  - **Checked at 2x in the game:** the menu (including mouse clicks), G-H, W-E scrolling with a message and the sound note added mid-play, the reward room with the unlock card, and the test room. Every object is drawn by exactly one camera, and 1x renders as before.
+  - Screenshot at 2x: [`day7-sharp-rendering-G-H-2x.png`](screenshots/day7-sharp-rendering-G-H-2x.png). The unlock card screenshot was retaken at 2x.
 
 ### AI bug log (Day 7)
 | # | What the AI got wrong | How it was found | Fix |

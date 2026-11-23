@@ -95,6 +95,7 @@ npm run build:single # dist-single/index.html: one self-contained file for the z
 - Dev builds only:
   - `?kit=bolt,throw,dash` replaces the chamber's declared kit, to try abilities anywhere.
   - `?upgrades=heavy-swing,guard` gives a room or chamber opened by URL those run upgrades. The ids are in `src/core/run/upgrades.ts`.
+  - `?scale=1|2|3` forces the render scale (normally picked from the screen, C118).
 
 ## Architecture
 Clean architecture with an enforced dependency rule:

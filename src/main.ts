@@ -3,6 +3,8 @@
  * creates the Phaser game and registers scenes. Puzzle rules live in src/core, never here.
  */
 import Phaser from 'phaser';
+import { VIEW } from './game/render/camera';
+import { crispText, RENDER_SCALE } from './game/render/view';
 import type { Ability, ChamberId } from './core/chamber/types';
 import { UPGRADES, type UpgradeId } from './core/run/upgrades';
 import { Sfx } from './game/audio/Sfx';
@@ -39,11 +41,13 @@ const upgradeOverride = import.meta.env.DEV && params.has('upgrades')
 // ?seed=123 fixes the run seed (upgrade offers; the expedition generator later).
 const seed = params.has('seed') ? Number(params.get('seed')) >>> 0 : undefined;
 
+// Sharp rendering (C118): the canvas has the screen's real pixels; scenes zoom their cameras to match.
+crispText();
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
-  width: 1024,
-  height: 576,
+  width: VIEW.width * RENDER_SCALE,
+  height: VIEW.height * RENDER_SCALE,
   backgroundColor: PALETTE.background,
   ...(autotest ? { fps: { forceSetTimeOut: true, target: 60 } } : {}),
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
@@ -69,7 +73,7 @@ window.addEventListener('keydown', (e) => {
   const scene = game.scene.getScenes(true)[0];
   if (!scene) return;
   const note = scene.add
-    .text(scene.scale.width - 12, scene.scale.height - 10, muted ? 'sound off (M)' : 'sound on (M)', { fontFamily: 'monospace', fontSize: '13px', color: cssHex(PALETTE.text) })
+    .text(VIEW.width - 12, VIEW.height - 10, muted ? 'sound off (M)' : 'sound on (M)', { fontFamily: 'monospace', fontSize: '13px', color: cssHex(PALETTE.text) })
     .setOrigin(1, 1)
     .setScrollFactor(0)
     .setDepth(300);

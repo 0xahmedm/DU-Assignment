@@ -43,7 +43,8 @@ import { PatrolEnemy, SHIELDBEARER_KIND, WALKER_KIND } from '../enemies/PatrolEn
 import { Crate } from '../player/Crate';
 import { Player } from '../player/Player';
 import { ChamberView } from '../render/ChamberView';
-import { bandBounds } from '../render/camera';
+import { bandBounds, VIEW } from '../render/camera';
+import { splitCameras } from '../render/view';
 import { afterimage, dust, ring, sparks } from '../render/fx';
 import { cssHex, gateColor, PALETTE } from '../render/palette';
 
@@ -171,6 +172,7 @@ export class ChamberScene extends Phaser.Scene {
   }
 
   create(): void {
+    splitCameras(this); // sharp rendering: a zoomed world camera + a fixed HUD camera (C118)
     const room = this.play.room;
     const def: ChamberDef | undefined = room ? roomToChamber(room.def) : CHAMBERS[this.chamberId];
     if (!def) {
@@ -197,7 +199,7 @@ export class ChamberScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, width, height);
     // The world sits in the band between the HUD bars (C116): centred when it is smaller, and able to
     // scroll fully into view when it is larger, so the bars never hide part of it.
-    const cam = bandBounds(width, height, this.scale.width, this.scale.height, HUD_TOP, HUD_BOTTOM);
+    const cam = bandBounds(width, height, VIEW.width, VIEW.height, HUD_TOP, HUD_BOTTOM);
     this.cameras.main.setBounds(cam.x, cam.y, cam.width, cam.height).setBackgroundColor(PALETTE.background);
 
     // Collision: one static body per cell that is, or can become, solid (terrain, solid devices,
@@ -273,7 +275,7 @@ export class ChamberScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-ESC', () => this.scene.start('Menu'));
 
     this.info = this.add
-      .text(this.scale.width / 2, HUD_TOP + 8, '', { fontFamily: 'monospace', fontSize: '15px', color: cssHex(PALETTE.text), align: 'center', backgroundColor: '#000000aa', padding: { x: 10, y: 6 } })
+      .text(VIEW.width / 2, HUD_TOP + 8, '', { fontFamily: 'monospace', fontSize: '15px', color: cssHex(PALETTE.text), align: 'center', backgroundColor: '#000000aa', padding: { x: 10, y: 6 } })
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(100)
@@ -289,8 +291,8 @@ export class ChamberScene extends Phaser.Scene {
     this.refreshHud();
     // Opaque HUD bars (C116, a playtest fix: the text used to sit on top of the chamber).
     const bars = this.add.graphics().setScrollFactor(0).setDepth(99);
-    bars.fillStyle(0x0e0f12, 1).fillRect(0, 0, this.scale.width, HUD_TOP).fillRect(0, this.scale.height - HUD_BOTTOM, this.scale.width, HUD_BOTTOM);
-    bars.fillStyle(PALETTE.terrainEdge, 1).fillRect(0, HUD_TOP - 2, this.scale.width, 2).fillRect(0, this.scale.height - HUD_BOTTOM, this.scale.width, 2);
+    bars.fillStyle(0x0e0f12, 1).fillRect(0, 0, VIEW.width, HUD_TOP).fillRect(0, VIEW.height - HUD_BOTTOM, VIEW.width, HUD_BOTTOM);
+    bars.fillStyle(PALETTE.terrainEdge, 1).fillRect(0, HUD_TOP - 2, VIEW.width, 2).fillRect(0, VIEW.height - HUD_BOTTOM, VIEW.width, 2);
     // The interact prompt (C116): a key cap over the player when something underfoot can be used.
     this.prompt = this.add
       .text(0, 0, '', { fontFamily: 'monospace', fontSize: '13px', color: '#15161a', backgroundColor: '#ffd166', padding: { x: 6, y: 3 }, fontStyle: 'bold' })
@@ -299,13 +301,13 @@ export class ChamberScene extends Phaser.Scene {
       .setVisible(false);
     // The controls, always on screen (C111): base controls plus the abilities this room allows.
     this.add
-      .text(12, this.scale.height - 6, controlsLine(kit, Boolean(room?.def.pedestals)), { fontFamily: 'monospace', fontSize: '12px', color: cssHex(PALETTE.text) })
+      .text(12, VIEW.height - 6, controlsLine(kit, Boolean(room?.def.pedestals)), { fontFamily: 'monospace', fontSize: '12px', color: cssHex(PALETTE.text) })
       .setOrigin(0, 1)
       .setScrollFactor(0)
       .setDepth(100);
     // What the exit still waits for (C109): enemies to defeat.
     this.enemiesNote = this.add
-      .text(this.scale.width - 12, 10, '', { fontFamily: 'monospace', fontSize: '13px', color: cssHex(PALETTE.enemy) })
+      .text(VIEW.width - 12, 10, '', { fontFamily: 'monospace', fontSize: '13px', color: cssHex(PALETTE.enemy) })
       .setOrigin(1, 0)
       .setScrollFactor(0)
       .setDepth(100);
@@ -318,7 +320,7 @@ export class ChamberScene extends Phaser.Scene {
     if (unlocked) this.showUnlock(unlocked, banner ?? '');
     else if (banner) {
       const t = this.add
-        .text(this.scale.width / 2, 96, banner, { fontFamily: 'monospace', fontSize: '18px', color: cssHex(PALETTE.lightCore), align: 'center', backgroundColor: '#000000cc', padding: { x: 14, y: 8 } })
+        .text(VIEW.width / 2, 96, banner, { fontFamily: 'monospace', fontSize: '18px', color: cssHex(PALETTE.lightCore), align: 'center', backgroundColor: '#000000cc', padding: { x: 14, y: 8 } })
         .setOrigin(0.5, 0)
         .setScrollFactor(0)
         .setDepth(150);
@@ -778,8 +780,8 @@ export class ChamberScene extends Phaser.Scene {
   private showUnlock(ability: Ability, solvedLine: string): void {
     const info = ABILITY_INFO[ability];
     const accent = ABILITY_ACCENT[ability];
-    const w = this.scale.width;
-    const h = this.scale.height;
+    const w = VIEW.width;
+    const h = VIEW.height;
     this.physics.world.pause();
     const style = (size: number, color: number, bold = false) => ({ fontFamily: 'monospace', fontSize: `${size}px`, color: cssHex(color), fontStyle: bold ? 'bold' : 'normal', align: 'center' });
     const shade = this.add.rectangle(w / 2, h / 2, w, h, 0x000000, 0.6).setScrollFactor(0).setDepth(300).setAlpha(0);
@@ -1054,7 +1056,7 @@ export class ChamberScene extends Phaser.Scene {
     if (this.resetHeldMs <= 0) return;
     const t = Math.min(1, this.resetHeldMs / RESET_HOLD_MS);
     g.lineStyle(4, PALETTE.text, 0.9).beginPath();
-    g.arc(this.scale.width - 30, 30, 14, -Math.PI / 2, -Math.PI / 2 + t * Math.PI * 2).strokePath();
+    g.arc(VIEW.width - 30, 30, 14, -Math.PI / 2, -Math.PI / 2 + t * Math.PI * 2).strokePath();
     if (t >= 1) {
       Telemetry.reset();
       this.scene.restart(this.play);
@@ -1101,7 +1103,7 @@ export class ChamberScene extends Phaser.Scene {
 
   private showMessage(text: string): void {
     this.add
-      .text(this.scale.width / 2, this.scale.height / 2, text, {
+      .text(VIEW.width / 2, VIEW.height / 2, text, {
         fontFamily: 'monospace',
         fontSize: '18px',
         color: cssHex(PALETTE.text),
