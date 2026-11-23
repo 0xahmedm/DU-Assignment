@@ -1139,5 +1139,5 @@ HTML5 with a suitable JS/TS framework; simple vector/geometric art or free/AI-ge
   - The card shows only on a first solve of a Medium (one per ability, ever). Its colour is that Medium's mechanic: amber Throw, cyan Bolt, red Dash.
   - It waits 0.7 s before E or Enter can close it, so a key still held from the chamber can't skip it. The key that closes it doesn't also act in the room.
   - The run's physics, its clock and the Remix timer are paused while it shows. Esc still opens the menu.
-  - The new ability's upgrade can still be offered in that same reward room; the card has just announced the ability, and the pedestal says which ability it upgrades.
+  - The new ability's upgrade can still be offered in that same reward room; the card has just announced the ability, and the pedestal says which ability it upgrades. **Confirmed by the user (2026-11-23): keep it.**
 - 2026-11-17 (Day 5): Docs refreshed and an automated docs check added (`tests/docs.test.ts`, C86). Historical sections that still said "awaiting user" now point to the confirmed decisions; a reading note at the top explains how proposals, decisions and revisions relate.
