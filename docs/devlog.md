@@ -204,6 +204,7 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
 - **Final delivery:**
   - **GDD:** final and within 4 pages. The brief-change section was removed at the user's request, since no brief-change email came.
   - **AI log:** this session exported, emails redacted: [`day6-7-claude.md`](ai-logs/day6-7-claude.md) and its raw zip.
+  - **AI log, final:** re-exported after the last fixes (C117–C119), emails redacted and checked (none left in either file). The readable log now keeps messages the user pasted in, and leaves out the automatic summaries written when the context ran out.
   - **Builds:** the submission zip is the single-file build plus a README. The GitHub Pages build deploys from `main`.
 - **Ability unlock card (C117), from the user's play.** The report was "an upgrade for an ability that is not unlocked yet" and "nothing says I unlocked it".
   - **Checked in the game first:** the offers were right. After a seeded run solved Borrowed Weight, the run held `abilities: ["throw"]` in the next reward room, so Throw Sight could be dealt there. The only sign was a banner line that faded in 3 s.
