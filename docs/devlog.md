@@ -215,6 +215,10 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
   - **Fix:** the canvas is now 1024 x 576 times 2 here (3 on 4K screens). The cameras zoom to match and text is drawn at that resolution, so every layout keeps its coordinates. Chambers and rooms use two cameras: the world camera follows and shakes, and a HUD camera keeps the bars and text fixed.
   - **Checked at 2x in the game:** the menu (including mouse clicks), G-H, W-E scrolling with a message and the sound note added mid-play, the reward room with the unlock card, and the test room. Every object is drawn by exactly one camera, and 1x renders as before.
   - Screenshot at 2x: [`day7-sharp-rendering-G-H-2x.png`](screenshots/day7-sharp-rendering-G-H-2x.png). The unlock card screenshot was retaken at 2x.
+- **Two fixes from the user's play (C119):**
+  - **Unlock card over the upgrade names:** measured in the reward room, the card ended at y 419 and the names began at 413. It now spans y 64–326. A run banner still on screen also fades out once a pedestal's description opens (checked: a "Seal 1 restored" banner was gone the moment the player stood on a pedestal).
+  - **Remix and Endless were invisible before completion:** the Expedition screen now shows both under "New expedition", dimmed with a lock and "unlocks with all 4 seals". How to play mentions them. Checked with developer options off and on (Replay seed still fits).
+  - Screenshots: [`day7-ability-unlock-card.png`](screenshots/day7-ability-unlock-card.png) (retaken), [`day7-menu-expedition-locked-modes.png`](screenshots/day7-menu-expedition-locked-modes.png).
 
 ### AI bug log (Day 7)
 | # | What the AI got wrong | How it was found | Fix |

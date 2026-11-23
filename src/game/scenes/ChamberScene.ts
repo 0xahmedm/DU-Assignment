@@ -51,6 +51,8 @@ import { cssHex, gateColor, PALETTE } from '../render/palette';
 const RESET_HOLD_MS = 1000; // hold R this long to reset (C51)
 /** The unlock card's colour: the mechanic of the Medium that grants the ability (C117). */
 const ABILITY_ACCENT: Record<Ability, number> = { throw: PALETTE.weight, bolt: PALETTE.light, dash: PALETTE.phaseRed };
+/** The unlock card's height, px. */
+const CARD_H = 262;
 
 /**
  * What to play: a puzzle chamber by id, or an expedition room with its encounter tier (C101).
@@ -145,6 +147,8 @@ export class ChamberScene extends Phaser.Scene {
   private enemySpawnRows: number[] = [];
   /** "[E] take …" over the player on a reward pedestal (C116). */
   private prompt: Phaser.GameObjects.Text | undefined;
+  /** The run controller's one-off banner while it shows; it gives way to a pedestal's description (C119). */
+  private banner: Phaser.GameObjects.Text | undefined;
 
   constructor() {
     super('Chamber');
@@ -152,6 +156,7 @@ export class ChamberScene extends Phaser.Scene {
 
   init(data: PlayData): void {
     this.play = data.room ? data : { ...data, id: data.id ?? this.chamberId };
+    this.banner = undefined;
     this.dashHit = new Set();
     this.insight = { targets: [] };
     this.hud = undefined;
@@ -324,6 +329,7 @@ export class ChamberScene extends Phaser.Scene {
         .setOrigin(0.5, 0)
         .setScrollFactor(0)
         .setDepth(150);
+      this.banner = t;
       this.tweens.add({ targets: t, alpha: 0, delay: 2600, duration: 600, onComplete: () => t.destroy() });
     }
     if (this.fx.insight) this.insightG = this.add.graphics().setDepth(7);
@@ -772,6 +778,15 @@ export class ChamberScene extends Phaser.Scene {
     return `${choice.name}\n${choice.description}${needs ? `\nUpgrades your ${ABILITY_INFO[needs].name} ability` : ''}`;
   }
 
+  /** Fades the run controller's banner out now (it would overlap the pedestal description). */
+  private dismissBanner(): void {
+    const b = this.banner;
+    if (!b?.active) return;
+    this.banner = undefined;
+    this.tweens.killTweensOf(b);
+    this.tweens.add({ targets: b, alpha: 0, duration: 120, onComplete: () => b.destroy() });
+  }
+
   /**
    * The unlock card (C117, a playtest fix: a new ability used to be one line of a banner that
    * faded). Shown at the start of the room after the Medium that granted it: the ability, its
@@ -786,7 +801,7 @@ export class ChamberScene extends Phaser.Scene {
     const style = (size: number, color: number, bold = false) => ({ fontFamily: 'monospace', fontSize: `${size}px`, color: cssHex(color), fontStyle: bold ? 'bold' : 'normal', align: 'center' });
     const shade = this.add.rectangle(w / 2, h / 2, w, h, 0x000000, 0.6).setScrollFactor(0).setDepth(300).setAlpha(0);
     const parts = [
-      this.add.rectangle(0, 0, 560, 262, PALETTE.background).setStrokeStyle(3, accent),
+      this.add.rectangle(0, 0, 560, CARD_H, PALETTE.background).setStrokeStyle(3, accent),
       this.add.text(0, -104, solvedLine, style(13, PALETTE.dim)).setOrigin(0.5),
       this.add.text(0, -76, 'NEW ABILITY', style(14, accent, true)).setOrigin(0.5),
       this.add.text(0, -40, info.name.toUpperCase(), style(38, accent, true)).setOrigin(0.5),
@@ -798,7 +813,8 @@ export class ChamberScene extends Phaser.Scene {
     ];
     const go = this.add.text(0, 110, 'E / Enter: continue', style(13, PALETTE.text, true)).setOrigin(0.5).setAlpha(0);
     for (const p of [...parts, go]) p.setScrollFactor(0);
-    const card = this.add.container(w / 2, h / 2, [...parts, go]).setScrollFactor(0).setDepth(301).setScale(0.6).setAlpha(0);
+    // High in the band, clear of the reward room's pedestals and their names (C119: it used to cover them).
+    const card = this.add.container(w / 2, HUD_TOP + 16 + CARD_H / 2, [...parts, go]).setScrollFactor(0).setDepth(301).setScale(0.6).setAlpha(0);
     this.tweens.add({ targets: shade, alpha: 1, duration: 180 });
     this.tweens.add({ targets: card, scale: 1, alpha: 1, duration: 320, ease: 'Back.easeOut' });
     this.cameras.main.flash(220, 255, 255, 255, false);
@@ -860,6 +876,8 @@ export class ChamberScene extends Phaser.Scene {
       const choice = this.offers[i];
       const out = choice && this.play.run && UPGRADE_IDS.has(choice.id) ? replacedBy(this.play.run, choice.id as UpgradeId) : undefined;
       this.info.setText(choice ? `${this.choiceText(choice)}${out ? `\nReplaces ${upgradeById(out).name} (you hold 4 at most)` : ''}` : '').setVisible(Boolean(choice));
+      // One message at a time (C119): a banner still showing ("Seal 1 restored") gives way to the description.
+      if (choice) this.dismissBanner();
       // The pedestal underfoot hides its label: the key cap and the box above say it all.
       this.pedestals.forEach((p, j) => p.label.setAlpha(j === i ? 0 : 1));
       // The key cap over the player, so the way to take it is never missed (playtest fix, C116).

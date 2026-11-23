@@ -186,15 +186,19 @@ export class MenuScene extends Phaser.Scene {
       // seed picks four of the open ones, easiest first.
       const open = frontier(PROGRESS_GRAPH, progress);
       const sub = open.length <= 4 ? `Deals: ${open.map((id) => CHAMBERS[id]?.name ?? id).join(' · ')}` : `Deals four of: ${open.join(' · ')}`;
-      this.rows.push([this.button(CX, 150, 460, 70, 'New expedition', { sub, size: 22, accent: PALETTE.lightCore, onActivate: () => this.startRun(newSeed()) })]);
+      this.rows.push([this.button(CX, 140, 460, 64, 'New expedition', { sub, size: 22, accent: PALETTE.lightCore, onActivate: () => this.startRun(newSeed()) })]);
+      // The modes still to come, shown locked where their buttons will be (C119), so a new player knows they exist.
+      this.lockedMode(CX - 117, 202, 'Remix · timed runs');
+      this.lockedMode(CX + 117, 202, 'Endless · score run');
     }
 
     // Replay seed: testers only (developer options, C114).
-    const replay = DevOptions.on ? this.button(CX, 238, 460, 44, '', { size: 16, onActivate: () => this.replaySeed() }) : undefined;
+    const replayY = complete ? 238 : 260;
+    const replay = DevOptions.on ? this.button(CX, replayY, 460, 44, '', { size: 16, onActivate: () => this.replaySeed() }) : undefined;
     if (replay) this.rows.push([replay]);
     const refreshReplay = () => replay?.label.setText(`Replay seed  ${this.seedText || '(type a number)'}`);
     refreshReplay();
-    if (replay) this.add.text(CX, 270, 'developer option · digits: type a seed    Backspace: delete', text(11, PALETTE.dim)).setOrigin(0.5);
+    if (replay) this.add.text(CX, replayY + 32, 'developer option · digits: type a seed    Backspace: delete', text(11, PALETTE.dim)).setOrigin(0.5);
     // Typing a seed (C72): the first digit replaces the remembered seed, the next ones append.
     let typing = false;
     if (replay) this.input.keyboard!.on('keydown', (e: KeyboardEvent) => {
@@ -300,7 +304,7 @@ export class MenuScene extends Phaser.Scene {
     const left = 92;
     const right = 532;
     const y = col(left, 84, 'THE GOAL', [
-      ['Restore the four seals. Each Hard chamber restores one; Eclipse, the last, needs the other three.'],
+      ['Restore the four seals. Each Hard chamber restores one; Eclipse, the last, needs the other three. Then two new modes open: Remix (timed runs) and Endless (how far can you get?).'],
       ['An expedition: two combat rooms, a puzzle chamber and an upgrade pick (stand on a pedestal, press E), up to four times, then the Seal altar. Solved chambers, abilities and seals are kept; hearts and upgrades last one run.'],
       ['Chamber select plays any chamber at any time. Progress is earned in expeditions.'],
     ]);
@@ -436,6 +440,18 @@ export class MenuScene extends Phaser.Scene {
     back.on('pointerover', () => back.setColor(cssHex(PALETTE.text)));
     back.on('pointerout', () => back.setColor(cssHex(PALETTE.dim)));
     back.on('pointerdown', () => this.goBack());
+  }
+
+  /** A mode that opens after completion (C119): dimmed, with a lock and when it unlocks. Not selectable. */
+  private lockedMode(x: number, y: number, label: string): void {
+    const w = 226;
+    this.add.rectangle(x, y, w, 42, PANEL, 0.5).setStrokeStyle(1, PALETTE.terrainEdge);
+    const lx = x - w / 2 + 20;
+    const g = this.add.graphics();
+    g.lineStyle(2, PALETTE.dim, 1).beginPath().arc(lx, y - 3, 5, Math.PI, 0, false).strokePath();
+    g.fillStyle(PALETTE.dim, 1).fillRect(lx - 7, y - 3, 14, 10);
+    this.add.text(x + 12, y - 8, label, text(13, PALETTE.dim, true)).setOrigin(0.5);
+    this.add.text(x + 12, y + 10, 'unlocks with all 4 seals', text(11, PALETTE.dim)).setOrigin(0.5);
   }
 
   private hint(s: string): void {
