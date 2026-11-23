@@ -7,7 +7,7 @@ import { ChamberLogic, type HitResult } from '../../core/chamber/logic';
 import { beamContact, segmentLine, traceBeams, type BeamTrace, type BeamWorld } from '../../core/light/beams';
 import { GateMap, passThrough } from '../../core/gates/gates';
 import { nearestFreeMirror, nearestSource, targetsOf, withMirrorFlipped } from '../../core/light/insight';
-import { BOLT, boltEnemyLanes, boltStart, enemiesOnLanes, traceBolt } from '../../core/player/bolt';
+import { BOLT, boltEnemyLanes, boltStart, cellsReached, enemiesOnLanes, lanesWindow, traceBolt } from '../../core/player/bolt';
 import { parseChamber } from '../../core/chamber/parser';
 import type { Ability, ChamberDef, ChamberId, ChamberModel } from '../../core/chamber/types';
 import { roomToChamber, type RewardChoice, type RoomDef, type Tier } from '../../core/run/rooms';
@@ -28,9 +28,11 @@ import { loseHeart, newHearts, type Hearts } from '../../core/run/hearts';
 import { replacedBy } from '../../core/run/upgrades';
 import { enemiesLeft, enemiesRespawn } from '../../core/run/clearing';
 import { controlsLine, keysOf } from '../input/controlsText';
-import { ABILITY_INFO } from '../../core/player/abilities';
+import { ABILITY_INFO, chamberKit } from '../../core/player/abilities';
 import { DevOptions } from '../devOptions';
 import { Telemetry } from '../telemetry';
+import { browserStore, PROGRESS_GRAPH } from '../progress';
+import { abilitiesOf, loadProgress } from '../../core/run/progression';
 import { formatTime } from '../../core/run/telemetry';
 import type { Device } from '../../core/chamber/types';
 import { validateChamber } from '../../core/chamber/validator';
@@ -226,7 +228,10 @@ export class ChamberScene extends Phaser.Scene {
     this.controls = new Controls(this);
     const [sr, sc] = this.model.start;
     const kitOverride = this.registry.get('kitOverride') as readonly Ability[] | undefined; // dev only (main.ts)
-    const kit = new Set(kitOverride ?? room?.kit ?? def.kit);
+    // Every owned ability works everywhere (C121): a chamber adds its declared kit to what the run
+    // owns (in chamber select, what the save owns).
+    const owned = this.play.run?.abilities ?? abilitiesOf(PROGRESS_GRAPH, loadProgress(PROGRESS_GRAPH, browserStore()));
+    const kit = new Set(kitOverride ?? room?.kit ?? chamberKit(def.kit, owned));
     // A room opened alone (URL) gets a fresh run, so its pedestals deal real offers (C64). The
     // dev-only ?upgrades= also gives a URL-opened chamber a run, to try Insight / Throw Sight.
     const devUpgrades = this.registry.get('upgradeOverride') as UpgradeId[] | undefined; // dev only (main.ts)
@@ -304,7 +309,7 @@ export class ChamberScene extends Phaser.Scene {
       .setOrigin(0.5, 1)
       .setDepth(60)
       .setVisible(false);
-    // The controls, always on screen (C111): base controls plus the abilities this room allows.
+    // The controls, always on screen (C111): base controls plus the abilities usable here (C121).
     this.add
       .text(12, VIEW.height - 6, controlsLine(kit, Boolean(room?.def.pedestals)), { fontFamily: 'monospace', fontSize: '12px', color: cssHex(PALETTE.text) })
       .setOrigin(0, 1)
@@ -591,66 +596,88 @@ export class ChamberScene extends Phaser.Scene {
     });
     // Enemies (C103): a forward Bolt hits an enemy in front of any part of the body (one lane per
     // body row, each stopped by walls, never past what stops the Bolt); an up-Bolt only its line.
-    // The nearest enemy takes the Bolt and stops it; with Piercing Bolt (C67) it passes through
-    // every enemy on its lanes, hitting each, and goes on to whatever it would have hit.
     const isSolid = (r: number, c: number) => this.logic.isSolid(r, c);
     const lanes = dir === 'up' ? [{ row: start.cell[0], cells: path.cells }] : boltEnemyLanes(body, facing, isSolid, path.cells.length);
-    const found = enemiesOnLanes(lanes, (r, c) => {
+    const liveAt = (r: number, c: number) => {
       const cell = { left: c * TILE, right: (c + 1) * TILE, top: r * TILE, bottom: (r + 1) * TILE };
       return this.enemies.filter((w) => w.alive && overlap(cell, w.bounds()));
-    });
-    const first = this.fx.piercingBolt ? undefined : found[0];
-    const target = first?.enemy;
-    const pierced = this.fx.piercingBolt ? found.map((f) => f.enemy) : [];
-    if (first) path.hit = undefined;
+    };
     Sfx.bolt();
     const [dr, dc] = start.step;
-    // A Bolt at an enemy flies level along that enemy's lane (a walker: the player's lower row).
-    const row = dir === 'forward' && first ? first.cell[0] : start.cell[0];
+    // The dart flies level with the nearest enemy on its lanes when fired (a walker: the player's
+    // lower row), else along the upper body. That only places the dart; what it hits is decided
+    // in flight (C120).
+    const aimed = enemiesOnLanes(lanes, liveAt)[0];
+    const row = dir === 'forward' && aimed ? aimed.cell[0] : start.cell[0];
     const from =
       dir === 'up'
         ? { x: (body.left + body.right) / 2, y: body.top }
         : { x: facing === 1 ? body.right : body.left, y: row * TILE + TILE / 2 };
-    const last = first?.cell ?? path.cells.at(-1) ?? start.cell;
-    // End at the target's centre, or at the face of whatever stopped it.
+    const last = path.cells.at(-1) ?? start.cell;
+    // Its line ends at the puzzle target's centre, or at the face of whatever stopped it.
     const to = {
-      x: last[1] * TILE + TILE / 2 + (path.hit || target ? 0 : (dc * TILE) / 2),
-      y: last[0] * TILE + TILE / 2 + (path.hit || target ? 0 : (dr * TILE) / 2),
+      x: last[1] * TILE + TILE / 2 + (path.hit ? 0 : (dc * TILE) / 2),
+      y: dir === 'up' ? last[0] * TILE + TILE / 2 + (path.hit ? 0 : (dr * TILE) / 2) : from.y,
     };
     const dist = Math.hypot(to.x - from.x, to.y - from.y);
-    // Piercing Bolt: each enemy on the line is hit as the dart passes it.
-    for (const w of pierced) {
-      const at = Math.hypot(w.rect.x - from.x, dir === 'up' ? w.rect.y - from.y : 0);
-      this.time.delayedCall((at / BOLT.speed) * 1000, () => {
-        if (w.alive) this.onEnemyHit(w, w.hit('bolt', from.x, { knockbackScale: this.fx.knockbackScale }));
-      });
-    }
     const dart = this.add
       .rectangle(from.x, from.y, dir === 'up' ? 4 : 14, dir === 'up' ? 14 : 4, PALETTE.lightCore)
       .setStrokeStyle(2, PALETTE.light)
       .setDepth(12);
-    this.tweens.add({
+    // In flight (C120, a fix: the target used to be picked when fired, so a second quick Bolt flew
+    // to an enemy already defeated and stopped on nothing). Every frame the dart checks the cells
+    // its front swept since the last frame for a live enemy: the nearest takes it and stops it;
+    // with Piercing Bolt (C67) it hits each one once and flies on to the end of its line.
+    const struck = new Set<PatrolEnemy>();
+    let swept = 0;
+    let done = false;
+    const sweep = (): boolean => {
+      const front = dir === 'up' ? dart.y - 7 : dart.x + facing * 7;
+      const reached = Math.min(cellsReached(dir, facing, start.cell, front), path.cells.length + 1);
+      const found = enemiesOnLanes(lanesWindow(lanes, swept - 1, reached), liveAt).filter((f) => !struck.has(f.enemy));
+      swept = Math.max(swept, reached);
+      for (const f of found) {
+        struck.add(f.enemy);
+        this.onEnemyHit(f.enemy, f.enemy.hit('bolt', from.x, { knockbackScale: this.fx.knockbackScale }), false);
+        if (!this.fx.piercingBolt) return true;
+      }
+      return false;
+    };
+    const finish = (stoppedAt?: { x: number; y: number }) => {
+      if (done) return;
+      done = true;
+      tween.stop();
+      dart.destroy();
+      if (stoppedAt) return;
+      if (path.hit && this.logic) this.onHits(this.logic.resolveHits([path.hit], this.lastOccupied));
+      else this.view.puff(to.x, to.y, PALETTE.light);
+    };
+    const tween = this.tweens.add({
       targets: dart,
       x: to.x,
       y: to.y,
       duration: Math.max(30, (dist / BOLT.speed) * 1000),
+      onUpdate: () => {
+        if (!done && sweep()) finish({ x: dart.x, y: dart.y });
+      },
       onComplete: () => {
-        dart.destroy();
-        if (target) {
-          if (target.alive) this.onEnemyHit(target, target.hit('bolt', from.x, { knockbackScale: this.fx.knockbackScale }));
-        } else if (path.hit && this.logic) this.onHits(this.logic.resolveHits([path.hit], this.lastOccupied));
-        else this.view.puff(to.x, to.y, PALETTE.light);
+        if (done) return;
+        if (sweep()) finish({ x: dart.x, y: dart.y });
+        else finish();
       },
     });
   }
 
-  /** Feel of a hit on an enemy (C62): hit-stop, shake, sound; a clang pushes the player back. */
-  private onEnemyHit(enemy: PatrolEnemy, outcome: HitOutcome): void {
+  /**
+   * Feel of a hit on an enemy (C62): hit-stop, shake, sound. A clang on a shield pushes the player
+   * back, but only from up close: a Bolt blocked at range doesn't (C120, a fix: it used to).
+   */
+  private onEnemyHit(enemy: PatrolEnemy, outcome: HitOutcome, close = true): void {
     if (outcome === 'blocked') {
       Sfx.clang();
       this.cameras.main.shake(70, 0.003);
       // Shield Breaker: the stagger replaces the push back, so you can follow up.
-      if (!enemy.staggered) this.player.knockback('x', enemy.rect.x);
+      if (close && !enemy.staggered) this.player.knockback('x', enemy.rect.x);
       return;
     }
     if (outcome === 'killed') Sfx.kill();
@@ -809,7 +836,7 @@ export class ChamberScene extends Phaser.Scene {
         .text(0, 8, keysOf(ability), { ...style(15, 0x15161a, true), backgroundColor: '#ffd166', padding: { x: 8, y: 3 } })
         .setOrigin(0.5),
       this.add.text(0, 46, info.what, { ...style(14, PALETTE.text), wordWrap: { width: 500 } }).setOrigin(0.5),
-      this.add.text(0, 78, 'Yours for good: it works in combat rooms, and in chambers that allow it.', style(12, PALETTE.dim)).setOrigin(0.5),
+      this.add.text(0, 78, 'Yours for good: it works in every room and chamber from now on.', style(12, PALETTE.dim)).setOrigin(0.5),
     ];
     const go = this.add.text(0, 110, 'E / Enter: continue', style(13, PALETTE.text, true)).setOrigin(0.5).setAlpha(0);
     for (const p of [...parts, go]) p.setScrollFactor(0);

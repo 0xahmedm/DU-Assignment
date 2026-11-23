@@ -114,3 +114,19 @@ export function enemiesOnLanes<E>(lanes: readonly BoltLane[], at: (r: number, c:
   }
   return found;
 }
+
+/**
+ * A Bolt in flight (C120): how many cells of its line the dart's front has reached. `front` is
+ * the front edge in px (x for a forward Bolt, y for an up-Bolt); `start` is the Bolt's first cell
+ * (where every lane begins). The scene checks the cells reached since the last frame each frame,
+ * so a Bolt hits whatever is there when it arrives, not what was there when it was fired.
+ */
+export function cellsReached(dir: BoltDir, facing: 1 | -1, start: Cell, front: number): number {
+  if (dir === 'up') return Math.max(0, start[0] - cellOf(front)) + 1;
+  return Math.max(0, (cellOf(front) - start[1]) * facing) + 1;
+}
+
+/** The part of each lane from cell `from` (inclusive) to `to` (exclusive): what a dart swept in one frame. */
+export function lanesWindow(lanes: readonly BoltLane[], from: number, to: number): BoltLane[] {
+  return lanes.map((l) => ({ row: l.row, cells: l.cells.slice(Math.max(0, from), Math.max(0, to)) }));
+}

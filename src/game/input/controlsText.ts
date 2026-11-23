@@ -16,7 +16,7 @@ const moveKeys = (): string => KEYMAP.left.map((k, i) => `${keyName(k)} ${keyNam
 export interface ControlRow {
   action: string;
   keys: string;
-  /** Only once the ability is unlocked (and only in chambers whose kit allows it). */
+  /** Only once the ability is unlocked (then everywhere, C121). */
   ability?: Ability;
 }
 
@@ -36,7 +36,7 @@ export const CONTROL_ROWS: readonly ControlRow[] = [
 ];
 
 /**
- * The one-line reminder shown in game: the base controls plus the abilities this room allows, and
+ * The one-line reminder shown in game: the base controls plus the abilities usable here, and
  * the interact key where there is something to interact with (a reward room).
  */
 export function controlsLine(kit: ReadonlySet<Ability>, interact = false): string {

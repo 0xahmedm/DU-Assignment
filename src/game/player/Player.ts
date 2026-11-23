@@ -58,7 +58,7 @@ export class Player {
     x: number,
     y: number,
     private readonly controls: Controls,
-    /** Abilities usable here: the chamber's declared kit (C24), or all of them in the test room. */
+    /** Abilities usable here: the chamber's declared kit plus the owned ones (C121), or all of them in the test room. */
     private readonly abilities: ReadonlySet<Ability> = new Set(),
     /** Run upgrades (C67); none in level select. Only the Dash cooldown may change (C65). */
     fx: UpgradeEffects = NO_UPGRADES,

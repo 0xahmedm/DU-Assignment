@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Box } from '../../src/core/combat/melee';
-import { boltEnemyLanes, boltStart, enemiesOnLanes, traceBolt } from '../../src/core/player/bolt';
+import { boltEnemyLanes, boltStart, cellsReached, enemiesOnLanes, lanesWindow, traceBolt } from '../../src/core/player/bolt';
 import { TILE } from '../../src/core/player/metrics';
 
 /** '#' solid, 'M' solid + hittable (mirror), '*' hittable, not solid (crystal), 'R' solid phase block. */
@@ -93,5 +93,32 @@ describe('Bolt vs enemies (C103)', () => {
     const { lanes } = forward(['##########', '#........#', '#........#', '#........#', '##########']);
     const found = enemiesOnLanes(lanes, at({ far: [[3, 7]], tall: [[2, 4], [3, 4]], near: [[3, 3]] }));
     expect(found.map((e) => e.enemy)).toEqual(['near', 'tall', 'far']);
+  });
+});
+
+describe('Bolt in flight (C120)', () => {
+  const lanes = [
+    { row: 2, cells: [[2, 1], [2, 2], [2, 3], [2, 4], [2, 5]] as [number, number][] },
+    { row: 3, cells: [[3, 1], [3, 2], [3, 3], [3, 4], [3, 5]] as [number, number][] },
+  ];
+  const at = (enemies: Record<string, [number, number]>) => (r: number, c: number) =>
+    Object.entries(enemies).filter(([, [er, ec]]) => er === r && ec === c).map(([id]) => id);
+
+  it('counts the cells the front has reached, either way and upwards', () => {
+    expect(cellsReached('forward', 1, [2, 1], 1 * TILE + 20)).toBe(1); // still in its first cell
+    expect(cellsReached('forward', 1, [2, 1], 4 * TILE + 1)).toBe(4);
+    expect(cellsReached('forward', -1, [2, 8], 5 * TILE + 3)).toBe(4);
+    expect(cellsReached('up', 1, [6, 3], 3 * TILE + 5)).toBe(4);
+    expect(cellsReached('forward', 1, [2, 1], 0)).toBe(1); // never less than its first cell
+  });
+
+  it('a dart only meets an enemy once its front gets there', () => {
+    const walker = at({ walker: [3, 4] });
+    expect(enemiesOnLanes(lanesWindow(lanes, 0, cellsReached('forward', 1, [2, 1], 3 * TILE + 5)), walker)).toEqual([]);
+    expect(enemiesOnLanes(lanesWindow(lanes, 2, cellsReached('forward', 1, [2, 1], 4 * TILE + 5)), walker).map((e) => e.enemy)).toEqual(['walker']);
+  });
+
+  it('cells already swept are not checked again (an enemy stepping in behind the dart is not hit)', () => {
+    expect(enemiesOnLanes(lanesWindow(lanes, 3, 5), at({ behind: [3, 2] }))).toEqual([]);
   });
 });

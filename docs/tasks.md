@@ -139,6 +139,7 @@ How to use this file:
 - [x] Ability unlock card (C117, from the user's play): offers were already correct (a Medium's ability counts at once); the unlock is now a card with the key, pedestals name the ability, the opening banner lists abilities; whole-campaign offer test
 - [x] Sharp rendering (C118, from the user): the canvas has the screen's real pixels (render scale 1-3), cameras zoom to match, text drawn at that resolution, a fixed HUD camera; layouts unchanged
 - [x] No overlapping messages; locked Remix and Endless shown before completion (C119, from the user)
+- [x] Bolt fixes (C120: no push back from range; hits decided in flight) and owned abilities in every chamber (C121, the user's call; shortcuts measured and listed)
 - [x] Follow-up call prep: [`follow-up-prep.md`](follow-up-prep.md): three live changes rehearsed on a clean tree with the tools' real output (grid edit, weaker jump: 13 route tests fail, a door + plate), intended feelings, six AI bug stories, likely challenges, numbers
 
 ## Stretch (only if ahead; C78/C80)

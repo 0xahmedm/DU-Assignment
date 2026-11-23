@@ -15,7 +15,7 @@ A browser-playable 2D puzzle action-platformer prototype. It has **12 puzzle cha
   - Runs are seeded. Testers can turn on **Developer options** (menu → Options & tools) to see the seed and replay it from the Expedition screen.
   - Solved chambers, abilities and seals are saved in this browser.
   - Once all four seals are restored, the Expedition screen offers timed **Remix** runs and **Endless** runs: rooms keep coming and the fighting gets harder; the score is rooms cleared, best kept on this browser.
-  - **Chamber select** (4 × 3) opens any of the twelve chambers with its declared kit.
+  - **Chamber select** (4 × 3) opens any of the twelve chambers with its declared kit plus the abilities you own.
 - **Sound** starts after your first key press (a browser rule). **M** turns it on or off.
 
 ## Controls

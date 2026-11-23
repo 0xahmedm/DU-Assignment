@@ -31,7 +31,7 @@ They combine because each one changes the others' rules: crates, enemies and sol
 
 ## How solvability is ensured
 - **Fixed movement metrics:** every layout is drawn against jump 3, gap 4, carrying 2 / 3, Throw 5 and Dash 4. No upgrade changes them, and tests measure them on the game's own movement code.
-- **Each chamber enforces its declared kit**, so a later ability can't bypass an earlier puzzle. Every layout was drawn as a text grid and searched for bypasses before approval.
+- **Each chamber is proven solvable with its declared kit**, drawn as a text grid and searched for bypasses before approval. Abilities you own also work in every chamber (C121, the user's call), so some puzzles get easier on a replay. Measured with the tools: Dash crosses P-E's second half and passes the beams in the four beam chambers.
 - **Automated checks:**
   - A load-time **validator** checks grid sanity and wiring.
   - A **logic enumerator** tries every mirror × phase × plate combination: each chamber's intended end state opens its exit, and no unintended solution exists.

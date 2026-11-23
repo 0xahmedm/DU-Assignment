@@ -19,3 +19,11 @@ export const ABILITY_INFO: Readonly<Record<Ability, AbilityInfo>> = {
 };
 
 export const ABILITIES: readonly Ability[] = ['throw', 'bolt', 'dash'];
+
+/**
+ * The abilities usable in a chamber (C121, the user's call, replacing C24's "exactly its kit"):
+ * its declared kit (what it is proven solvable with) plus every ability the player owns.
+ */
+export function chamberKit(declared: readonly Ability[], owned: readonly Ability[]): Ability[] {
+  return ABILITIES.filter((a) => declared.includes(a) || owned.includes(a));
+}

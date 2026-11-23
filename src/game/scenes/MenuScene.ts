@@ -241,7 +241,7 @@ export class MenuScene extends Phaser.Scene {
 
   private buildChambers(progress: Progress): void {
     this.header('CHAMBER SELECT');
-    this.add.text(CX, 82, 'Every chamber opens with its own kit. Progress is earned in expeditions.', text(12, PALETTE.dim)).setOrigin(0.5);
+    this.add.text(CX, 82, 'Every chamber opens with its own kit plus the abilities you own. Progress is earned in expeditions.', text(12, PALETTE.dim)).setOrigin(0.5);
     const colX = [336, 566, 796];
     DIFFICULTIES.forEach((d, c) => this.add.text(colX[c]!, 114, d, text(13, PALETTE.dim)).setOrigin(0.5));
 
@@ -318,7 +318,7 @@ export class MenuScene extends Phaser.Scene {
       ['Light: hit mirrors to turn beams; a lit receiver powers its door. Beams block your way and hurt.', PALETTE.light],
       ['Phase: hit a crystal to swap which colour, red or blue, is solid. Where you stand matters.', PALETTE.phaseRed],
       ['Gates: what goes into one frame comes out of its twin, going the same way. Light, crates and enemies too.', PALETTE.gatePairs[0]!],
-      ['Abilities, from the Medium chambers: Throw a crate 5 tiles, Bolt a target from afar, Dash 4 tiles (beams cannot touch you).'],
+      ['Abilities, earned in the Medium chambers and yours everywhere after: Throw a crate 5 tiles, Bolt a target from afar, Dash 4 tiles (beams cannot touch you).'],
     ]);
     this.hint('Esc: back    Controls are on their own screen');
   }
@@ -335,7 +335,7 @@ export class MenuScene extends Phaser.Scene {
       this.add.text(keysX, y, row.keys, text(14, PALETTE.lightCore, true)).setOrigin(0, 0.5);
     });
     const y = 100 + CONTROL_ROWS.length * 30 + 18;
-    this.add.text(CX, y, 'Abilities work once unlocked, and only in chambers that allow them.', text(12, PALETTE.dim)).setOrigin(0.5);
+    this.add.text(CX, y, 'Abilities work everywhere once unlocked.', text(12, PALETTE.dim)).setOrigin(0.5);
     this.add.text(CX, y + 30, 'MENU', text(12, PALETTE.dim)).setOrigin(0.5);
     this.add
       .text(CX, y + 54, 'arrows or mouse: choose    Enter or click: open    Esc: back\ndigits: type a seed (Expedition)    C: copy stats    Delete: reset progress (Options & tools)', { ...text(12), align: 'center', lineSpacing: 4 })

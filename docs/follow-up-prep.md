@@ -7,7 +7,7 @@ Notes for the follow-up call (Point 10 of the plan, C82): how to run the project
 ```bash
 npm install
 npm run dev          # http://localhost:5173 (hot reload: saved edits appear in the game at once)
-npm test             # 344 tests in 28 files, about 40 s
+npm test             # 349 tests in 29 files, about 40 s
 ```
 
 - Useful URLs:
@@ -78,7 +78,7 @@ Each one was rehearsed on 2026-11-23 on a clean tree and then reverted. The resu
 | G-M Gatekeeper | "I opened the door for the enemy, and now it holds my door open." |
 | G-H Handover | "One beam can't do both jobs, so the crate takes one over." |
 
-## AI bug stories (from the devlog's AI bug log, 35 entries)
+## AI bug stories (from the devlog's AI bug log, 37 entries)
 
 1. **A design bug before any code (#1).** The AI proposed Throw "lands 3 tiles ahead". But a carrying jump already crosses 3, so Throw would have been useless. It was found while drawing the chambers against the metrics; Throw became 5. *Lesson:* check every number against the others.
 2. **Layouts drawn for the wrong body (#18, #24).** The AI drew W-H's staircase and L-H's shaft as if the player were 1 tile tall (the body is 1.375). Both were unclimbable, which we only found by playing them. *Response:* the reachability checker (C51) now runs the real movement code on every grid. It caught similar errors in four chambers before they were built.
@@ -91,7 +91,7 @@ Each one was rehearsed on 2026-11-23 on a clean tree and then reverted. The resu
 
 - **Why roguelite runs in a puzzle game?** Solved chambers, abilities and seals are kept for good. A run rearranges the world around the next, harder puzzles, so no puzzle is ever solved twice for progress. Remix and Endless are optional replay after completion.
 - **Why does any enemy contact cost a heart, and now beams too?** Combat stays readable, with no health bars. Beams costing a heart was the user's call after playing (C110). The push back stays, so a beam is still a barrier first. Chamber select gives 3 hearts per attempt.
-- **Why do chambers enforce their kit?** A later ability must never bypass an earlier puzzle. Each chamber is solvable with exactly the kit it declares (C14).
+- **Why do owned abilities work in every chamber?** The user's call after playing (C121): an ability you earned should never silently stop working. Each chamber is still proven solvable with the kit it declares (C14). The trade-off was measured before shipping. With Dash, P-E's second half is skipped and W-H gains four spots, and beams across walkways can be dashed through in L-E, L-M, L-H and G-H. Bolt and Throw make far targets and crates easier. In a first playthrough the Easys come before any ability, so only replays are affected.
 - **Why no wall jump?** It would break the fixed metrics that every layout and the reachability checker rely on.
 - **Why do exits wait for enemies?** The user's decision after playing (C109): a combat room means something, and a chamber's plate walker is exempt. Trade-off: P-M's guard must be defeated, and dropping it into the sealed chasm needs a reset. The game says "fell out of reach? hold R".
 - **Isn't the fourth mechanic late and risky?** It went through the Day 1 pipeline: rules and grids drafted, checked by every tool, approved, then solved in the game. The core change is about 100 lines with 14 dedicated tests. Eclipse's tested layout was not touched.
@@ -116,9 +116,9 @@ Each one was rehearsed on 2026-11-23 on a clean tree and then reverted. The resu
 | Combat rooms | 5, each with 3 encounter tiers; plus start, reward and exit rooms |
 | Expedition | up to 18 rooms (4 chambers, 2 combat rooms before each); Remix and Endless after all four seals |
 | Upgrades | 10 (Endless: at most 4 held) |
-| Tests | 344 in 28 files; `npm run check` is the CI gate before every deploy |
-| Decisions | 119 (C1–C119), each with who decided |
-| AI bug log | 35 entries |
+| Tests | 349 in 29 files; `npm run check` is the CI gate before every deploy |
+| Decisions | 121 (C1–C121), each with who decided |
+| AI bug log | 37 entries |
 | Playtests | 3 remote testers; tester 1: 103 attempts, W-H 11:08 first solve; crate stutter 39 → 0 flips |
 | Commits | 50+, tags `day2` … `day7` |
 
