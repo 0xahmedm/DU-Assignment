@@ -27,7 +27,8 @@ import { MELEE, swingBox } from '../../core/combat/melee';
 import { loseHeart, newHearts, type Hearts } from '../../core/run/hearts';
 import { replacedBy } from '../../core/run/upgrades';
 import { enemiesLeft, enemiesRespawn } from '../../core/run/clearing';
-import { controlsLine } from '../input/controlsText';
+import { controlsLine, keysOf } from '../input/controlsText';
+import { ABILITY_INFO } from '../../core/player/abilities';
 import { DevOptions } from '../devOptions';
 import { Telemetry } from '../telemetry';
 import { formatTime } from '../../core/run/telemetry';
@@ -47,6 +48,8 @@ import { afterimage, dust, ring, sparks } from '../render/fx';
 import { cssHex, gateColor, PALETTE } from '../render/palette';
 
 const RESET_HOLD_MS = 1000; // hold R this long to reset (C51)
+/** The unlock card's colour: the mechanic of the Medium that grants the ability (C117). */
+const ABILITY_ACCENT: Record<Ability, number> = { throw: PALETTE.weight, bolt: PALETTE.light, dash: PALETTE.phaseRed };
 
 /**
  * What to play: a puzzle chamber by id, or an expedition room with its encounter tier (C101).
@@ -62,7 +65,8 @@ export interface PlayData {
    * Set by the expedition controller: the seed (shown only with developer options, C114), rooms
    * cleared so far (never the total), the mode, and a one-off banner.
    */
-  expedition?: { seed: number; cleared: number; remix: boolean; endless: boolean; banner?: string };
+  /** `unlocked`: an ability the last chamber granted, announced by the unlock card (C117). */
+  expedition?: { seed: number; cleared: number; remix: boolean; endless: boolean; banner?: string; unlocked?: Ability };
 }
 
 const GUARD_GRACE = 1; // s of invulnerability after Guard absorbs a hit
@@ -308,8 +312,11 @@ export class ChamberScene extends Phaser.Scene {
     // A one-off banner from the run controller (e.g. "W-M solved: Throw unlocked"); not repeated
     // when the room restarts after a defeat or a reset.
     const banner = this.play.expedition?.banner;
-    if (banner) {
-      this.play = { ...this.play, expedition: { ...this.play.expedition!, banner: undefined } };
+    const unlocked = this.play.expedition?.unlocked;
+    if (banner || unlocked) this.play = { ...this.play, expedition: { ...this.play.expedition!, banner: undefined, unlocked: undefined } };
+    // A new ability gets the unlock card instead of the banner (C117, playtest fix).
+    if (unlocked) this.showUnlock(unlocked, banner ?? '');
+    else if (banner) {
       const t = this.add
         .text(this.scale.width / 2, 96, banner, { fontFamily: 'monospace', fontSize: '18px', color: cssHex(PALETTE.lightCore), align: 'center', backgroundColor: '#000000cc', padding: { x: 14, y: 8 } })
         .setOrigin(0.5, 0)
@@ -753,8 +760,66 @@ export class ChamberScene extends Phaser.Scene {
     });
     this.logic.holdClosed('exit', false);
     this.prompt?.setVisible(false);
-    this.info.setText(`${choice.name}\n${choice.description}`).setVisible(true);
+    this.info.setText(this.choiceText(choice)).setVisible(true);
     this.game.events.emit(ROOM_EVENTS.reward, choice, this.play.run);
+  }
+
+  /** An offer's name and description; an ability upgrade also names its ability (C117). */
+  private choiceText(choice: RewardChoice): string {
+    const needs = UPGRADE_IDS.has(choice.id) ? upgradeById(choice.id as UpgradeId).needs : undefined;
+    return `${choice.name}\n${choice.description}${needs ? `\nUpgrades your ${ABILITY_INFO[needs].name} ability` : ''}`;
+  }
+
+  /**
+   * The unlock card (C117, a playtest fix: a new ability used to be one line of a banner that
+   * faded). Shown at the start of the room after the Medium that granted it: the ability, its
+   * key and what it does. Play waits (physics paused) until E or Enter, so it can't be missed.
+   */
+  private showUnlock(ability: Ability, solvedLine: string): void {
+    const info = ABILITY_INFO[ability];
+    const accent = ABILITY_ACCENT[ability];
+    const w = this.scale.width;
+    const h = this.scale.height;
+    this.physics.world.pause();
+    const style = (size: number, color: number, bold = false) => ({ fontFamily: 'monospace', fontSize: `${size}px`, color: cssHex(color), fontStyle: bold ? 'bold' : 'normal', align: 'center' });
+    const shade = this.add.rectangle(w / 2, h / 2, w, h, 0x000000, 0.6).setScrollFactor(0).setDepth(300).setAlpha(0);
+    const parts = [
+      this.add.rectangle(0, 0, 560, 262, PALETTE.background).setStrokeStyle(3, accent),
+      this.add.text(0, -104, solvedLine, style(13, PALETTE.dim)).setOrigin(0.5),
+      this.add.text(0, -76, 'NEW ABILITY', style(14, accent, true)).setOrigin(0.5),
+      this.add.text(0, -40, info.name.toUpperCase(), style(38, accent, true)).setOrigin(0.5),
+      this.add
+        .text(0, 8, keysOf(ability), { ...style(15, 0x15161a, true), backgroundColor: '#ffd166', padding: { x: 8, y: 3 } })
+        .setOrigin(0.5),
+      this.add.text(0, 46, info.what, { ...style(14, PALETTE.text), wordWrap: { width: 500 } }).setOrigin(0.5),
+      this.add.text(0, 78, 'Yours for good: it works in combat rooms, and in chambers that allow it.', style(12, PALETTE.dim)).setOrigin(0.5),
+    ];
+    const go = this.add.text(0, 110, 'E / Enter: continue', style(13, PALETTE.text, true)).setOrigin(0.5).setAlpha(0);
+    for (const p of [...parts, go]) p.setScrollFactor(0);
+    const card = this.add.container(w / 2, h / 2, [...parts, go]).setScrollFactor(0).setDepth(301).setScale(0.6).setAlpha(0);
+    this.tweens.add({ targets: shade, alpha: 1, duration: 180 });
+    this.tweens.add({ targets: card, scale: 1, alpha: 1, duration: 320, ease: 'Back.easeOut' });
+    this.cameras.main.flash(220, 255, 255, 255, false);
+    Sfx.unlock();
+    for (let i = 0; i < 3; i++) this.time.delayedCall(120 + i * 90, () => sparks(this, this.player.hitbox.x + (i - 1) * 14, this.player.hitbox.y - 10, accent, 8));
+    // A short wait first, so a key already held from the last room doesn't skip it.
+    this.time.delayedCall(700, () => {
+      this.tweens.add({ targets: go, alpha: 1, duration: 200 });
+      let closed = false;
+      const close = () => {
+        if (closed) return;
+        closed = true;
+        this.input.keyboard?.off('keydown-E', close);
+        this.input.keyboard?.off('keydown-ENTER', close);
+        Sfx.menuSelect();
+        this.tweens.add({ targets: [card, shade], alpha: 0, duration: 200, onComplete: () => (card.destroy(), shade.destroy()) });
+        // The key that closed the card must not also act in the room (E would be a pick).
+        this.controls.clear();
+        this.physics.world.resume();
+      };
+      this.input.keyboard?.on('keydown-E', close);
+      this.input.keyboard?.on('keydown-ENTER', close);
+    });
   }
 
   /** Hearts and run upgrades, under the title; chamber select shows its own 3 hearts (C110). */
@@ -792,7 +857,7 @@ export class ChamberScene extends Phaser.Scene {
       const i = this.pedestalUnder(player);
       const choice = this.offers[i];
       const out = choice && this.play.run && UPGRADE_IDS.has(choice.id) ? replacedBy(this.play.run, choice.id as UpgradeId) : undefined;
-      this.info.setText(choice ? `${choice.name}\n${choice.description}${out ? `\nReplaces ${upgradeById(out).name} (you hold 4 at most)` : ''}` : '').setVisible(Boolean(choice));
+      this.info.setText(choice ? `${this.choiceText(choice)}${out ? `\nReplaces ${upgradeById(out).name} (you hold 4 at most)` : ''}` : '').setVisible(Boolean(choice));
       // The pedestal underfoot hides its label: the key cap and the box above say it all.
       this.pedestals.forEach((p, j) => p.label.setAlpha(j === i ? 0 : 1));
       // The key cap over the player, so the way to take it is never missed (playtest fix, C116).

@@ -46,7 +46,7 @@ They combine because each one changes the others' rules: crates, enemies and sol
 
 ## Platforming & combat
 - **Movement** has fast acceleration, a variable jump with apex hang, coyote time and jump buffering, and no wall jump (it would break the metrics).
-- **Abilities** (from the Weight, Light and Phase Mediums): **Throw** lands a crate exactly 5 tiles ahead; **Bolt** flies straight and hits the first target (any enemy in front of you, or a puzzle target at chest height); **Dash** covers exactly 4 tiles with brief invulnerability.
+- **Abilities** (from the Weight, Light and Phase Mediums, each announced by an unlock card with its key, C117): **Throw** lands a crate exactly 5 tiles ahead; **Bolt** flies straight and hits the first target (any enemy in front of you, or a puzzle target at chest height); **Dash** covers exactly 4 tiles with brief invulnerability.
 - **Melee** hits forward and up, with a 60 ms hit-stop, knockback, shake and flash. Every puzzle state change and every action has its own generated sound and particles, so a chain reaction can be followed by ear.
 - **Exits** open when the room's puzzle is solved and its enemies are defeated; a walker the puzzle needs on a plate may stay (C109).
 - **Hearts:** 3 per expedition. Enemy contact costs one and restarts the room; a beam hit costs one and pushes you back (C110). Losing the last ends the run. Chamber select gives 3 per attempt for beam hits.

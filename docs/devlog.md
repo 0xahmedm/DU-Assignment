@@ -205,6 +205,11 @@ Testing note (not a product bug): synthetic `KeyboardEvent`s ignore the `keyCode
   - **GDD:** final and within 4 pages. The brief-change section was removed at the user's request, since no brief-change email came.
   - **AI log:** this session exported, emails redacted: [`day6-7-claude.md`](ai-logs/day6-7-claude.md) and its raw zip.
   - **Builds:** the submission zip is the single-file build plus a README. The GitHub Pages build deploys from `main`.
+- **Ability unlock card (C117), from the user's play.** The report was "an upgrade for an ability that is not unlocked yet" and "nothing says I unlocked it".
+  - **Checked in the game first:** the offers were right. After a seeded run solved Borrowed Weight, the run held `abilities: ["throw"]` in the next reward room, so Throw Sight could be dealt there. The only sign was a banner line that faded in 3 s.
+  - **Fix:** the room after the Medium opens with a card: the ability, its key, what it does, a flash and a new sound. Play waits for E or Enter. Pedestals name the ability an upgrade belongs to, and the opening banner lists your abilities.
+  - **Checked:** the card shows, E closes it, and physics resumes with no key left over (no accidental pick). A new test plays 60 whole campaigns and checks every reward room offers ability upgrades only for abilities the save owns. It also confirms the just-unlocked case happens.
+  - Screenshot: [`day7-ability-unlock-card.png`](screenshots/day7-ability-unlock-card.png).
 
 ### AI bug log (Day 7)
 | # | What the AI got wrong | How it was found | Fix |

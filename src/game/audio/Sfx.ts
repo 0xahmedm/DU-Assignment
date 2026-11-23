@@ -137,6 +137,12 @@ export const Sfx = {
   menuMove: () => tone('square', 520, 560, 30, 0.018),
   menuSelect: () => tone('triangle', 440, 660, 90, 0.045),
   menuBack: () => tone('triangle', 520, 360, 80, 0.035),
+  /** A new ability (the unlock card, C117): a rising four-note arpeggio over a low note. */
+  unlock: () => {
+    tone('triangle', 262, 262, 520, 0.05);
+    [523, 659, 784, 1047].forEach((f, i) => tone('square', f, f, 140, 0.035, i * 85));
+    tone('sine', 1047, 1568, 380, 0.04, 340);
+  },
   /** An upgrade is taken. */
   pick: () => {
     tone('triangle', 660, 990, 120, 0.06);

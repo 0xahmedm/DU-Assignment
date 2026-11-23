@@ -6,7 +6,9 @@ import { isComplete, loadProgress, saveProgress, sealsOf, solve } from '../core/
 import type { RoomDef } from '../core/run/rooms';
 import { recordEndless, recordRemixTime } from '../core/run/records';
 import { formatTime } from '../core/run/telemetry';
-import { newRun, type RunState } from '../core/run/upgrades';
+import { gainAbility, newRun, type RunState } from '../core/run/upgrades';
+import type { Ability } from '../core/chamber/types';
+import { ABILITY_INFO } from '../core/player/abilities';
 import { CHAMBER_GRID, CHAMBERS } from '../data/chambers';
 import { CONNECTORS, EXIT_ROOM, REWARD_ROOM, START_ROOM } from '../data/rooms/expedition';
 import { DevOptions } from './devOptions';
@@ -14,7 +16,6 @@ import { browserStore, PROGRESS_GRAPH } from './progress';
 import { ROOM_EVENTS, type ChamberScene, type PlayData } from './scenes/ChamberScene';
 
 const LAST_SEED_KEY = 'seal-chambers.lastSeed';
-const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1);
 
 /**
  * Runs one expedition (C8, C12, C72): plays the generated rooms in order through the chamber
@@ -41,7 +42,7 @@ export class Expedition {
     rememberSeed(plan.seed);
     const exp = new Expedition(from.game, plan, newRun(plan.seed, runAbilities(PROGRESS_GRAPH, progress, remix)), false);
     Expedition.current = exp;
-    from.scene.start('Chamber', exp.playData(firstBanner(plan, false)));
+    from.scene.start('Chamber', exp.playData(firstBanner(plan, false, exp.run.abilities)));
     return plan;
   }
 
@@ -102,10 +103,10 @@ export class Expedition {
   }
 
   /** What the chamber scene needs for the current step. */
-  private playData(banner?: string): PlayData {
+  private playData(banner?: string, unlocked?: Ability): PlayData {
     const step = this.stepAt(this.step);
     // Rooms cleared so far (the start room counts once you leave it); never the total (C114).
-    const expedition = { seed: this.plan.seed, cleared: this.step, remix: this.plan.remix, endless: this.endless, banner };
+    const expedition = { seed: this.plan.seed, cleared: this.step, remix: this.plan.remix, endless: this.endless, banner, unlocked };
     if (step.kind === 'chamber') return { id: step.id, run: this.run, expedition };
     const def: RoomDef =
       step.kind === 'start' ? START_ROOM : step.kind === 'reward' ? REWARD_ROOM : step.kind === 'exit' ? EXIT_ROOM : CONNECTORS.find((c) => c.id === step.roomId)!;
@@ -121,28 +122,28 @@ export class Expedition {
   private onDone(_id: string, run: RunState | undefined): void {
     if (run) this.run = run;
     const step = this.stepAt(this.step);
-    let banner: string | undefined;
-    if (step.kind === 'chamber') banner = this.recordSolve(step.id);
+    const solved = step.kind === 'chamber' ? this.recordSolve(step.id) : undefined;
     this.step = this.endless ? this.step + 1 : Math.min(this.step + 1, this.plan.steps.length - 1);
-    this.chamberScene()?.scene.restart(this.playData(banner));
+    this.chamberScene()?.scene.restart(this.playData(solved?.banner, solved?.unlocked));
   }
 
-  /** Saves the solve at once (C7) and returns what it gave, for the next room's banner. */
-  private recordSolve(id: ChamberId): string {
+  /**
+   * Saves the solve at once (C7) and returns what it gave, for the next room: a banner, and a new
+   * ability for the unlock card (C117), which takes the banner's place.
+   */
+  private recordSolve(id: ChamberId): { banner: string; unlocked?: Ability } {
     const store = browserStore();
     const result = solve(PROGRESS_GRAPH, loadProgress(PROGRESS_GRAPH, store), id);
     saveProgress(store, result.progress);
     this.solvedThisRun.push(id);
     const name = `${id} ${CHAMBERS[id]?.name ?? ''} solved`;
-    if (result.ability && !this.run.abilities.includes(result.ability)) {
-      // A new permanent ability works for the rest of this run, too (outside chambers, C24).
-      this.run = { ...this.run, abilities: [...this.run.abilities, result.ability] };
-    }
-    if (!result.first) return `${name}`;
-    if (result.completed) return `${name}!\nAll four seals are restored.`;
-    if (result.seal) return `${name}!\nSeal ${result.seal} restored.`;
-    if (result.ability) return `${name}!\nNew ability: ${cap(result.ability)}`;
-    return `${name}!`;
+    // A new permanent ability works for the rest of this run, too (outside chambers, C24).
+    this.run = gainAbility(this.run, result.ability);
+    if (!result.first) return { banner: name };
+    if (result.completed) return { banner: `${name}!\nAll four seals are restored.` };
+    if (result.seal) return { banner: `${name}!\nSeal ${result.seal} restored.` };
+    if (result.ability) return { banner: `${name}!`, unlocked: result.ability };
+    return { banner: `${name}!` };
   }
 
   /** The Seal altar: the run is won. */
@@ -188,10 +189,14 @@ function rememberSeed(seed: number): void {
   }
 }
 
-/** The opening banner: the mode, the seed for testers (C114), and the chambers dealt. */
-function firstBanner(plan: RunPlan, endless: boolean): string {
+/**
+ * The opening banner: the mode, the seed for testers (C114), the chambers dealt and, in a normal
+ * run, the abilities you own (C117), so an ability upgrade later on never comes as a surprise.
+ */
+function firstBanner(plan: RunPlan, endless: boolean, abilities: readonly Ability[] = []): string {
   const seed = DevOptions.on ? ` · seed ${plan.seed}` : '';
   if (endless) return `Endless expedition${seed}\nRooms keep coming, harder as you go. How far can you get?`;
   const names = plan.chambers.map((id) => `${id} ${CHAMBERS[id]?.name ?? ''}`).join(' · ');
-  return `${plan.remix ? 'Remix expedition' : 'Expedition'}${seed}\n${names}`;
+  const owned = !plan.remix && abilities.length ? `\nYour abilities: ${abilities.map((a) => ABILITY_INFO[a].name).join(' · ')}` : '';
+  return `${plan.remix ? 'Remix expedition' : 'Expedition'}${seed}\n${names}${owned}`;
 }

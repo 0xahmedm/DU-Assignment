@@ -31,6 +31,11 @@ export class Controls {
     return had;
   }
 
+  /** Forgets every latched press (a key that closed a card must not also act in the room). */
+  clear(): void {
+    this.latched.clear();
+  }
+
   horizontal(): -1 | 0 | 1 {
     const l = this.held('left');
     const r = this.held('right');

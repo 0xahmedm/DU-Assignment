@@ -3,7 +3,8 @@ import type { ChamberId } from '../../src/core/chamber/types';
 import { dealChambers, generateRun, newSeed, runAbilities } from '../../src/core/run/generator';
 import { endlessLevel, endlessStep, LOOP } from '../../src/core/run/endless';
 import { cycled } from '../../src/core/run/rng';
-import { buildGraph, frontier, newProgress, solve, type ChamberInfo, type Progress } from '../../src/core/run/progression';
+import { abilitiesOf, buildGraph, frontier, isComplete, newProgress, solve, type ChamberInfo, type Progress } from '../../src/core/run/progression';
+import { gainAbility, newRun, offersFor, takeUpgrade } from '../../src/core/run/upgrades';
 import { CHAMBER_GRID, CHAMBERS } from '../../src/data/chambers';
 import { CONNECTORS } from '../../src/data/rooms/expedition';
 
@@ -159,5 +160,36 @@ describe('cycled picks (C112)', () => {
     const out = cycled(items, 99, 30);
     for (let c = 0; c < 10; c++) expect([...out.slice(c * 3, c * 3 + 3)].sort()).toEqual(items);
     for (let i = 1; i < out.length; i++) expect(out[i]).not.toBe(out[i - 1]);
+  });
+});
+
+describe('ability upgrades in a run (C67, C117)', () => {
+  it('a reward room offers an ability upgrade only once the save owns that ability, and may right after its Medium', () => {
+    let fresh = 0;
+    for (const s of SEEDS.slice(0, 60)) {
+      let progress = newProgress();
+      for (let r = 0; r < RUNS_TO_FINISH + 1 && !isComplete(G, progress); r++) {
+        const plan = generateRun(G, progress, s + r, CONNECTOR_IDS);
+        let run = newRun(plan.seed, runAbilities(G, progress, plan.remix));
+        let justGained: string | undefined;
+        for (const step of plan.steps) {
+          if (step.kind === 'chamber') {
+            const result = solve(G, progress, step.id);
+            progress = result.progress;
+            run = gainAbility(run, result.ability);
+            justGained = result.ability;
+          } else if (step.kind === 'reward') {
+            const offer = offersFor(run);
+            const owned = abilitiesOf(G, progress);
+            for (const u of offer) if (u.needs) expect(owned).toContain(u.needs);
+            if (justGained && offer.some((u) => u.needs === justGained)) fresh++;
+            run = takeUpgrade(run, offer[0]!.id);
+            justGained = undefined;
+          }
+        }
+      }
+    }
+    // The case the unlock card exists for: the new ability's upgrade dealt in the very next room.
+    expect(fresh).toBeGreaterThan(0);
   });
 });

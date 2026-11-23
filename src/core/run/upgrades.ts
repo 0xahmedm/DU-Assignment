@@ -101,6 +101,16 @@ export const newRun = (seed: number, abilities: readonly Ability[] = []): RunSta
   timeMs: 0,
 });
 
+/**
+ * A chamber solved mid-run granted a permanent ability (C7): it works for the rest of the run too
+ * (outside chambers, C24), and from the next reward room its * upgrade may be offered. The game
+ * announces it with the unlock card (C117), so that offer never looks like a locked ability.
+ */
+export function gainAbility(run: RunState, ability: Ability | undefined): RunState {
+  if (!ability || run.abilities.includes(ability)) return run;
+  return { ...run, abilities: [...run.abilities, ability] };
+}
+
 /** Takes an upgrade. Mend acts at once on the hearts (C66); the rest are kept for the run. */
 export function takeUpgrade(run: RunState, id: UpgradeId): RunState {
   const out = replacedBy(run, id);
